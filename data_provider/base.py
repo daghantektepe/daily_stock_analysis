@@ -2287,6 +2287,20 @@ class DataFetcherManager:
         if is_meaningful_stock_name(index_name, stock_code):
             return self._cache_stock_name(stock_code, index_name) or index_name
 
+        # Borsa Istanbul: KAP's official company title (cached company list,
+        # fail-open) is more reliable than Yahoo's ASCII-folded short names.
+        if _is_tr_market(stock_code):
+            try:
+                from .kap_fetcher import get_kap_fetcher
+
+                kap_name = get_kap_fetcher().get_company_title(stock_code)
+            except Exception as exc:  # noqa: BLE001 - optional name source
+                logger.debug(f"[股票名称] KAP 名称获取失败 {stock_code}: {exc}")
+                kap_name = None
+            if is_meaningful_stock_name(kap_name, stock_code):
+                logger.info(f"[股票名称] 从 KAP 获取: {stock_code} -> {kap_name}")
+                return self._cache_stock_name(stock_code, kap_name) or kap_name
+
         # 2. 尝试从实时行情中获取（最快，可按需禁用）
         if allow_realtime:
             quote = self.get_realtime_quote(raw_stock_code or stock_code, log_final_failure=False)

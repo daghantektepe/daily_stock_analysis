@@ -17,6 +17,7 @@ from typing import Optional, Dict, Any, List, Tuple, TYPE_CHECKING
 
 from src.config import get_config, resolve_news_window_days
 from src.data.stock_index_loader import resolve_index_stock_code
+from src.formatters import display_value
 from src.report_language import (
     get_bias_status_emoji,
     get_localized_stock_name,
@@ -1082,8 +1083,8 @@ class HistoryService:
             # 量能分析
             if vol_data:
                 report_lines.extend([
-                    f"**{labels['volume_label']}**: {labels['volume_ratio_label']} {vol_data.get('volume_ratio', 'N/A')} "
-                    f"({vol_data.get('volume_status', '')}) | {labels['turnover_rate_label']} {vol_data.get('turnover_rate', 'N/A')}%",
+                    f"**{labels['volume_label']}**: {labels['volume_ratio_label']} {display_value(vol_data.get('volume_ratio'))} "
+                    f"({display_value(vol_data.get('volume_status'), missing='')}) | {labels['turnover_rate_label']} {display_value(vol_data.get('turnover_rate'), suffix='%')}",
                     f"💡 *{vol_data.get('volume_meaning', '')}*",
                     "",
                 ])

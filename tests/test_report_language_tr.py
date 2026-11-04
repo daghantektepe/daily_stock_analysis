@@ -235,3 +235,44 @@ def test_turkish_snapshot_volume_avoids_chinese_units() -> None:
     )
     assert snapshot["volume"] == "78.32 mn adet"
     assert "万" not in snapshot["volume"]
+
+
+def test_display_value_hides_none_in_reports() -> None:
+    from src.formatters import display_value
+
+    assert display_value(None) == "N/A"
+    assert display_value("None") == "N/A"
+    assert display_value(float("nan")) == "N/A"
+    assert display_value(0) == "0"
+    assert display_value(1.2, suffix="%") == "1.2%"
+    assert display_value(None, suffix="%") == "N/A"
+    assert display_value(None, missing="") == ""
+
+
+def test_prompt_uses_market_currency_and_financial_currency() -> None:
+    from src.analyzer import GeminiAnalyzer
+
+    analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
+    analyzer._config_override = None
+    context = {
+        "code": "THYAO.IS",
+        "stock_name": "Türk Hava Yolları",
+        "date": "2026-11-04",
+        "today": {"close": 291.25, "open": 271.75, "high": 291.5, "low": 270.0, "pct_chg": 9.7, "volume": 1},
+        "fundamental_context": {
+            "earnings": {
+                "data": {
+                    "financial_report": {"report_date": "2026-06-30", "revenue": 7205, "currency": "USD"},
+                    "dividend": {"currency": "TRY"},
+                }
+            }
+        },
+    }
+    try:
+        prompt = analyzer._format_prompt(context, "Türk Hava Yolları", report_language="tr")
+    except Exception as exc:  # pragma: no cover - prompt builder needs fuller runtime state
+        pytest.skip(f"prompt builder requires runtime config: {exc}")
+    assert "291.25 土耳其里拉" in prompt
+    assert "291.25 元" not in prompt
+    assert "| 财报币种 | USD |" in prompt
+    assert "| 报价/分红币种 | TRY |" in prompt

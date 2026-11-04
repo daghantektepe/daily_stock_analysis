@@ -62,7 +62,7 @@ from src.schemas.decision_action import (
 )
 from bot.models import BotMessage
 from src.utils.sanitize import sanitize_diagnostic_text
-from src.formatters import strip_hidden_markdown_metadata
+from src.formatters import display_value, strip_hidden_markdown_metadata
 from src.utils.data_processing import (
     signal_attribution_has_content,
     signal_attribution_weight_items,
@@ -898,7 +898,7 @@ class NotificationService(
             f"# 📅 {report_date} {labels['report_title']}",
             "",
             f"> {labels['analyzed_prefix']} **{len(results)}** {labels['stock_unit']} | "
-            f"{labels['generated_at_label']}：{datetime.now().strftime('%H:%M:%S')}",
+            f"{labels['generated_at_label']}{'：' if report_language == 'zh' else ': '}{datetime.now().strftime('%H:%M:%S')}",
         ]
         self._append_market_status_line(report_lines, results, report_language)
         report_lines.extend(["---", ""])
@@ -1075,7 +1075,7 @@ class NotificationService(
         # 底部信息（去除免责声明）
         report_lines.extend([
             "",
-            f"*{labels['generated_at_label']}：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+            f"*{labels['generated_at_label']}{'：' if report_language == 'zh' else ': '}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
         ])
 
         return "\n".join(report_lines)
@@ -1428,8 +1428,8 @@ class NotificationService(
                     # 量能分析
                     if vol_data:
                         report_lines.extend([
-                            f"**{labels['volume_label']}**: {labels['volume_ratio_label']} {vol_data.get('volume_ratio', 'N/A')} ({vol_data.get('volume_status', '')}) | "
-                            f"{labels['turnover_rate_label']} {vol_data.get('turnover_rate', 'N/A')}%",
+                            f"**{labels['volume_label']}**: {labels['volume_ratio_label']} {display_value(vol_data.get('volume_ratio'))} ({display_value(vol_data.get('volume_status'), missing='')}) | "
+                            f"{labels['turnover_rate_label']} {display_value(vol_data.get('turnover_rate'), suffix='%')}",
                             f"💡 *{vol_data.get('volume_meaning', '')}*",
                             "",
                         ])
@@ -1576,11 +1576,11 @@ class NotificationService(
         # 底部（去除免责声明）
         report_lines.extend([
             "",
-            f"*{labels['generated_at_label']}：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+            f"*{labels['generated_at_label']}{'：' if report_language == 'zh' else ': '}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
         ])
         models = self._collect_models_used(results)
         if models:
-            report_lines.append(f"*{labels['analysis_model_label']}：{', '.join(models)}*")
+            report_lines.append(f"*{labels['analysis_model_label']}{'：' if report_language == 'zh' else ': '}{', '.join(models)}*")
 
         return "\n".join(report_lines)
 
@@ -2107,8 +2107,8 @@ class NotificationService(
                 "",
                 f"| {labels['current_price_label']} | {labels['volume_ratio_label']} | {labels['turnover_rate_label']} | {labels['source_label']} |",
                 "|-------|------|--------|----------|",
-                f"| {snapshot.get('price', 'N/A')} | {snapshot.get('volume_ratio', 'N/A')} | "
-                f"{snapshot.get('turnover_rate', 'N/A')} | {display_source} |",
+                f"| {display_value(snapshot.get('price'))} | {display_value(snapshot.get('volume_ratio'))} | "
+                f"{display_value(snapshot.get('turnover_rate'))} | {display_source} |",
             ])
 
         lines.append("")

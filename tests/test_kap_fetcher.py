@@ -209,3 +209,29 @@ def test_intelligence_templates_include_turkish_market_feeds() -> None:
     templates = service.list_source_templates(market="tr")["items"]
     assert {item["template_id"] for item in templates} == {"tr-aa-economy", "tr-dunya", "tr-bloomberght"}
     assert all(item["source_type"] == "rss" and item["scope_type"] == "market" for item in templates)
+
+
+def test_stock_name_for_bist_uses_kap_title_before_other_sources() -> None:
+    from data_provider.base import DataFetcherManager
+
+    fake = MagicMock()
+    fake.get_company_title.return_value = "TÜRK HAVA YOLLARI A.O."
+    manager = DataFetcherManager(fetchers=[])
+    with patch("data_provider.kap_fetcher.get_kap_fetcher", return_value=fake), \
+            patch.object(manager, "get_realtime_quote") as realtime:
+        assert manager.get_stock_name("ZZTHY.IS") == "TÜRK HAVA YOLLARI A.O."
+        realtime.assert_not_called()
+
+    # Non-BIST codes never consult KAP.
+    fake.get_company_title.reset_mock()
+    with patch("data_provider.kap_fetcher.get_kap_fetcher", return_value=fake):
+        manager.get_stock_name("ZZZZ", allow_realtime=False)
+    fake.get_company_title.assert_not_called()
+
+
+def test_stock_name_for_bist_fails_open_when_kap_errors() -> None:
+    from data_provider.base import DataFetcherManager
+
+    manager = DataFetcherManager(fetchers=[])
+    with patch("data_provider.kap_fetcher.get_kap_fetcher", side_effect=RuntimeError("down")):
+        assert manager.get_stock_name("ZZERR.IS", allow_realtime=False) == ""

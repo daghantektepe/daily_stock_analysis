@@ -80,6 +80,7 @@ from src.llm.provider_cache import (
 from src.llm.response_content import strip_leading_think_wrapper
 from src.storage import persist_llm_usage
 from src.data.stock_mapping import STOCK_NAME_MAP
+from src.formatters import display_value
 from src.report_language import (
     get_signal_level,
     get_no_data_text,
@@ -106,6 +107,17 @@ from src.market_phase_prompt import format_market_phase_prompt_section
 from src.market_structure_prompt import format_market_structure_prompt_section
 
 logger = logging.getLogger(__name__)
+
+
+_PROMPT_PRICE_UNIT_BY_MARKET = {
+    "cn": "元",
+    "hk": "港元",
+    "us": "美元",
+    "jp": "日元",
+    "kr": "韩元",
+    "tw": "新台币",
+    "tr": "土耳其里拉",
+}
 
 
 def _localized_text(language: Any, *, en: str, zh: str, ko: str, tr: Optional[str] = None) -> str:
@@ -3816,6 +3828,8 @@ class GeminiAnalyzer:
             stock_name = STOCK_NAME_MAP.get(code, f'股票{code}')
             
         today = context.get('today', {})
+        # Quote currency label used in the (Chinese) prompt tables; A-shares keep 元.
+        price_unit = _PROMPT_PRICE_UNIT_BY_MARKET.get(detect_market(code), "元")
         unknown_text = get_unknown_text(report_language)
         no_data_text = get_no_data_text(report_language)
         quote_section_title, close_price_label = _phase_aware_quote_labels(context)
@@ -3825,14 +3839,14 @@ class GeminiAnalyzer:
         volume_label = "实时成交量" if realtime_overlay_quote else "成交量"
         amount_label = "实时成交额" if realtime_overlay_quote else "成交额"
         quote_rows = [
-            f"| {close_price_label} | {today.get('close', 'N/A')} 元 |",
+            f"| {close_price_label} | {today.get('close', 'N/A')} {price_unit} |",
         ]
         if not hide_regular_session_ohlc:
             quote_rows.extend(
                 [
-                    f"| 开盘价 | {today.get('open', 'N/A')} 元 |",
-                    f"| 最高价 | {today.get('high', 'N/A')} 元 |",
-                    f"| 最低价 | {today.get('low', 'N/A')} 元 |",
+                    f"| 开盘价 | {today.get('open', 'N/A')} {price_unit} |",
+                    f"| 最高价 | {today.get('high', 'N/A')} {price_unit} |",
+                    f"| 最低价 | {today.get('low', 'N/A')} {price_unit} |",
                 ]
             )
         quote_rows.extend(
@@ -3899,9 +3913,9 @@ class GeminiAnalyzer:
 ### 实时行情增强数据
 | 指标 | 数值 | 解读 |
 |------|------|------|
-| 当前价格 | {rt.get('price', 'N/A')} 元 | |
-| **量比** | **{rt.get('volume_ratio', 'N/A')}** | {rt.get('volume_ratio_desc', '')} |
-| **换手率** | **{rt.get('turnover_rate', 'N/A')}%** | |
+| 当前价格 | {rt.get('price', 'N/A')} {price_unit} | |
+| **量比** | **{display_value(rt.get('volume_ratio'))}** | {display_value(rt.get('volume_ratio_desc'), missing='')} |
+| **换手率** | **{display_value(rt.get('turnover_rate'), suffix='%')}** | |
 | 市盈率(动态) | {rt.get('pe_ratio', 'N/A')} | |
 | 市净率 | {rt.get('pb_ratio', 'N/A')} | |
 | 总市值 | {self._format_amount(rt.get('total_mv'))} | |
@@ -3938,12 +3952,22 @@ class GeminiAnalyzer:
             ttm_cash = dividend_metrics.get("ttm_cash_dividend_per_share", "N/A")
             ttm_count = dividend_metrics.get("ttm_event_count", "N/A")
             report_date = financial_report.get("report_date", "N/A")
+            financial_currency = str(financial_report.get("currency") or "").strip().upper()
+            dividend_currency = str(dividend_metrics.get("currency") or "").strip().upper()
+            currency_rows = ""
+            if financial_currency:
+                currency_rows += (
+                    f"| 财报币种 | {financial_currency} | 营收/利润/现金流按该币种计"
+                    f"{f'，与报价币种 {price_unit} 不同，勿直接混算' if dividend_currency and dividend_currency != financial_currency else ''} |\n"
+                )
+            if dividend_currency:
+                currency_rows += f"| 报价/分红币种 | {dividend_currency} | 每股分红与股价按该币种计 |\n"
             prompt += f"""
 ### 财报与分红（价值投资口径）
 | 指标 | 数值 | 说明 |
 |------|------|------|
 | 最近报告期 | {report_date} | 来自结构化财报字段 |
-| 营业收入 | {financial_report.get('revenue', 'N/A')} | |
+{currency_rows}| 营业收入 | {financial_report.get('revenue', 'N/A')} | |
 | 归母净利润 | {financial_report.get('net_profit_parent', 'N/A')} | |
 | 经营现金流 | {financial_report.get('operating_cash_flow', 'N/A')} | |
 | ROE | {financial_report.get('roe', 'N/A')} | |
@@ -4050,7 +4074,7 @@ class GeminiAnalyzer:
 | 指标 | 数值 | 健康标准 |
 |------|------|----------|
 | **获利比例** | **{profit_ratio:.1%}** | 70-90%时警惕 |
-| 平均成本 | {chip.get('avg_cost', 'N/A')} 元 | 现价应高于5-15% |
+| 平均成本 | {chip.get('avg_cost', 'N/A')} {price_unit} | 现价应高于5-15% |
 | 90%筹码集中度 | {chip.get('concentration_90', 0):.2%} | <15%为集中 |
 | 70%筹码集中度 | {chip.get('concentration_70', 0):.2%} | |
 | 筹码状态 | {chip.get('chip_status', unknown_text)} | |
@@ -4402,7 +4426,7 @@ class GeminiAnalyzer:
         if realtime:
             snapshot.update({
                 "price": self._format_price(realtime.get('price')),
-                "volume_ratio": realtime.get('volume_ratio', 'N/A'),
+                "volume_ratio": display_value(realtime.get('volume_ratio')),
                 "turnover_rate": self._format_percent(realtime.get('turnover_rate')),
                 "source": getattr(realtime.get('source'), 'value', realtime.get('source', 'N/A')),
             })

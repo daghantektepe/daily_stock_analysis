@@ -8,7 +8,7 @@
 """
 
 import re
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 import markdown2
 
@@ -28,6 +28,22 @@ HIDDEN_MARKDOWN_METADATA_RE = re.compile(
 # Unicode code point ranges for special characters.
 _SPECIAL_CHAR_RANGE = (0x10000, 0xFFFFF)
 _SPECIAL_CHAR_REGEX = re.compile(r'[\U00010000-\U000FFFFF]')
+
+
+def display_value(value: Any, *, suffix: str = "", missing: str = "N/A") -> str:
+    """Render a scalar for reports, mapping None/empty/NaN/"None" to ``missing``.
+
+    ``dict.get(key, "N/A")`` still returns ``None`` when the key exists with a
+    ``None`` value, which leaked "None" / "None%" into rendered reports.
+    """
+    if value is None:
+        return missing
+    if isinstance(value, float) and value != value:  # NaN
+        return missing
+    text = str(value).strip()
+    if not text or text.lower() in {"none", "null", "nan", "n/a"}:
+        return missing
+    return f"{text}{suffix}"
 
 
 def _page_marker(i: int, total: int) -> str:

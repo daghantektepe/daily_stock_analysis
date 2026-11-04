@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] 报告与 Prompt 中缺失的量比/换手率等字段不再渲染为 `None` / `None%`，统一显示 `N/A`；非中文报告页脚使用半角冒号
+- [改进] 分析 Prompt 的价格单位按市场显示（港元/美元/日元/韩元/新台币/土耳其里拉，A 股仍为元），财报区块新增财报币种与报价币种行，避免离岸市场金额币种混淆；Borsa Istanbul 股票名称优先使用 KAP 官方公司名称（fail-open）
 - [修复] 报告语言为 `ko` / `tr` 时生成完整报告不再因数据源显示名缺少对应语言而 `KeyError` 导致本地报告保存失败（回退英文名）；`tr` 报告的 DecisionSignal 摘要使用土耳其语标签，行情快照成交量/成交额改用土耳其语计数单位（bin / mn / mr）而非“万股/亿元”
 - [文档] 新增土耳其语个人部署指南 `docs/turkey-personal-setup.md`：本机使用 Claude / Gemini 订阅 CLI 与 Codex CLI 的生成链、可选 Gemini API / Grok / Ollama、隐私边界与 BIST 首次运行检查清单
 - [改进] `scripts/check_env.py --backends` 对主生成后端与 fallback 链逐个发起真实 JSON 冒烟测试并汇总可用性
