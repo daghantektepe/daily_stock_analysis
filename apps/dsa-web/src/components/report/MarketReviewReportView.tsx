@@ -349,6 +349,29 @@ const MARKET_REVIEW_TEXT: Record<ReportLanguage, {
     leading: '강세',
     lagging: '약세',
   },
+  tr: {
+    reviewSummary: 'Değerlendirme Özeti',
+    noReviewSummary: 'Henüz değerlendirme özeti yok',
+    noSentimentScore: 'Henüz puan yok',
+    rotationAndFunds: 'Rotasyon ve Para Akışı',
+    noRotationView: 'Henüz rotasyon görüşü yok',
+    riskAndWatch: 'Riskler ve İzleme Listesi',
+    noRiskWatch: 'Henüz önemli gözlem yok',
+    structuredMarketData: 'Yapılandırılmış Piyasa Verisi',
+    noBreadthData: 'Veri yok',
+    advancers: 'Yükselenler',
+    decliners: 'Düşenler',
+    limitUpDown: 'Tavan/Taban',
+    turnover: 'İşlem Hacmi',
+    index: 'Endeks',
+    last: 'Son',
+    change: 'Değişim',
+    highLow: 'Yüksek/Düşük',
+    industryBoards: 'Sektörler',
+    conceptBoards: 'Temalar',
+    leading: 'Güçlü',
+    lagging: 'Zayıf',
+  },
 };
 
 const formatRankingChange = (value: unknown): string => {
@@ -371,7 +394,9 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
 }) => {
   const normalizedReportLanguage = normalizeReportLanguage(reportLanguage);
   const text = getReportText(normalizedReportLanguage);
-  const runFlowText = UI_TEXT[normalizedReportLanguage === 'ko' ? 'en' : normalizedReportLanguage];
+  const runFlowText = UI_TEXT[
+    normalizedReportLanguage === 'ko' || normalizedReportLanguage === 'tr' ? 'en' : normalizedReportLanguage
+  ];
   const marketReviewText = MARKET_REVIEW_TEXT[normalizedReportLanguage];
   const [loadedMarkdown, setLoadedMarkdown] = useState<LoadedMarkdown | null>(null);
   const [loadError, setLoadError] = useState<LoadError | null>(null);

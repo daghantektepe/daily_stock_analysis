@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增土耳其 Borsa Istanbul 个股支持：`THYAO.IS` 等 `.IS` 后缀代码识别为 `tr` 市场，日线/行情仅走 YFinance，交易日历注册 `XIST / Europe/Istanbul`，报告 Prompt 增加 TRY 汇率、TCMB、KAP 与高通胀语境，财务金额标注土耳其里拉，Portfolio / DecisionSignal / Intelligence 的 API 与 Web 市场枚举放行 `tr`（Portfolio 默认币种 `TRY`）；裸字母代码仍按美股处理，详见 `docs/market-support.md`
+- [新功能] 报告输出语言新增土耳其语（`REPORT_LANGUAGE=tr`），覆盖个股报告标签、操作建议/趋势/置信度本地化与反向识别、Prompt 输出语言指令、Agent 与问股回复、决策护栏（含土耳其语动词否定后缀识别）、通知模板标签、分享图与 Web 报告页文案；结构化上下文与 `ko` 一样复用英文骨架
 - [修复] 首页移动端侧栏的历史、自选与今日列表恢复纵向触摸滚动：外层卡片不再覆盖移动端滚动壳层的 `overflow`，实际滚动视口明确启用纵向手势与边界约束，桌面端继续保留卡片裁剪
 - [修复] Electron 桌面端恢复历史个股报告、市场复盘和完整报告的“分享”入口，复用安装包自带 Chromium 从本机受限 HTML 生成 PNG；Web 与桌面端在未配置自定义品牌时统一使用随包分发的小红书二维码，并在二维码下展示昵称 `@霸天土小豆`。
 - [新功能] Agent Chat 按会话持久化 Skill 选择，支持刷新和会话切换恢复，并区分省略 `skills`、显式空列表与非空选择；无持久化状态的历史会话继续使用运行时默认且不会被静默转为显式选择，复用分析 `context` 中残留的 legacy `skills` / `strategies` 也不会覆盖顶层三态或会话状态，非空但全部无效的 Skill 请求不会被当成显式空列表并清空既有选择

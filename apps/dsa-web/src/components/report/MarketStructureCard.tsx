@@ -176,7 +176,9 @@ export const MarketStructureCard: React.FC<MarketStructureCardProps> = ({ contex
   }
 
   const reportLanguage = normalizeReportLanguage(language);
-  const text = reportLanguage === 'en'
+  // Turkish reuses the English market-structure chrome.
+  const structureLanguage = reportLanguage === 'tr' ? 'en' : reportLanguage;
+  const text = structureLanguage === 'en'
     ? TEXT.en
     : reportLanguage === 'ko'
       ? TEXT.ko
@@ -198,7 +200,7 @@ export const MarketStructureCard: React.FC<MarketStructureCardProps> = ({ contex
   const riskTags = valueList(
     stockPosition.riskTags?.map(
       (tag) =>
-        (RISK_TAG_TEXT[reportLanguage] as Record<string, string>)[tag.code]
+        (RISK_TAG_TEXT[structureLanguage] as Record<string, string>)[tag.code]
         || tag.message
         || tag.code,
     ),

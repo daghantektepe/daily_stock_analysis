@@ -46,8 +46,11 @@ _MARKET_REGION_REF_RE = re.compile(
 _SUFFIXED_NUMERIC_CODE_PATTERN = (
     r"(?:\d{6}\.(?:SH|SZ|SS|BJ|KS|KQ)|\d{1,5}\.HK|\d{4,6}\.(?:TWO|TW)|\d{4,5}\.T)"
 )
+# Borsa Istanbul tickers are alphanumeric (``THYAO.IS``), so they need their
+# own alternative ahead of the generic 1-5 letter US ticker branch.
+_BIST_CODE_PATTERN = r"(?<![A-Za-z0-9])[A-Z][A-Z0-9]{2,5}\.IS(?![A-Za-z])"
 _CODE_RE = re.compile(
-    rf"(?:\(|（)?({_SUFFIXED_NUMERIC_CODE_PATTERN}|(?:(?i:sh|sz|bj|hk))?\d{{5,6}}(?:\.[A-Z]{{2}})?|(?<![A-Za-z])[A-Z]{{1,5}}(?:\.[A-Z])?(?![A-Za-z]))(?:\)|）)?",
+    rf"(?:\(|（)?({_BIST_CODE_PATTERN}|{_SUFFIXED_NUMERIC_CODE_PATTERN}|(?:(?i:sh|sz|bj|hk))?\d{{5,6}}(?:\.[A-Z]{{2}})?|(?<![A-Za-z])[A-Z]{{1,5}}(?:\.[A-Z])?(?![A-Za-z]))(?:\)|）)?",
 )
 _NUMERIC_CODE_RE = re.compile(
     rf"(?:{_SUFFIXED_NUMERIC_CODE_PATTERN}|(?:(?i:sh|sz|bj|hk))?\d{{5,6}}(?:\.[A-Z]{{2}})?)"
@@ -105,6 +108,23 @@ _POSTER_TEXT = {
         "disclaimer": "AI 생성 연구 자료이며 투자 조언이 아닙니다. 투자에는 위험이 따릅니다.",
         "source": "데이터 소스",
     },
+    "tr": {
+        "brand": "Yapay Zekâ Hisse Analizi", "stock_subtitle": "Hisse karar kartı · tez, seviyeler ve riskler",
+        "market_subtitle": "Endeks, piyasa genişliği, temalar ve risklerin kapanış değerlendirmesi", "multi_title": "Çoklu Piyasa Değerlendirmesi",
+        "multi_subtitle": "Piyasa bazında endeksler, temalar ve risk sınırları", "dashboard_subtitle": "Çoklu Hisse Karar Özeti",
+        "score": "Puan", "confidence": "Güven", "trend": "Trend", "core": "Temel Sonuç",
+        "snapshot": "Piyasa Görünümü", "execution": "Uygulama Planı", "technical": "Teknik Referans",
+        "next_watch": "Sonraki İzleme", "positive_catalysts": "Olumlu Katalizörler", "risk_alerts": "Risk Uyarıları",
+        "catalysts_risks": "Katalizörler ve Riskler", "no_position": "Pozisyon Yok", "holding": "Pozisyon Var",
+        "position": "Pozisyon", "entry": "Giriş", "risk_control": "Risk Yönetimi", "position_advice": "Pozisyon Önerisi",
+        "market_signal": "Piyasa Sinyali", "today_conclusion": "Sonuç", "breadth": "Piyasa Genişliği",
+        "dimensions": "Sinyal Dağılımı", "leaders": "Güçlü Sektörler", "laggards": "Zayıf Sektörler",
+        "focus_tag": "İzle", "avoid_tag": "Uzak Dur", "focus": "Öne Çıkan İzleme Listesi", "funds": "Para Akışı Takibi",
+        "strategy": "Sonraki Seans Planı", "risks": "Risk Uyarıları", "tagline": "Hisse araştırmasını daha basit ve verimli hale getirin",
+        "open_source": "Açık Kaynak · GitHub", "xiaohongshu": "Xiaohongshu",
+        "disclaimer": "Yapay zekâ tarafından yalnızca araştırma amacıyla üretilmiştir; yatırım tavsiyesi değildir. Piyasalar risk içerir.",
+        "source": "Kaynak",
+    },
 }
 _POSTER_LABELS = {
     "en": {
@@ -124,6 +144,15 @@ _POSTER_LABELS = {
         "行动窗口": "행동 구간", "下次检查": "다음 점검", "上涨": "상승", "下跌": "하락",
         "涨停": "상한가", "跌停": "하한가", "成交额": "거래대금", "赚钱效应": "시장 폭 점수",
         "指数强度": "지수 강도", "涨停结构": "상한가 구조",
+    },
+    "tr": {
+        "当前/收盘": "Güncel/Kapanış", "现价": "Güncel", "涨跌幅": "Değişim", "涨跌": "Değişim",
+        "量比": "Hacim Oranı", "换手率": "Devir Hızı", "换手": "Devir Hızı", "理想买入": "İdeal Giriş",
+        "确认买入": "Teyitli Giriş", "止损": "Zarar Durdur", "目标": "Hedef", "均线": "HO Dizilimi",
+        "量能": "Hacim", "趋势分": "Trend Puanı", "MA5乖离": "MA5 Sapma", "支撑": "Destek", "压力": "Direnç",
+        "行动窗口": "İşlem Zamanı", "下次检查": "Sonraki Kontrol", "上涨": "Yükselen", "下跌": "Düşen",
+        "涨停": "Tavan", "跌停": "Taban", "成交额": "İşlem Hacmi", "赚钱效应": "Genişlik Puanı",
+        "指数强度": "Endeks Gücü", "涨停结构": "Tavan Yapısı",
     },
 }
 _MARKET_LABEL_PATTERNS = (
@@ -347,10 +376,18 @@ def _poster_language(
             return "en"
         if normalized.startswith("ko"):
             return "ko"
+        if normalized.startswith("tr"):
+            return "tr"
         if normalized.startswith("zh"):
             return "zh"
     if re.search(r"[\uac00-\ud7af]", markdown_text or ""):
         return "ko"
+    # Turkish-only letters (ğ/ş/ı/İ) plus a Turkish report heading.
+    if re.search(r"[ğşıİ]", markdown_text or "") and re.search(
+        r"(?:Karar Paneli|Temel Sonuç|Piyasa Görünümü|Piyasa Değerlendirmesi)",
+        markdown_text or "",
+    ):
+        return "tr"
     if re.search(
         r"(?:core conclusion|market snapshot|action levels|market (?:review|recap)|major indices)",
         markdown_text or "",
@@ -372,6 +409,8 @@ def _poster_label(language: str, label: str) -> str:
         return label.replace("观察 ", "Watch ", 1)
     if language == "ko" and label.startswith("观察 "):
         return label.replace("观察 ", "관찰 ", 1)
+    if language == "tr" and label.startswith("观察 "):
+        return label.replace("观察 ", "İzle ", 1)
     return label
 
 
@@ -1269,7 +1308,7 @@ def _stock_data_from_payload(
 def _market_title(markdown_text: str) -> str:
     first_title = next((title for title, _body, _level in _extract_sections(markdown_text)), "")
     language = _poster_language(markdown_text)
-    if language in {"en", "ko"} and _is_market_review_title(first_title):
+    if language in {"en", "ko", "tr"} and _is_market_review_title(first_title):
         return first_title
     market = _market_label(first_title)
     if market:
@@ -2114,7 +2153,7 @@ def build_share_image_html(
     poster_branding = branding or ShareImageBranding()
 
     return f"""<!DOCTYPE html>
-<html lang="{'en' if language == 'en' else 'ko' if language == 'ko' else 'zh-CN'}">
+<html lang="{'en' if language == 'en' else 'ko' if language == 'ko' else 'tr' if language == 'tr' else 'zh-CN'}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=1080, initial-scale=1">

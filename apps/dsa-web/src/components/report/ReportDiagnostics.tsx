@@ -169,8 +169,9 @@ export const ReportDiagnostics: React.FC<ReportDiagnosticsProps> = ({
   onOpenRunFlow,
 }) => {
   const reportLanguage = normalizeReportLanguage(language);
-  const text = TEXT[reportLanguage];
-  const runFlowText = UI_TEXT[reportLanguage === 'ko' ? 'en' : reportLanguage];
+  // Turkish reuses the English diagnostics chrome.
+  const text = TEXT[reportLanguage === 'tr' ? 'en' : reportLanguage];
+  const runFlowText = UI_TEXT[reportLanguage === 'ko' || reportLanguage === 'tr' ? 'en' : reportLanguage];
   const [fetchState, setFetchState] = useState<{
     recordId?: number;
     summary: RunDiagnosticSummary | null;

@@ -1,7 +1,7 @@
 import type { ReportLanguage } from '../types/analysis';
 
 export const normalizeReportLanguage = (value?: string | null): ReportLanguage =>
-  value === 'en' ? 'en' : value === 'ko' ? 'ko' : 'zh';
+  value === 'en' ? 'en' : value === 'ko' ? 'ko' : value === 'tr' ? 'tr' : 'zh';
 
 const REPORT_TEXT = {
   zh: {
@@ -157,6 +157,64 @@ const REPORT_TEXT = {
     neutralBoard: '중립',
     reanalyze: '재분석',
   },
+  tr: {
+    keyInsights: 'TEMEL ÇIKARIMLAR',
+    noAnalysisSummary: 'Henüz analiz özeti yok',
+    actionAdvice: 'İşlem Önerisi',
+    noAdvice: 'Öneri yok',
+    trendPrediction: 'Trend Beklentisi',
+    noPrediction: 'Beklenti yok',
+    marketSentiment: 'Piyasa Algısı',
+    strategyPoints: 'Strateji Seviyeleri',
+    sniperLevels: 'İşlem Seviyeleri',
+    idealBuy: 'İdeal Alım',
+    secondaryBuy: 'İkincil Alım',
+    stopLoss: 'Zarar Durdur',
+    takeProfit: 'Kâr Al',
+    noValue: '—',
+    newsFeed: 'Haber Akışı',
+    relatedNews: 'İlgili Haberler',
+    refresh: 'Yenile',
+    retry: 'Tekrar dene',
+    dismiss: 'Kapat',
+    details: 'Ayrıntılar',
+    loadingNews: 'Haberler yükleniyor...',
+    noNews: 'İlgili haber yok',
+    noNewsDescription: 'En son haberler için daha sonra yenileyin.',
+    openLink: 'Aç',
+    transparency: 'Şeffaflık',
+    traceability: 'Veri İzlenebilirliği',
+    rawResult: 'Ham Analiz Sonucu',
+    analysisSnapshot: 'Analiz Anlık Görüntüsü',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı!',
+    recordId: 'Kayıt ID',
+    fullReport: 'Tam Analiz Raporu',
+    loadingReport: 'Rapor yükleniyor...',
+    loadReportFailed: 'Rapor yüklenemedi',
+    copyMarkdownSource: 'Markdown kaynağını kopyala',
+    copyPlainText: 'Düz metni kopyala',
+    generateShareImage: 'Paylaş',
+    generatingShareImage: 'Oluşturuluyor...',
+    shareImageReadyToShare: 'Şimdi paylaş',
+    shareImageReady: 'Hazır',
+    shareImageFailed: 'Tekrar dene',
+    analysisModel: 'Analiz Modeli',
+    fearGreedIndex: 'Korku ve Açgözlülük Endeksi',
+    boardLinkage: 'Sektör Bağlantısı',
+    relatedBoards: 'İlgili Sektörler',
+    leadingBoard: 'Güçlü',
+    laggingBoard: 'Zayıf',
+    neutralBoard: 'Nötr',
+    reanalyze: 'Yeniden analiz et',
+  },
 } as const;
 
 export const getReportText = (language?: string | null) => REPORT_TEXT[normalizeReportLanguage(language)];
+
+/** Report languages that ship dedicated copy for secondary report panels. */
+export type ChromeLanguage = Exclude<ReportLanguage, 'tr'>;
+
+/** Turkish reuses the English chrome for secondary panels that only ship zh/en/ko copy. */
+export const toChromeLanguage = (language: ReportLanguage): ChromeLanguage =>
+  language === 'tr' ? 'en' : language;

@@ -122,6 +122,35 @@ PY
 
 回滚方式：移除 `tw` 市场识别、交易日历注册、YFinance 路由扩展、三大法人资料层/报告消费、TWD 标注、服务层/API 市场枚举及前端市场类型放行，并删除本文档中的能力声明。
 
+## 土耳其（Borsa Istanbul）个股支持（suffix-only）
+
+当前阶段支持手动输入伊斯坦布尔证券交易所（Borsa Istanbul，BIST）股票的 Yahoo Finance `.IS` 后缀代码，进入既有个股分析、历史保存、报告渲染、DecisionSignal、Portfolio 和 Intelligence 链路，市场标签为 `tr`。
+
+支持格式：
+
+- 个股：`THYAO.IS`、`ASELS.IS`、`GARAN.IS`、`A1CAP.IS`
+- 指数：`XU100.IS`（BIST 100）、`XU030.IS`（BIST 30）可作为普通 suffix 代码进入个股分析链路
+- 代码 base 必须以字母开头，为 3-6 位字母数字（BIST 代码以字母为主，少数含数字，如 `A1CAP`）；`1234.IS`、`AB.IS` 等不合法 base 会被拒绝。
+
+约束与边界：
+
+- **严格 suffix-only**：裸 `THYAO` 等不带 `.IS` 后缀的代码仍按美股 ticker 语义处理（字母代码与美股命名空间冲突），`suffix_base_lookup_allowed` 对 `tr` 返回 False。
+- 后缀规则集中在 `src/services/market_symbol_utils.py` 的 `SuffixMarketSpec("tr", ("IS",), (), base_pattern)`；`SuffixMarketSpec` 新增可选 `base_pattern`，仅对字母数字 base 的市场生效，JP/KR/TW 的数字长度规则保持不变。
+- 日线和基础实时/近实时行情只走 `YfinanceFetcher`，不尝试 A 股专属数据源；基本面复用 offshore yfinance 轻量路径，`institution`、`capital_flow`、`dragon_tiger`、`boards` 按 `not_supported` 降级。
+- 报告 Prompt 增加土耳其市场语义：高通胀下名义涨幅与实际回报的区分、土耳其里拉（TRY）汇率、土耳其央行（TCMB）利率决议、外资持股与资金流、KAP（公开披露平台）公告、BIST ±10% 日内价格限制与 T+2 结算，并明确不要套用北向资金、龙虎榜、融资融券等 A 股概念。
+- 交易日历注册 `tr: XIST / Europe/Istanbul`。连续交易 10:00–18:00；BIST 收盘集合竞价在日历收盘（18:00）之后进行，因此 `_CLOSING_AUCTION_WINDOW_MINUTES["tr"]=0`，18:00 后直接进入 `postmarket`。土耳其法定节假日（如 10 月 29 日共和国日）由 `exchange-calendars` 识别为非交易日。
+- 报告中的财务金额以 TRY 计价时标注为「土耳其里拉」，避免落入 A 股默认「元」。
+- Portfolio 新建 `tr` 账户时默认币种为 `TRY`；`tr` 属于 partial valuation 市场（实时报价 best-effort、汇率与成本口径部分支持）。
+
+不承诺项：
+
+- 不承诺实时行情；Yahoo Finance 的 BIST 数据可能延迟或字段缺失。
+- 不提供 BIST 大盘复盘（`MARKET_REVIEW_REGION` 不接受 `tr`）、Market Light 告警、市场宽度或板块排行。
+- 未内置 BIST 股票索引/种子，Web 自动补全不覆盖土耳其股票；请手动输入完整 `.IS` 代码。
+- 不提供 KAP 公告或土耳其本地新闻专用数据源；新闻仍走既有搜索服务，可在 Intelligence 中以 `market=tr` 配置 RSS 源。
+
+回滚方式：移除 `market_symbol_utils` 中的 `tr` 规则与 `base_pattern` 扩展、`XIST` 交易日历注册、YFinance/DataFetcherManager 路由扩展、`market_context` 土耳其语义、TRY 币种标注、服务层/API 市场枚举及前端市场类型放行，并删除本文档中的能力声明。
+
 ## 日本/韩国 Portfolio 与 Market Light 边界（Issue #1815 Phase 3）
 
 Portfolio 允许 JP/KR 账户、交易和持仓快照进入现有链路，但会将账户/持仓快照标记为 `data_quality=partial`，并通过 `limitations` 明确 `realtime_quote_best_effort`、`fx_and_cost_basis_partial`、`sector_and_risk_metrics_limited`；不承诺 JPY/KRW 汇率、成本、市值、行业集中度或组合风险指标完整口径。

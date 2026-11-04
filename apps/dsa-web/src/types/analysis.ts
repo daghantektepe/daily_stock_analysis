@@ -42,7 +42,7 @@ export interface MarketReviewAccepted {
 
 // ============ Report Types ============
 
-export type ReportLanguage = 'zh' | 'en' | 'ko';
+export type ReportLanguage = 'zh' | 'en' | 'ko' | 'tr';
 
 export type MarketPhaseValue =
   | 'premarket'
@@ -100,7 +100,12 @@ export type SentimentLabel =
   | '비관'
   | '중립'
   | '낙관'
-  | '매우 낙관';
+  | '매우 낙관'
+  | 'Çok Kötümser'
+  | 'Kötümser'
+  | 'Nötr'
+  | 'İyimser'
+  | 'Çok İyimser';
 
 export type DecisionAction = 'buy' | 'add' | 'hold' | 'reduce' | 'sell' | 'watch' | 'avoid' | 'alert';
 
@@ -623,6 +628,13 @@ export const getSentimentLabel = (score: number, language: ReportLanguage = 'zh'
     if (score <= 60) return '중립';
     if (score <= 80) return '낙관';
     return '매우 낙관';
+  }
+  if (language === 'tr') {
+    if (score <= 20) return 'Çok Kötümser';
+    if (score <= 40) return 'Kötümser';
+    if (score <= 60) return 'Nötr';
+    if (score <= 80) return 'İyimser';
+    return 'Çok İyimser';
   }
   if (score <= 20) return '极度悲观';
   if (score <= 40) return '悲观';

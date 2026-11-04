@@ -136,6 +136,17 @@ def _get_market_review_text(language: str) -> dict[str, str]:
             "kr_title": "# 한국 시황 리뷰",
             "separator": "> 다음 시장 시황 리뷰",
         }
+    if normalized == "tr":
+        return {
+            "root_title": "# 🎯 Piyasa Değerlendirmesi",
+            "push_title": "🎯 Piyasa Değerlendirmesi",
+            "cn_title": "# Çin A Hisseleri Piyasa Değerlendirmesi",
+            "us_title": "# ABD Piyasa Değerlendirmesi",
+            "hk_title": "# Hong Kong Piyasa Değerlendirmesi",
+            "jp_title": "# Japonya Piyasa Değerlendirmesi",
+            "kr_title": "# Kore Piyasa Değerlendirmesi",
+            "separator": "> Sıradaki piyasa değerlendirmesi",
+        }
     return {
         "root_title": "# 🎯 大盘复盘",
         "push_title": "🎯 大盘复盘",
@@ -802,6 +813,10 @@ def _persist_market_review_history(
             stock_name = "시황 리뷰"
             operation_advice = "리뷰 보기"
             trend_prediction = "시황 리뷰"
+        elif report_language == "tr":
+            stock_name = "Piyasa Değerlendirmesi"
+            operation_advice = "Değerlendirmeyi gör"
+            trend_prediction = "Piyasa değerlendirmesi"
         else:
             stock_name = "大盘复盘"
             operation_advice = "查看复盘"
@@ -908,6 +923,7 @@ def _build_market_review_context_overview(
     label = (
         "Market review" if report_language == "en"
         else "시황 리뷰" if report_language == "ko"
+        else "Piyasa değerlendirmesi" if report_language == "tr"
         else "大盘复盘"
     )
     return {
@@ -950,4 +966,6 @@ def _summarize_market_review(review_report: str, report_language: str) -> str:
         return "Market review report generated."
     if report_language == "ko":
         return "시황 리뷰 리포트가 생성되었습니다."
+    if report_language == "tr":
+        return "Piyasa değerlendirme raporu oluşturuldu."
     return "大盘复盘报告已生成。"

@@ -80,6 +80,11 @@ export function normalizeStockCode(stockCode: string): string {
       return `${base}.${suffix}`;
     }
 
+    // TR Borsa Istanbul Yahoo suffix-only codes (`THYAO.IS`), alphanumeric base.
+    if (suffix === 'IS' && /^[A-Z][A-Z0-9]{2,5}$/.test(base.toUpperCase())) {
+      return `${base.toUpperCase()}.${suffix}`;
+    }
+
     // 00700.HK → HK00700
     if (suffix === 'HK' && /^\d{1,5}$/.test(base)) {
       return `HK${base.padStart(5, '0')}`;

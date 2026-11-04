@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import Any, List
 
 from src.report_language import (
+    has_turkish_negated_verb_suffix,
     localize_confidence_level,
     localize_operation_advice,
     normalize_report_language,
@@ -17,6 +18,7 @@ _CONSERVATIVE_TAGS = {"high_risk", "market_cooling", "conservative", "low_positi
 _CONSERVATIVE_TEXT_MARKERS_ZH = ("退潮", "观望", "高风险", "谨慎", "保守", "仓位上限", "仓位不超过", "轻仓")
 _CONSERVATIVE_TEXT_MARKERS_EN = ("high risk", "risk-off", "risk off", "watch", "cautious", "conservative", "position cap", "position limit")
 _CONSERVATIVE_TEXT_MARKERS_KO = ("고위험", "관망", "위험", "신중", "보수", "비중 상한", "비중 축소", "경량")
+_CONSERVATIVE_TEXT_MARKERS_TR = ("yüksek risk", "riskten kaçış", "temkinli", "ihtiyatlı", "muhafazakâr", "muhafazakar", "pozisyon sınırı", "pozisyon limiti")
 _AGGRESSIVE_BUY_MARKERS_ZH = (
     "立即买入",
     "马上买入",
@@ -43,6 +45,18 @@ _AGGRESSIVE_BUY_MARKERS_KO = (
 _NEGATION_HINTS_ZH = ("暂不", "不建议", "不应", "不宜", "不能", "无法", "不允许", "禁止", "避免", "不要", "别", "先不")
 _NEGATION_HINTS_EN = (" not ", "do not", "don't", "no ", "never", "avoid")
 _NEGATION_HINTS_KO = ("권하지 않", "하지 않", "하지 마", "불가", "금지", "피하", "보류", "않", "말")
+_AGGRESSIVE_BUY_MARKERS_TR = (
+    "hemen al",
+    "şimdi al",
+    "güçlü al",
+    "agresif al",
+    "kademeli al",
+    "yükselişi kovala",
+    "pozisyon artır",
+    "pozisyonu artır",
+)
+# Prefix hints only; suffix negation (``almayın``) is handled separately.
+_NEGATION_HINTS_TR = ("asla", "kesinlikle değil", "önerilmez", "tavsiye edilmez")
 _NEGATION_LOOKBACK = 16
 _GUARDRAIL_SENTIMENT_SCORE = 52
 
@@ -56,6 +70,8 @@ def _negation_hints_for(language: str) -> tuple[str, ...]:
         return _NEGATION_HINTS_EN
     if language == "ko":
         return _NEGATION_HINTS_KO
+    if language == "tr":
+        return _NEGATION_HINTS_TR
     return _NEGATION_HINTS_ZH
 
 
@@ -145,6 +161,11 @@ def _softened_position_advice(language: str) -> dict[str, str]:
             "no_position": "시장 위험이 완화되거나 확인 신호가 나오기 전까지 신규 진입하지 마세요.",
             "has_position": "소량만 보유하고 비중을 늘리지 마세요. 리스크 관리선이 무너지면 비중을 줄이세요.",
         }
+    if language == "tr":
+        return {
+            "no_position": "Piyasa riski azalana veya teyit sinyali gelene kadar yeni pozisyon açmayın.",
+            "has_position": "Yalnızca küçük bir pozisyon tutun, pozisyonu büyütmeyin; risk çizgisi kırılırsa azaltın.",
+        }
     return {
         "no_position": "大盘环境偏谨慎，暂不开新仓，等待风险缓解或确认信号。",
         "has_position": "仅保留小仓观察，暂不扩大仓位；若跌破风控位优先降低仓位。",
@@ -165,6 +186,12 @@ def _softened_position_strategy(language: str) -> dict[str, str]:
             "entry_plan": position_advice["no_position"],
             "risk_control": "시장 위험이 완화되기 전까지 비중을 늘리지 말고 낙폭을 엄격히 관리하세요.",
         }
+    if language == "tr":
+        return {
+            "suggested_position": "Küçük/savunmacı pozisyon",
+            "entry_plan": position_advice["no_position"],
+            "risk_control": "Piyasa riski azalmadan pozisyonu büyütmeyin; geri çekilmeyi sıkı kontrol edin.",
+        }
     return {
         "suggested_position": "小仓/低仓位",
         "entry_plan": position_advice["no_position"],
@@ -180,6 +207,8 @@ def _append_softening_limitation(phase_decision: dict[str, Any], *, language: st
         limitation = "Daily market context is conservative/high risk; aggressive buy advice was softened."
     elif language == "ko":
         limitation = "대시장 환경이 보수적/고위험이라 공격적 매수 권고를 완화했습니다."
+    elif language == "tr":
+        limitation = "Genel piyasa koşulları temkinli/yüksek riskli; agresif alım önerisi yumuşatıldı."
     else:
         limitation = "大盘环境偏谨慎/高风险，已软化激进买入建议。"
     if limitation not in limitations:
@@ -190,9 +219,11 @@ def _append_softening_limitation(phase_decision: dict[str, Any], *, language: st
         reason_note = "Market context requires conservative sizing."
     elif language == "ko":
         reason_note = "시장 환경상 보수적인 비중 관리가 필요합니다."
+    elif language == "tr":
+        reason_note = "Piyasa koşulları temkinli pozisyon büyüklüğü gerektiriyor."
     else:
         reason_note = "大盘环境要求降低进攻性并控制仓位。"
-    separator = "; " if language == "en" else "；"
+    separator = "; " if language in ("en", "tr") else "；"
     phase_decision["confidence_reason"] = (
         f"{reason}{separator}{reason_note}" if reason else reason_note
     )
@@ -212,6 +243,7 @@ def _is_conservative_context(context: Any) -> bool:
         any(marker in summary for marker in _CONSERVATIVE_TEXT_MARKERS_ZH)
         or any(marker in summary for marker in _CONSERVATIVE_TEXT_MARKERS_KO)
         or any(marker in lowered for marker in _CONSERVATIVE_TEXT_MARKERS_EN)
+        or any(marker in lowered for marker in _CONSERVATIVE_TEXT_MARKERS_TR)
     )
 
 
@@ -234,6 +266,8 @@ def _buy_markers(language: str) -> tuple[str, ...]:
         return _AGGRESSIVE_BUY_MARKERS_EN
     if language == "ko":
         return _AGGRESSIVE_BUY_MARKERS_KO
+    if language == "tr":
+        return _AGGRESSIVE_BUY_MARKERS_TR
     return _AGGRESSIVE_BUY_MARKERS_ZH
 
 
@@ -255,6 +289,10 @@ def _contains_any(
                 break
             context = lowered[max(0, marker_pos - _NEGATION_LOOKBACK):marker_pos]
             has_negation = _contains_negation_near_marker(context, negation_hints)
+            if not has_negation and language == "tr":
+                has_negation = has_turkish_negated_verb_suffix(
+                    lowered[marker_pos + len(marker_lower):]
+                )
             if require_negation:
                 if has_negation:
                     return True
@@ -285,4 +323,4 @@ def _cap_conservative_sentiment_score(value: Any) -> int:
     return min(_GUARDRAIL_SENTIMENT_SCORE, max(0, score))
 
 def _is_high_confidence(value: Any) -> bool:
-    return str(value or "").strip().lower() in {"高", "high", "높음"}
+    return str(value or "").strip().lower() in {"高", "high", "높음", "yüksek"}

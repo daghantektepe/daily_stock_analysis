@@ -36,7 +36,7 @@ def detect_market(stock_code: Optional[str]) -> str:
     if code.isdigit() and len(code) == 5:
         return "hk"
 
-    # Suffix-only Yahoo symbols for JP/KR/TW. Bare Korean/Taiwan numeric
+    # Suffix-only Yahoo symbols for JP/KR/TW/TR. Bare Korean/Taiwan numeric
     # codes keep existing fallback semantics to avoid cross-market collisions.
     suffix_market = get_suffix_market(code)
     if suffix_market:
@@ -77,6 +77,10 @@ _MARKET_ROLES = {
     "tw": {
         "zh": "台股",
         "en": "Taiwan stock",
+    },
+    "tr": {
+        "zh": "土耳其股",
+        "en": "Turkey (Borsa Istanbul) stock",
     },
 }
 
@@ -146,6 +150,22 @@ _MARKET_GUIDELINES = {
             "price limit; do not apply China A-share-specific concepts such as Northbound flows or Dragon Tiger lists."
         ),
     },
+    "tr": {
+        "zh": (
+            "- 本次分析对象为 **土耳其股**（伊斯坦布尔证券交易所 Borsa Istanbul 上市，Yahoo Finance 后缀 `.IS`，以土耳其里拉 TRY 计价）。\n"
+            "- 请按土耳其市场语境分析，关注高通胀下的名义涨幅与实际（通胀/汇率调整后）回报差异、土耳其里拉（TRY）对美元/欧元汇率、"
+            "土耳其央行（TCMB）利率决议、外资持股比例与资金流向，以及 KAP（公开披露平台）公告；"
+            "BIST 个股常规有 ±10% 日内价格限制，交易结算为 T+2；"
+            "不要套用 A 股专属的北向资金、龙虎榜、融资融券等概念。"
+        ),
+        "en": (
+            "- This analysis covers a **Turkey stock** (listed on Borsa Istanbul, Yahoo Finance suffix `.IS`, priced in Turkish lira TRY).\n"
+            "- Use Turkey-market context: separate nominal TRY gains from real (inflation- and FX-adjusted) returns given high inflation, "
+            "TRY FX versus USD/EUR, Central Bank of the Republic of Turkey (TCMB) rate decisions, foreign ownership ratios and flows, "
+            "and KAP (Public Disclosure Platform) filings; BIST equities normally have a ±10% daily price limit and settle T+2; "
+            "do not apply China A-share-specific concepts such as Northbound flows, Dragon Tiger lists, or margin-financing narratives."
+        ),
+    },
 }
 
 
@@ -160,7 +180,7 @@ def get_market_role(stock_code: Optional[str], lang: str = "zh") -> str:
         Role string like 'A 股投资分析' or 'US stock investment analysis'.
     """
     market = detect_market(stock_code)
-    lang_key = "en" if lang in ("en", "ko") else "zh"
+    lang_key = "en" if lang in ("en", "ko", "tr") else "zh"
     return _MARKET_ROLES.get(market, _MARKET_ROLES["cn"])[lang_key]
 
 
@@ -175,5 +195,5 @@ def get_market_guidelines(stock_code: Optional[str], lang: str = "zh") -> str:
         Multi-line string with market-specific guidelines.
     """
     market = detect_market(stock_code)
-    lang_key = "en" if lang in ("en", "ko") else "zh"
+    lang_key = "en" if lang in ("en", "ko", "tr") else "zh"
     return _MARKET_GUIDELINES.get(market, _MARKET_GUIDELINES["cn"])[lang_key]

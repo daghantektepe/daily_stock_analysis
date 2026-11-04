@@ -5,7 +5,7 @@ import type {
   AnalysisContextPackOverview,
   ReportLanguage,
 } from '../../types/analysis';
-import { normalizeReportLanguage } from '../../utils/reportLanguage';
+import { normalizeReportLanguage, toChromeLanguage, type ChromeLanguage } from '../../utils/reportLanguage';
 import { Badge, Card, StatusDot } from '../common';
 import { DashboardPanelHeader } from '../dashboard';
 
@@ -35,7 +35,7 @@ const QUALITY_STYLE = {
   poor: { variant: 'danger', tone: 'danger' },
 } as const satisfies Record<string, { variant: BadgeVariant; tone: StatusTone }>;
 
-const BLOCK_LABELS: Record<ReportLanguage, Record<string, string>> = {
+const BLOCK_LABELS: Record<ChromeLanguage, Record<string, string>> = {
   zh: {
     quote: '行情',
     daily_bars: '日线',
@@ -161,7 +161,7 @@ const TEXT = {
   },
 } as const;
 
-const MISSING_REASON_LABELS: Record<ReportLanguage, Record<string, string>> = {
+const MISSING_REASON_LABELS: Record<ChromeLanguage, Record<string, string>> = {
   zh: {
     daily_bars_missing: '日线数据未进入本次分析，技术指标可能不完整；请检查日线数据源、网络或限流后重新分析',
     news_context_missing: '新闻未进入本次 LLM 分析，结论未使用新闻上下文；报告页相关资讯由独立接口补充，显示与否不代表已进入本次分析。请检查搜索配置、网络或限流后重新分析',
@@ -209,14 +209,14 @@ const MISSING_REASON_LABELS: Record<ReportLanguage, Record<string, string>> = {
   },
 };
 
-const UNKNOWN_REASON_DETAILS: Record<ReportLanguage, string> = {
+const UNKNOWN_REASON_DETAILS: Record<ChromeLanguage, string> = {
   zh: '未记录明确原因；请结合状态、来源和告警排查',
   en: 'No specific reason was recorded; review the status, source, and warnings',
   ko: '명확한 원인이 기록되지 않았습니다. 상태, 출처 및 경고를 함께 확인하세요',
 };
 
 const STATUS_FALLBACK_GUIDANCE: Record<
-  ReportLanguage,
+  ChromeLanguage,
   Partial<Record<AnalysisContextPackBlockStatus, string>>
 > = {
   zh: {
@@ -274,8 +274,8 @@ const getCount = (
 
 const formatLimitation = (
   value: string,
-  language: ReportLanguage,
-  text: (typeof TEXT)[ReportLanguage],
+  language: ChromeLanguage,
+  text: (typeof TEXT)[ChromeLanguage],
 ): string => {
   const [rawKey, ...statusParts] = value.split(':');
   if (!rawKey || statusParts.length === 0) {
@@ -295,7 +295,7 @@ const formatLimitation = (
 
 const formatMissingReason = (
   reason: string,
-  language: ReportLanguage,
+  language: ChromeLanguage,
   status: AnalysisContextPackBlockStatus,
 ): string => {
   const detail = MISSING_REASON_LABELS[language][reason]
@@ -308,7 +308,7 @@ export const AnalysisContextSummary: React.FC<AnalysisContextSummaryProps> = ({
   overview,
   language = 'zh',
 }) => {
-  const reportLanguage = normalizeReportLanguage(language);
+  const reportLanguage = toChromeLanguage(normalizeReportLanguage(language));
   const text = TEXT[reportLanguage];
 
   if (!overview || !overview.blocks?.length) {

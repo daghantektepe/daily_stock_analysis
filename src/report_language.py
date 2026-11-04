@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from src.schemas.decision_scale import signal_key_for_score
 
-SUPPORTED_REPORT_LANGUAGES = ("zh", "en", "ko")
+SUPPORTED_REPORT_LANGUAGES = ("zh", "en", "ko", "tr")
 
 _REPORT_LANGUAGE_ALIASES = {
     "zh-cn": "zh",
@@ -28,6 +28,11 @@ _REPORT_LANGUAGE_ALIASES = {
     "kr": "ko",
     "ko-kr": "ko",
     "ko_kr": "ko",
+    "turkish": "tr",
+    "türkçe": "tr",
+    "turkce": "tr",
+    "tr-tr": "tr",
+    "tr_tr": "tr",
 }
 
 _OPERATION_ADVICE_CANONICAL_MAP = {
@@ -66,13 +71,13 @@ _OPERATION_ADVICE_CANONICAL_MAP = {
 }
 
 _OPERATION_ADVICE_TRANSLATIONS = {
-    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수"},
-    "buy": {"zh": "买入", "en": "Buy", "ko": "매수"},
-    "hold": {"zh": "持有", "en": "Hold", "ko": "보유"},
-    "watch": {"zh": "观望", "en": "Watch", "ko": "관망"},
-    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소"},
-    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도"},
-    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도"},
+    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수", "tr": "Güçlü Al"},
+    "buy": {"zh": "买入", "en": "Buy", "ko": "매수", "tr": "Al"},
+    "hold": {"zh": "持有", "en": "Hold", "ko": "보유", "tr": "Tut"},
+    "watch": {"zh": "观望", "en": "Watch", "ko": "관망", "tr": "İzle"},
+    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소", "tr": "Azalt"},
+    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도", "tr": "Sat"},
+    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도", "tr": "Güçlü Sat"},
 }
 
 _TREND_PREDICTION_CANONICAL_MAP = {
@@ -107,11 +112,11 @@ _TREND_PREDICTION_CANONICAL_MAP = {
 }
 
 _TREND_PREDICTION_TRANSLATIONS = {
-    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish", "ko": "강한 상승"},
-    "bullish": {"zh": "看多", "en": "Bullish", "ko": "상승"},
-    "sideways": {"zh": "震荡", "en": "Sideways", "ko": "횡보"},
-    "bearish": {"zh": "看空", "en": "Bearish", "ko": "하락"},
-    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish", "ko": "강한 하락"},
+    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish", "ko": "강한 상승", "tr": "Güçlü Yükseliş"},
+    "bullish": {"zh": "看多", "en": "Bullish", "ko": "상승", "tr": "Yükseliş"},
+    "sideways": {"zh": "震荡", "en": "Sideways", "ko": "횡보", "tr": "Yatay"},
+    "bearish": {"zh": "看空", "en": "Bearish", "ko": "하락", "tr": "Düşüş"},
+    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish", "ko": "강한 하락", "tr": "Güçlü Düşüş"},
 }
 
 _CONFIDENCE_LEVEL_CANONICAL_MAP = {
@@ -128,9 +133,9 @@ _CONFIDENCE_LEVEL_CANONICAL_MAP = {
 }
 
 _CONFIDENCE_LEVEL_TRANSLATIONS = {
-    "high": {"zh": "高", "en": "High", "ko": "높음"},
-    "medium": {"zh": "中", "en": "Medium", "ko": "보통"},
-    "low": {"zh": "低", "en": "Low", "ko": "낮음"},
+    "high": {"zh": "高", "en": "High", "ko": "높음", "tr": "Yüksek"},
+    "medium": {"zh": "中", "en": "Medium", "ko": "보통", "tr": "Orta"},
+    "low": {"zh": "低", "en": "Low", "ko": "낮음", "tr": "Düşük"},
 }
 
 _STRATEGY_SIGNAL_CANONICAL_MAP = {
@@ -149,11 +154,11 @@ _STRATEGY_SIGNAL_CANONICAL_MAP = {
 }
 
 _STRATEGY_SIGNAL_TRANSLATIONS = {
-    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수"},
-    "buy": {"zh": "买入", "en": "Buy", "ko": "매수"},
-    "hold": {"zh": "持有", "en": "Hold", "ko": "보유"},
-    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도"},
-    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도"},
+    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수", "tr": "Güçlü Al"},
+    "buy": {"zh": "买入", "en": "Buy", "ko": "매수", "tr": "Al"},
+    "hold": {"zh": "持有", "en": "Hold", "ko": "보유", "tr": "Tut"},
+    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도", "tr": "Sat"},
+    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도", "tr": "Güçlü Sat"},
 }
 
 _CONSENSUS_LEVEL_CANONICAL_MAP = {
@@ -170,10 +175,10 @@ _CONSENSUS_LEVEL_CANONICAL_MAP = {
 }
 
 _CONSENSUS_LEVEL_TRANSLATIONS = {
-    "high": {"zh": "高", "en": "High", "ko": "높음"},
-    "medium": {"zh": "中", "en": "Medium", "ko": "보통"},
-    "low": {"zh": "低", "en": "Low", "ko": "낮음"},
-    "insufficient": {"zh": "证据不足", "en": "Insufficient", "ko": "증거 부족"},
+    "high": {"zh": "高", "en": "High", "ko": "높음", "tr": "Yüksek"},
+    "medium": {"zh": "中", "en": "Medium", "ko": "보통", "tr": "Orta"},
+    "low": {"zh": "低", "en": "Low", "ko": "낮음", "tr": "Düşük"},
+    "insufficient": {"zh": "证据不足", "en": "Insufficient", "ko": "증거 부족", "tr": "Yetersiz Kanıt"},
 }
 
 _CONFLICT_SEVERITY_CANONICAL_MAP = {
@@ -188,10 +193,10 @@ _CONFLICT_SEVERITY_CANONICAL_MAP = {
 }
 
 _CONFLICT_SEVERITY_TRANSLATIONS = {
-    "none": {"zh": "无", "en": "None", "ko": "없음"},
-    "low": {"zh": "低", "en": "Low", "ko": "낮음"},
-    "medium": {"zh": "中", "en": "Medium", "ko": "보통"},
-    "high": {"zh": "高", "en": "High", "ko": "높음"},
+    "none": {"zh": "无", "en": "None", "ko": "없음", "tr": "Yok"},
+    "low": {"zh": "低", "en": "Low", "ko": "낮음", "tr": "Düşük"},
+    "medium": {"zh": "中", "en": "Medium", "ko": "보통", "tr": "Orta"},
+    "high": {"zh": "高", "en": "High", "ko": "높음", "tr": "Yüksek"},
 }
 
 _STRATEGY_SKILL_CANONICAL_MAP = {
@@ -243,21 +248,21 @@ _STRATEGY_SKILL_CANONICAL_MAP = {
 }
 
 _STRATEGY_SKILL_TRANSLATIONS = {
-    "bull_trend": {"zh": "默认多头趋势", "en": "Bull Trend", "ko": "기본 상승 추세"},
-    "hot_theme": {"zh": "热点题材", "en": "Hot Theme", "ko": "핫 테마"},
-    "volume_breakout": {"zh": "放量突破", "en": "Volume Breakout", "ko": "거래량 돌파"},
-    "ma_golden_cross": {"zh": "均线金叉", "en": "MA Golden Cross", "ko": "이평선 골든크로스"},
-    "growth_quality": {"zh": "成长质量", "en": "Growth Quality", "ko": "성장 품질"},
-    "bottom_volume": {"zh": "底部放量", "en": "Bottom Volume", "ko": "저점 거래량"},
-    "box_oscillation": {"zh": "箱体震荡", "en": "Box Oscillation", "ko": "박스권 등락"},
-    "chan_theory": {"zh": "缠论结构", "en": "Chan Theory", "ko": "찬 이론 구조"},
-    "dragon_head": {"zh": "龙头战法", "en": "Dragon Head", "ko": "대장주 전략"},
-    "emotion_cycle": {"zh": "情绪周期", "en": "Emotion Cycle", "ko": "심리 사이클"},
-    "event_driven": {"zh": "事件驱动", "en": "Event Driven", "ko": "이벤트 드리븐"},
-    "expectation_repricing": {"zh": "预期重估", "en": "Expectation Repricing", "ko": "기대 재평가"},
-    "one_yang_three_yin": {"zh": "一阳三阴", "en": "One Yang Three Yin", "ko": "일양삼음"},
-    "shrink_pullback": {"zh": "缩量回踩", "en": "Shrink Pullback", "ko": "거래량 축소 눌림"},
-    "wave_theory": {"zh": "波浪理论", "en": "Wave Theory", "ko": "파동 이론"},
+    "bull_trend": {"zh": "默认多头趋势", "en": "Bull Trend", "ko": "기본 상승 추세", "tr": "Temel Yükseliş Trendi"},
+    "hot_theme": {"zh": "热点题材", "en": "Hot Theme", "ko": "핫 테마", "tr": "Popüler Tema"},
+    "volume_breakout": {"zh": "放量突破", "en": "Volume Breakout", "ko": "거래량 돌파", "tr": "Hacimli Kırılım"},
+    "ma_golden_cross": {"zh": "均线金叉", "en": "MA Golden Cross", "ko": "이평선 골든크로스", "tr": "HO Altın Kesişim"},
+    "growth_quality": {"zh": "成长质量", "en": "Growth Quality", "ko": "성장 품질", "tr": "Büyüme Kalitesi"},
+    "bottom_volume": {"zh": "底部放量", "en": "Bottom Volume", "ko": "저점 거래량", "tr": "Dip Hacmi"},
+    "box_oscillation": {"zh": "箱体震荡", "en": "Box Oscillation", "ko": "박스권 등락", "tr": "Kutu İçi Dalgalanma"},
+    "chan_theory": {"zh": "缠论结构", "en": "Chan Theory", "ko": "찬 이론 구조", "tr": "Chan Teorisi Yapısı"},
+    "dragon_head": {"zh": "龙头战法", "en": "Dragon Head", "ko": "대장주 전략", "tr": "Lider Hisse Stratejisi"},
+    "emotion_cycle": {"zh": "情绪周期", "en": "Emotion Cycle", "ko": "심리 사이클", "tr": "Duygu Döngüsü"},
+    "event_driven": {"zh": "事件驱动", "en": "Event Driven", "ko": "이벤트 드리븐", "tr": "Olay Odaklı"},
+    "expectation_repricing": {"zh": "预期重估", "en": "Expectation Repricing", "ko": "기대 재평가", "tr": "Beklenti Yeniden Fiyatlaması"},
+    "one_yang_three_yin": {"zh": "一阳三阴", "en": "One Yang Three Yin", "ko": "일양삼음", "tr": "Bir Yang Üç Yin"},
+    "shrink_pullback": {"zh": "缩量回踩", "en": "Shrink Pullback", "ko": "거래량 축소 눌림", "tr": "Düşük Hacimli Geri Çekilme"},
+    "wave_theory": {"zh": "波浪理论", "en": "Wave Theory", "ko": "파동 이론", "tr": "Dalga Teorisi"},
 }
 
 _CHIP_HEALTH_CANONICAL_MAP = {
@@ -273,9 +278,9 @@ _CHIP_HEALTH_CANONICAL_MAP = {
 }
 
 _CHIP_HEALTH_TRANSLATIONS = {
-    "healthy": {"zh": "健康", "en": "Healthy", "ko": "양호"},
-    "average": {"zh": "一般", "en": "Average", "ko": "보통"},
-    "caution": {"zh": "警惕", "en": "Caution", "ko": "주의"},
+    "healthy": {"zh": "健康", "en": "Healthy", "ko": "양호", "tr": "Sağlıklı"},
+    "average": {"zh": "一般", "en": "Average", "ko": "보통", "tr": "Ortalama"},
+    "caution": {"zh": "警惕", "en": "Caution", "ko": "주의", "tr": "Dikkat"},
 }
 
 _BIAS_STATUS_CANONICAL_MAP = {
@@ -293,33 +298,37 @@ _BIAS_STATUS_CANONICAL_MAP = {
 }
 
 _BIAS_STATUS_TRANSLATIONS = {
-    "safe": {"zh": "安全", "en": "Safe", "ko": "안전"},
-    "caution": {"zh": "警戒", "en": "Caution", "ko": "경계"},
-    "danger": {"zh": "危险", "en": "Danger", "ko": "위험"},
+    "safe": {"zh": "安全", "en": "Safe", "ko": "안전", "tr": "Güvenli"},
+    "caution": {"zh": "警戒", "en": "Caution", "ko": "경계", "tr": "Dikkat"},
+    "danger": {"zh": "危险", "en": "Danger", "ko": "위험", "tr": "Tehlike"},
 }
 
 _PLACEHOLDER_BY_LANGUAGE = {
     "zh": "待补充",
     "en": "TBD",
     "ko": "미정",
+    "tr": "Belirlenecek",
 }
 
 _UNKNOWN_BY_LANGUAGE = {
     "zh": "未知",
     "en": "Unknown",
     "ko": "알 수 없음",
+    "tr": "Bilinmiyor",
 }
 
 _NO_DATA_BY_LANGUAGE = {
     "zh": "数据缺失",
     "en": "Data unavailable",
     "ko": "데이터 없음",
+    "tr": "Veri yok",
 }
 
 _CHIP_UNAVAILABLE_BY_LANGUAGE = {
     "zh": "筹码分布未启用或数据源暂不可用，未纳入筹码判断。",
     "en": "Chip distribution is disabled or temporarily unavailable; chip signals were not used.",
     "ko": "매물대가 비활성화되었거나 데이터 소스를 일시적으로 사용할 수 없어 매물대 신호를 반영하지 않았습니다.",
+    "tr": "Maliyet dağılımı (chip) devre dışı veya veri kaynağı geçici olarak kullanılamıyor; maliyet dağılımı sinyalleri dikkate alınmadı.",
 }
 
 _CHIP_PLACEHOLDER_EXACT = {
@@ -357,6 +366,7 @@ _GENERIC_STOCK_NAME_BY_LANGUAGE = {
     "zh": "待确认股票",
     "en": "Unnamed Stock",
     "ko": "미확인 종목",
+    "tr": "Adı Doğrulanmamış Hisse",
 }
 
 _REPORT_LABELS: Dict[str, Dict[str, str]] = {
@@ -762,6 +772,140 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "strategy_opposing_skills_label": "반대 전략",
         "strategy_invalid_opinions_label": "추가로 {count}개 전략이 유효한 신호를 생성하지 못했습니다",
     },
+    "tr": {
+        "dashboard_title": "Karar Paneli",
+        "brief_title": "Karar Özeti",
+        "analyzed_prefix": "Analiz edilen",
+        "stock_unit": "hisse",
+        "stock_unit_compact": "hisse",
+        "buy_label": "Al",
+        "watch_label": "İzle",
+        "sell_label": "Sat",
+        "summary_heading": "Analiz Sonuç Özeti",
+        "info_heading": "Önemli Gelişmeler",
+        "sentiment_summary_label": "Piyasa Algısı",
+        "earnings_outlook_label": "Kâr Beklentisi",
+        "risk_alerts_label": "Risk Uyarıları",
+        "positive_catalysts_label": "Olumlu Katalizörler",
+        "latest_news_label": "Son Haberler",
+        "core_conclusion_heading": "Temel Sonuç",
+        "one_sentence_label": "Tek Cümlelik Sonuç",
+        "time_sensitivity_label": "Zaman Hassasiyeti",
+        "default_time_sensitivity": "Bu hafta",
+        "position_status_label": "Pozisyon Durumu",
+        "action_advice_label": "İşlem Önerisi",
+        "no_position_label": "Pozisyon yok",
+        "has_position_label": "Pozisyon var",
+        "continue_holding": "Tutmaya devam",
+        "market_snapshot_heading": "Piyasa Görünümü",
+        "close_label": "Kapanış",
+        "prev_close_label": "Önceki Kapanış",
+        "open_label": "Açılış",
+        "high_label": "En Yüksek",
+        "low_label": "En Düşük",
+        "change_pct_label": "Değişim %",
+        "change_amount_label": "Değişim",
+        "amplitude_label": "Gün İçi Aralık",
+        "volume_label": "Hacim (adet)",
+        "amount_label": "İşlem Hacmi",
+        "current_price_label": "Güncel Fiyat",
+        "volume_ratio_label": "Hacim Oranı",
+        "turnover_rate_label": "Devir Hızı",
+        "source_label": "Fiyat Kaynağı",
+        "data_perspective_heading": "Veri Analizi",
+        "ma_alignment_label": "Hareketli Ortalama Dizilimi",
+        "bullish_alignment_label": "Yükseliş Dizilimi",
+        "yes_label": "Evet",
+        "no_label": "Hayır",
+        "none_label": "Yok",
+        "trend_strength_label": "Trend Gücü",
+        "price_metrics_label": "Fiyat Göstergeleri",
+        "ma5_label": "MA5",
+        "ma10_label": "MA10",
+        "ma20_label": "MA20",
+        "bias_ma5_label": "Sapma (MA5)",
+        "support_level_label": "Destek",
+        "resistance_level_label": "Direnç",
+        "chip_label": "Maliyet Dağılımı",
+        "phase_decision_heading": "Seans İçi Karar Koruması",
+        "action_window_label": "İşlem Zamanı",
+        "immediate_action_label": "Şimdiki Aksiyon",
+        "watch_conditions_label": "İzleme Koşulları",
+        "next_check_time_label": "Sonraki Kontrol",
+        "confidence_reason_label": "Güven Gerekçesi",
+        "data_limitations_label": "Veri Sınırlamaları",
+        "battle_plan_heading": "Uygulama Planı",
+        "ideal_buy_label": "İdeal Alım",
+        "secondary_buy_label": "İkincil Alım",
+        "stop_loss_label": "Zarar Durdur",
+        "take_profit_label": "Kâr Al",
+        "suggested_position_label": "Önerilen Pozisyon",
+        "entry_plan_label": "Giriş Planı",
+        "risk_control_label": "Risk Yönetimi",
+        "checklist_heading": "Kontrol Listesi",
+        "failed_checks_heading": "Karşılanmayan Koşullar",
+        "history_compare_heading": "Geçmiş Sinyal Karşılaştırması",
+        "time_label": "Zaman",
+        "score_label": "Puan",
+        "advice_label": "Öneri",
+        "trend_label": "Trend",
+        "generated_at_label": "Oluşturulma",
+        "report_time_label": "Oluşturuldu",
+        "no_results": "Analiz sonucu yok",
+        "report_title": "Hisse Analiz Raporu",
+        "avg_score_label": "Ortalama Puan",
+        "action_points_heading": "İşlem Seviyeleri",
+        "position_advice_heading": "Pozisyon Stratejisi",
+        "analysis_model_label": "Analiz Modeli",
+        "not_investment_advice": "Yapay zekâ tarafından üretilmiştir, yalnızca bilgi amaçlıdır; yatırım tavsiyesi değildir.",
+        "details_report_hint": "Ayrıntılı rapor:",
+        "financial_summary_heading": "Finansal Özet",
+        "report_date_label": "Rapor Dönemi",
+        "revenue_label": "Hasılat",
+        "net_profit_label": "Ana Ortaklık Net Kârı",
+        "operating_cash_flow_label": "Faaliyet Nakit Akışı",
+        "roe_label": "ROE",
+        "revenue_yoy_label": "Hasılat Yıllık Değişim",
+        "net_profit_yoy_label": "Net Kâr Yıllık Değişim",
+        "gross_margin_label": "Brüt Kâr Marjı",
+        "shareholder_return_heading": "Hissedar Getirisi",
+        "ttm_cash_dividend_label": "Son 12 Ay Hisse Başı Nakit Temettü (vergi öncesi)",
+        "ttm_event_count_label": "Son 12 Ay Temettü Sayısı",
+        "ttm_dividend_yield_label": "Son 12 Ay Temettü Verimi",
+        "latest_ex_dividend_label": "Son Hak Kullanım Tarihi",
+        "institutional_flow_heading": "Üç Kurumsal Yatırımcı Grubu",
+        "institutional_flow_note": "Pozitif = net alım, negatif = net satım; birim: adet.",
+        "inst_foreign_label": "Yabancı",
+        "inst_trust_label": "Yatırım Fonu",
+        "inst_dealer_label": "Aracı Kurum",
+        "inst_total_label": "Kurumsal Toplam",
+        "related_boards_heading": "İlgili Sektörler",
+        "industry_boards_heading": "Sektör Grupları",
+        "concept_boards_heading": "Tema Grupları",
+        "board_name_label": "Sektör",
+        "board_type_label": "Tür",
+        "board_status_label": "Sektör Durumu",
+        "board_change_pct_label": "Sektör Değişim %",
+        "leading_board_label": "Güçlü",
+        "lagging_board_label": "Zayıf",
+        "signal_attribution_heading": "Sinyal Kaynak Analizi",
+        "attribution_weights_label": "Kaynak Ağırlıkları",
+        "technical_indicators_label": "Teknik Göstergeler",
+        "news_sentiment_label": "Haber Algısı",
+        "fundamentals_label": "Temel Veriler",
+        "market_conditions_label": "Piyasa Koşulları",
+        "strongest_bullish_signal_label": "En Güçlü Yükseliş Sinyali",
+        "strongest_bearish_signal_label": "En Güçlü Düşüş Sinyali",
+        "strategy_synthesis_heading": "Strateji Sentezi",
+        "strategy_final_signal_label": "Nihai Sinyal",
+        "strategy_consensus_level_label": "Uzlaşı Düzeyi",
+        "strategy_conflict_label": "Çelişki",
+        "strategy_confidence_label": "Güven",
+        "strategy_summary_label": "Özet",
+        "strategy_supporting_skills_label": "Destekleyen Stratejiler",
+        "strategy_opposing_skills_label": "Karşı Stratejiler",
+        "strategy_invalid_opinions_label": "{count} strateji daha geçerli sinyal üretemedi",
+    },
 }
 
 _DECISION_INTENT_NEGATIONS = (
@@ -807,6 +951,19 @@ def _strip_decision_negation_connectors(text: str) -> str:
                 changed = True
                 break
     return suffix
+
+
+_TURKISH_NEGATED_VERB_SUFFIX = re.compile(r"m[ae](?!k|l[ıi])")
+
+
+def has_turkish_negated_verb_suffix(text_after_marker: str) -> bool:
+    """Return whether a Turkish verb marker is negated by its suffix.
+
+    Turkish negates verbs with the ``-ma/-me`` suffix (``al`` -> ``almayın``),
+    so prefix-based negation hints cannot see it. Infinitive ``-mak/-mek`` and
+    necessity ``-malı/-meli`` are affirmative and are not treated as negation.
+    """
+    return bool(_TURKISH_NEGATED_VERB_SUFFIX.match(text_after_marker or ""))
 
 
 def normalize_report_language(value: Optional[str], default: str = "zh") -> str:
@@ -856,6 +1013,38 @@ def _normalize_lookup_key(value: Any) -> str:
     return str(value or "").strip().lower().replace("_", " ").replace("-", " ")
 
 
+def _register_lookup_aliases(canonical_map: Dict[str, str], aliases: Dict[str, str]) -> None:
+    """Register aliases using the same normalization as runtime lookups.
+
+    Turkish dotted capitals (``İ``) lower-case to ``i̇`` in Python, so the keys
+    must go through ``_normalize_lookup_key`` instead of being hand-written.
+    """
+    for alias, canonical in aliases.items():
+        canonical_map.setdefault(_normalize_lookup_key(alias), canonical)
+
+
+# Turkish (tr) labels emitted by the LLM / localized UI, mapped back to canonical keys.
+_register_lookup_aliases(_OPERATION_ADVICE_CANONICAL_MAP, {
+    "Güçlü Al": "strong_buy", "Al": "buy", "Kademeli Al": "buy", "Pozisyon Artır": "buy",
+    "Tut": "hold", "Tut ve İzle": "hold", "İzle": "watch", "Bekle": "watch",
+    "Azalt": "reduce", "Pozisyon Azalt": "reduce", "Sat": "sell", "Güçlü Sat": "strong_sell",
+})
+_register_lookup_aliases(_TREND_PREDICTION_CANONICAL_MAP, {
+    "Güçlü Yükseliş": "strong_bullish", "Yükseliş": "bullish", "Yatay": "sideways",
+    "Düşüş": "bearish", "Güçlü Düşüş": "strong_bearish",
+})
+_register_lookup_aliases(_CONFIDENCE_LEVEL_CANONICAL_MAP, {"Yüksek": "high", "Orta": "medium", "Düşük": "low"})
+_register_lookup_aliases(_STRATEGY_SIGNAL_CANONICAL_MAP, {
+    "Güçlü Al": "strong_buy", "Al": "buy", "Tut": "hold", "Sat": "sell", "Güçlü Sat": "strong_sell",
+})
+_register_lookup_aliases(_CONSENSUS_LEVEL_CANONICAL_MAP, {
+    "Yüksek": "high", "Orta": "medium", "Düşük": "low", "Yetersiz Kanıt": "insufficient",
+})
+_register_lookup_aliases(_CONFLICT_SEVERITY_CANONICAL_MAP, {"Yok": "none", "Düşük": "low", "Orta": "medium", "Yüksek": "high"})
+_register_lookup_aliases(_CHIP_HEALTH_CANONICAL_MAP, {"Sağlıklı": "healthy", "Ortalama": "average", "Dikkat": "caution"})
+_register_lookup_aliases(_BIAS_STATUS_CANONICAL_MAP, {"Güvenli": "safe", "Dikkat": "caution", "Tehlike": "danger"})
+
+
 def _iter_lookup_candidates(value: Any) -> list[str]:
     raw_text = str(value or "").strip()
     if not raw_text:
@@ -883,7 +1072,14 @@ def _first_non_negated_position(text: str, token: str) -> Optional[int]:
 
     normalized_text = text.lower().strip()
     if any(ch in normalized_text for ch in "abcdefghijklmnopqrstuvwxyz"):
-        matches = list(re.finditer(rf"(?<![a-z0-9_]){re.escape(token)}(?![a-z0-9_])", normalized_text))
+        # Turkish letters count as word characters so short tokens such as
+        # ``sat``/``al`` never match inside ``satın``/``alış``.
+        matches = list(
+            re.finditer(
+                rf"(?<![a-z0-9_çğıöşüâîû]){re.escape(token)}(?![a-z0-9_çğıöşüâîû])",
+                normalized_text,
+            )
+        )
     else:
         matches = list(re.finditer(re.escape(token), normalized_text))
 
@@ -1085,21 +1281,25 @@ def localize_strategy_conflict_description(conflict_type: Any, language: Optiona
             "zh": "策略方向出现对立：部分策略看多，部分策略看空，综合结论需要降低确定性。",
             "en": "Strategy directions diverge: some strategies are bullish while others are bearish, so conviction should be reduced.",
             "ko": "전략 방향이 엇갈립니다. 일부 전략은 상승을, 일부 전략은 하락을 보며 확신도를 낮춰야 합니다.",
+            "tr": "Strateji yönleri ayrışıyor: bazı stratejiler yükseliş, bazıları düşüş bekliyor; güven düzeyi düşürülmeli.",
         },
         "wide_score_dispersion": {
             "zh": "策略信号分数分布较宽，说明多策略对行情结构存在明显分歧。",
             "en": "Strategy signal scores are widely dispersed, indicating meaningful disagreement on market structure.",
             "ko": "전략 신호 점수 분포가 넓어 시장 구조에 대한 전략 간 이견이 큽니다.",
+            "tr": "Strateji sinyal puanları geniş bir aralığa dağılmış; stratejiler piyasa yapısı konusunda belirgin şekilde ayrışıyor.",
         },
         "high_confidence_dissent": {
             "zh": "存在高置信少数派策略与综合信号明显不一致，应保留反方观点。",
             "en": "A high-confidence minority strategy materially disagrees with the final signal and should be kept as a dissenting view.",
             "ko": "높은 확신도의 소수 전략이 종합 신호와 크게 달라 반대 관점으로 보존해야 합니다.",
+            "tr": "Yüksek güvenli azınlık stratejiler nihai sinyalden belirgin şekilde ayrışıyor; karşı görüş olarak korunmalı.",
         },
         "adjustment_contradiction": {
             "zh": "策略加减分方向相互矛盾，说明不同策略对同一标的的边际评分分歧较大。",
             "en": "Strategy score adjustments contradict each other, showing large disagreement in marginal scoring.",
             "ko": "전략별 점수 조정 방향이 서로 충돌해 동일 종목의 한계 평가 차이가 큽니다.",
+            "tr": "Stratejilerin puan düzeltme yönleri birbiriyle çelişiyor; aynı hisse için marjinal değerlendirmeler belirgin şekilde farklı.",
         },
     }
     localized = translations.get(key, {})
@@ -1182,6 +1382,12 @@ def localize_strategy_synthesis_summary(strategy_synthesis: Any, language: Optio
             base = f"{opinion_count}개 전략의 종합 판단: 종합 신호는 {final_signal}, 공감도는 {consensus_level}, 충돌 강도는 {conflict_severity}입니다."
         else:
             base = f"{opinion_count}개 전략의 종합 판단: 종합 신호는 {final_signal}, 공감도는 {consensus_level}, 감지된 전략 충돌은 없습니다."
+        return base
+    if lang == "tr":
+        if conflict_count:
+            base = f"{opinion_count} stratejinin sentezi: nihai sinyal {final_signal}, uzlaşı düzeyi {consensus_level}, çelişki şiddeti {conflict_severity}."
+        else:
+            base = f"{opinion_count} stratejinin sentezi: nihai sinyal {final_signal}, uzlaşı düzeyi {consensus_level}, strateji çelişkisi tespit edilmedi."
         return base
     if conflict_count:
         base = f"来自 {opinion_count} 个策略的综合判断：综合信号为{final_signal}，共识度为{consensus_level}，冲突强度为{conflict_severity}。"
@@ -1326,6 +1532,17 @@ def get_sentiment_label(score: int, language: Optional[str]) -> str:
         if score >= 20:
             return "비관"
         return "매우 비관"
+
+    if normalized == "tr":
+        if score >= 80:
+            return "Çok İyimser"
+        if score >= 60:
+            return "İyimser"
+        if score >= 40:
+            return "Nötr"
+        if score >= 20:
+            return "Kötümser"
+        return "Çok Kötümser"
 
     if score >= 80:
         return "极度乐观"

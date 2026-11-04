@@ -94,6 +94,11 @@ class YfinanceFetcher(BaseFetcher):
         """
         return is_suffix_market_symbol(stock_code, "tw")
 
+    @staticmethod
+    def _is_tr_suffix_stock(stock_code: str) -> bool:
+        """Return True for Borsa Istanbul suffix-only Yahoo symbols (``THYAO.IS`` / ``XU100.IS``)."""
+        return is_suffix_market_symbol(stock_code, "tr")
+
     def _convert_stock_code(self, stock_code: str) -> str:
         """
         转换股票代码为 Yahoo Finance 格式
@@ -132,8 +137,12 @@ class YfinanceFetcher(BaseFetcher):
             return code
 
         # 日股/韩股/台股 MVP：显式 Yahoo Finance suffix-only 代码，原样传给 Yahoo。
-        if self._is_jp_kr_suffix_stock(code) or self._is_tw_suffix_stock(code):
-            logger.debug(f"识别为日韩台 Yahoo suffix 代码: {code}")
+        if (
+            self._is_jp_kr_suffix_stock(code)
+            or self._is_tw_suffix_stock(code)
+            or self._is_tr_suffix_stock(code)
+        ):
+            logger.debug(f"识别为日韩台土 Yahoo suffix 代码: {code}")
             return code
 
         # 港股：hk前缀 -> .HK后缀
@@ -820,8 +829,9 @@ class YfinanceFetcher(BaseFetcher):
             self._is_us_stock(stock_code)
             or self._is_jp_kr_suffix_stock(stock_code)
             or self._is_tw_suffix_stock(stock_code)
+            or self._is_tr_suffix_stock(stock_code)
         ):
-            logger.debug(f"[Yfinance] {stock_code} 不是美股或日韩 suffix 代码，跳过")
+            logger.debug(f"[Yfinance] {stock_code} 不是美股或日韩台土 suffix 代码，跳过")
             return None
 
         try:

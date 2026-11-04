@@ -60,6 +60,12 @@ describe('normalizeStockCode', () => {
     expect(normalizeStockCode('005930')).toBe('005930');
   });
 
+  it('keeps Borsa Istanbul suffix codes in canonical uppercase form', () => {
+    expect(normalizeStockCode('thyao.is')).toBe('THYAO.IS');
+    expect(normalizeStockCode('A1CAP.IS')).toBe('A1CAP.IS');
+    expect(normalizeStockCode('THYAO')).toBe('THYAO');
+  });
+
   it('keeps TW Yahoo suffix codes (.TW / .TWO) in canonical uppercase suffix form', () => {
     expect(normalizeStockCode('2330.tw')).toBe('2330.TW');
     expect(normalizeStockCode('0050.TW')).toBe('0050.TW');

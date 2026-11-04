@@ -27,4 +27,21 @@ describe('stock code validation', () => {
       expect(result.valid).toBe(false);
     }
   );
+
+  test.each([
+    ['THYAO.IS', 'THYAO.IS'],
+    ['asels.is', 'ASELS.IS'],
+    ['A1CAP.IS', 'A1CAP.IS'],
+    ['XU100.IS', 'XU100.IS'],
+  ])('accepts Borsa Istanbul suffix code %s', (input, normalized) => {
+    expect(looksLikeStockCode(input)).toBe(true);
+    expect(validateStockCode(input)).toEqual({ valid: true, normalized });
+  });
+
+  test.each(['1234.IS', 'AB.IS', 'ABCDEFG.IS'])(
+    'rejects malformed Borsa Istanbul code %s',
+    (input) => {
+      expect(validateStockCode(input).valid).toBe(false);
+    }
+  );
 });

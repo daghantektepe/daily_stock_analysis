@@ -591,6 +591,27 @@ def parse_analysis_target(
     # ``.``) and ``_classify_bare_code`` would otherwise route them to ``US``
     # because the body isn't pure digits. We therefore short-circuit foreign
     # suffix forms and emit the canonical Yahoo-style ``BASE.SUFFIX`` id.
+    # Borsa Istanbul ``THYAO.IS`` uses alphanumeric bases, so it is resolved by
+    # the shared suffix-market rule instead of the numeric exchange table and
+    # ``_normalize_code_and_exchange`` returns no explicit exchange for it.
+    from .market_symbol_utils import get_suffix_market as _get_suffix_market
+    if norm_code and not norm_exchange and _get_suffix_market(norm_code) == "tr":
+        norm_exchange = "IS"
+    elif norm_code is None and raw.upper().endswith(".IS"):
+        return AnalysisTarget(
+            raw_input=raw_input,
+            asset_type=ParseStatus.UNSUPPORTED,
+            canonical_id=raw,
+            display_code=raw,
+            exchange="IS",
+            unsupported_reason=(
+                f"explicit foreign exchange suffix 'IS' rejects base "
+                f"{raw.rsplit('.', 1)[0]!r}: Borsa Istanbul tickers must start "
+                f"with a letter and have 3-6 alphanumeric characters (e.g. 'THYAO.IS')"
+            ),
+            normalized_prefix=None,
+            normalized_code=None,
+        )
     if norm_code and "." in norm_code and norm_exchange:
         return AnalysisTarget(
             raw_input=raw_input,
