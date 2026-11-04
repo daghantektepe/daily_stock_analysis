@@ -328,8 +328,9 @@ class YfinanceFetcher(BaseFetcher):
             行情字典，失败时返回 None
         """
         ticker = yf.Ticker(yf_code)
-        # 取近两日数据以计算涨跌幅
-        hist = ticker.history(period='2d')
+        # 取近几日数据，用最近两个交易日计算涨跌幅。period='2d' 对部分交易所
+        # （如 Borsa Istanbul 指数）常只返回 1 行，导致昨收=今收、涨跌幅恒为 0%。
+        hist = ticker.history(period='5d')
         if hist.empty:
             return None
         today_row = hist.iloc[-1]
@@ -376,6 +377,8 @@ class YfinanceFetcher(BaseFetcher):
             return self._get_kr_main_indices(yf)
         if region == "tw":
             return self._get_tw_main_indices(yf)
+        if region == "tr":
+            return self._get_tr_main_indices(yf)
 
         # A 股指数：akshare 代码 -> (yfinance 代码, 显示名称)
         yf_mapping = {
@@ -510,6 +513,31 @@ class YfinanceFetcher(BaseFetcher):
                 return results
         except Exception as e:
             logger.error(f"[Yfinance] 获取韩国指数行情失败: {e}")
+        return None
+
+    def _get_tr_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
+        """获取土耳其主要指数（BIST 100/BIST 30/银行指数）与美元/里拉汇率。"""
+        tr_indices = {
+            'XU100': ('XU100.IS', 'BIST 100'),
+            'XU030': ('XU030.IS', 'BIST 30'),
+            'XBANK': ('XBANK.IS', 'BIST Banka'),
+            # USD/TRY is not an index, but nominal TRY moves are unreadable without it.
+            'USDTRY': ('TRY=X', 'USD/TRY'),
+        }
+        results = []
+        try:
+            for code, (yf_symbol, name) in tr_indices.items():
+                try:
+                    item = self._fetch_yf_ticker_data(yf, yf_symbol, name, code)
+                    if item:
+                        results.append(item)
+                except Exception as e:
+                    logger.warning(f"[Yfinance] 获取土耳其指数 {name} 失败: {e}")
+            if results:
+                logger.info(f"[Yfinance] 成功获取 {len(results)} 个土耳其指数/汇率行情")
+                return results
+        except Exception as e:
+            logger.error(f"[Yfinance] 获取土耳其指数行情失败: {e}")
         return None
 
     def _get_tw_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:

@@ -85,8 +85,9 @@ Proje kökünde `.env` dosyası oluştur (`.env.example` tüm seçenekleri açı
 STOCK_LIST=THYAO.IS,ASELS.IS,GARAN.IS,BIMAS.IS,TUPRS.IS
 REPORT_LANGUAGE=tr
 REPORT_TYPE=full
-# BIST için genel piyasa değerlendirmesi henüz yok; ilk aşamada kapalı tut
-MARKET_REVIEW_ENABLED=false
+# Günlük BIST piyasa değerlendirmesi (BIST 100 / BIST 30 / Banka endeksi + USD/TRY)
+MARKET_REVIEW_ENABLED=true
+MARKET_REVIEW_REGION=tr
 
 # --- Üretim zinciri: Claude -> Gemini -> Codex -> API'li modeller ---
 GENERATION_BACKEND=claude_code_cli

@@ -229,6 +229,40 @@ KR_BLUEPRINT = MarketStrategyBlueprint(
     ],
 )
 
+TR_BLUEPRINT = MarketStrategyBlueprint(
+    region="tr",
+    title="土耳其市场三段式复盘策略",
+    positioning="聚焦 BIST 100/BIST 30、银行股、美元/里拉汇率与土耳其央行政策预期，形成次日交易计划。",
+    principles=[
+        "先看 BIST 100 与 BIST 30 是否同向，再看银行指数是否领涨或拖累。",
+        "高通胀与里拉贬值会推高名义涨幅：用美元/里拉走势校验是否为实际（美元计）上涨。",
+        "只基于可得指数、汇率、新闻和价格行为判断，不臆造市场广度或板块统计。",
+    ],
+    dimensions=[
+        StrategyDimension(
+            name="趋势结构",
+            objective="判断土耳其市场处于上攻、震荡还是防守阶段。",
+            checkpoints=["BIST 100/BIST 30 是否同向", "银行指数是否确认方向", "关键支撑阻力是否被突破"],
+        ),
+        StrategyDimension(
+            name="宏观与汇率",
+            objective="识别里拉、通胀与央行利率路径对权益市场的影响。",
+            checkpoints=["美元/里拉方向与波动", "土耳其央行（TCMB）利率决议与通胀数据", "外资流向与主权风险叙事"],
+        ),
+        StrategyDimension(
+            name="主题线索",
+            objective="提炼可延续主线与需要规避的拥挤方向。",
+            checkpoints=["银行/控股/航空/国防链是否轮动", "KAP 重大公告与财报季催化", "新闻催化是否支撑价格行为"],
+        ),
+    ],
+    action_framework=[
+        "进攻：BIST 100/BIST 30 共振上行 + 银行股确认 + 里拉稳定。",
+        "均衡：指数分化或里拉波动加大，控制仓位并等待确认。",
+        "防守：里拉急贬、利率预期恶化或指数跌破支撑，优先控制回撤。",
+    ],
+)
+
+
 def get_market_strategy_blueprint(region: str) -> MarketStrategyBlueprint:
     """Return strategy blueprint by market region."""
     if region == "us":
@@ -239,4 +273,6 @@ def get_market_strategy_blueprint(region: str) -> MarketStrategyBlueprint:
         return JP_BLUEPRINT
     if region == "kr":
         return KR_BLUEPRINT
+    if region == "tr":
+        return TR_BLUEPRINT
     return CN_BLUEPRINT

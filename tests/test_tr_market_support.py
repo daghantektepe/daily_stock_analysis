@@ -224,6 +224,7 @@ def test_stock_name_lookup_skips_a_share_sources_for_bist() -> None:
     # Keep the test offline: KAP (the BIST name source) has no answer here.
     with patch("data_provider.kap_fetcher.get_kap_fetcher") as kap:
         kap.return_value.get_company_title.return_value = None
-        assert manager.get_stock_name("THYAO.IS", allow_realtime=False) == ""
+        # A ticker that is not in the autocomplete index, so no static name exists.
+        assert manager.get_stock_name("ZZNOA.IS", allow_realtime=False) == ""
     assert baostock.calls == []
     assert akshare.calls == []

@@ -177,8 +177,12 @@ _MARKET_LABEL_PATTERNS = (
             re.IGNORECASE,
         ),
     ),
-    ("日股", re.compile(r"(?:日\s*股|japan|일본)", re.IGNORECASE)),
-    ("韩股", re.compile(r"(?:韩\s*股|korea|한국)", re.IGNORECASE)),
+    ("日股", re.compile(r"(?:日\s*股|japan|japonya|일본)", re.IGNORECASE)),
+    ("韩股", re.compile(r"(?:韩\s*股|korea|\bkore\b|한국)", re.IGNORECASE)),
+    (
+        "土耳其股",
+        re.compile(r"(?:土耳其\s*股|turkey|türkiye|borsa\s+[iİ]stanbul|\bbist\b|튀르키예)", re.IGNORECASE),
+    ),
 )
 
 
@@ -905,6 +909,7 @@ def _market_label_for_region(region: str) -> str:
         "us": "美股",
         "jp": "日股",
         "kr": "韩股",
+        "tr": "土耳其股",
     }.get((region or "").strip().lower(), "")
 
 
@@ -1986,6 +1991,7 @@ def _market_region_for_segment(segment: MarketSegment) -> str:
         "美股": "us",
         "日股": "jp",
         "韩股": "kr",
+        "土耳其股": "tr",
     }.get(label, "")
 
 
@@ -1998,7 +2004,7 @@ def _multi_market_body(
     markets = structured_payload.get("markets") if isinstance(structured_payload, Mapping) else None
     market_payloads = markets if isinstance(markets, Mapping) else {}
     unused_regions = [
-        region for region in ("cn", "hk", "us", "jp", "kr")
+        region for region in ("cn", "hk", "us", "jp", "kr", "tr")
         if isinstance(market_payloads.get(region), Mapping)
     ]
     for segment in segments:

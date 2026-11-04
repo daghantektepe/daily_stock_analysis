@@ -14,7 +14,7 @@ from typing import List
 class MarketProfile:
     """大盘复盘市场区域配置"""
 
-    region: str  # "cn" | "hk" | "us" | "jp" | "kr"
+    region: str  # "cn" | "hk" | "us" | "jp" | "kr" | "tr"
     # 用于判断整体走势的指数代码，cn 用上证 000001，us 用标普 SPX
     mood_index_code: str
     # 新闻搜索关键词
@@ -93,6 +93,20 @@ KR_PROFILE = MarketProfile(
 )
 
 
+TR_PROFILE = MarketProfile(
+    region="tr",
+    mood_index_code="XU100",
+    news_queries=[
+        "Borsa İstanbul BIST 100",
+        "Turkey stock market Borsa Istanbul BIST 100",
+        "BIST 100 dolar TL TCMB faiz",
+    ],
+    prompt_index_hint="分析 BIST 100、BIST 30、银行指数与美元/里拉汇率的走势特点，区分名义涨幅与里拉贬值/通胀影响",
+    has_market_stats=False,
+    has_sector_rankings=False,
+)
+
+
 def get_profile(region: str) -> MarketProfile:
     """根据 region 返回对应的 MarketProfile"""
     if region == "us":
@@ -103,4 +117,6 @@ def get_profile(region: str) -> MarketProfile:
         return JP_PROFILE
     if region == "kr":
         return KR_PROFILE
+    if region == "tr":
+        return TR_PROFILE
     return CN_PROFILE

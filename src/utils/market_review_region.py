@@ -4,9 +4,13 @@
 from typing import Optional
 
 
-MARKET_REVIEW_REGION_ORDER = ("cn", "hk", "us", "jp", "kr")
+MARKET_REVIEW_REGION_ORDER = ("cn", "hk", "us", "jp", "kr", "tr")
 MARKET_REVIEW_REGION_SET = frozenset(MARKET_REVIEW_REGION_ORDER)
-MARKET_REVIEW_REGION_ALL = ",".join(MARKET_REVIEW_REGION_ORDER)
+# ``both`` keeps its historical meaning (the five original markets). Newer
+# markets such as ``tr`` are opt-in via an explicit token or comma list so
+# existing ``both`` users do not silently get extra reviews and pushes.
+MARKET_REVIEW_REGION_BOTH = ("cn", "hk", "us", "jp", "kr")
+MARKET_REVIEW_REGION_ALL = ",".join(MARKET_REVIEW_REGION_BOTH)
 MARKET_REVIEW_REGION_VALID_INPUTS = (*MARKET_REVIEW_REGION_ORDER, "both")
 
 
@@ -46,7 +50,7 @@ def normalize_market_review_region_strict(value: str) -> str:
     normalized = value.strip().lower()
     valid_hint = (
         f"{', '.join(MARKET_REVIEW_REGION_VALID_INPUTS)}，"
-        "或 cn/hk/us/jp/kr 的合法逗号分隔组合"
+        "或 cn/hk/us/jp/kr/tr 的合法逗号分隔组合（both 不含 tr）"
     )
     if not normalized:
         raise ValueError(f"region 不能为空；合法值：{valid_hint}")

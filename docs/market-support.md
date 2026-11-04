@@ -149,7 +149,8 @@ PY
 不承诺项：
 
 - 不承诺实时行情；Yahoo Finance 的 BIST 数据可能延迟或字段缺失。
-- 不提供 BIST 大盘复盘（`MARKET_REVIEW_REGION` 不接受 `tr`）、Market Light 告警、市场宽度或板块排行。
+- BIST 大盘复盘 v1：`MARKET_REVIEW_REGION=tr`（或与其他市场组合，如 `us,tr`）通过 Yahoo Finance 获取 BIST 100 `XU100.IS`、BIST 30 `XU030.IS`、银行指数 `XBANK.IS` 与美元/里拉 `TRY=X`，使用土耳其市场 profile / 策略蓝图（指数同向、银行股确认、里拉与 TCMB 利率路径、名义涨幅与里拉贬值区分）；交易日按 `XIST` 过滤。`both` 保持原有五市场含义（cn,hk,us,jp,kr），**不包含 `tr`**，需显式填写，避免既有用户被静默增加复盘与推送。
+- 不提供 BIST Market Light 告警、市场宽度、涨跌家数或板块排行。
 - KAP 只提供公告标题、类别与链接，不解析公告正文或附件（如财报 PDF）。
 
 回滚方式：移除 `market_symbol_utils` 中的 `tr` 规则与 `base_pattern` 扩展、`XIST` 交易日历注册、YFinance/DataFetcherManager 路由扩展、`market_context` 土耳其语义、TRY 币种标注、服务层/API 市场枚举及前端市场类型放行，并删除本文档中的能力声明。
