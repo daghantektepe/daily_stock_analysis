@@ -65,6 +65,33 @@ _BUILTIN_SOURCE_TEMPLATES = [
         "market": "global",
         "description": "Public market news RSS for global market context. Test before enabling.",
     },
+    {
+        "template_id": "tr-aa-economy",
+        "name": "Anadolu Ajansı Ekonomi",
+        "source_type": "rss",
+        "url": "https://www.aa.com.tr/tr/rss/default?cat=ekonomi",
+        "scope_type": "market",
+        "market": "tr",
+        "description": "Anadolu Agency economy RSS (Turkish) for Borsa Istanbul market context. Test before enabling.",
+    },
+    {
+        "template_id": "tr-dunya",
+        "name": "Dünya Gazetesi",
+        "source_type": "rss",
+        "url": "https://www.dunya.com/rss",
+        "scope_type": "market",
+        "market": "tr",
+        "description": "Dünya business newspaper RSS (Turkish) for Borsa Istanbul market context. Test before enabling.",
+    },
+    {
+        "template_id": "tr-bloomberght",
+        "name": "Bloomberg HT",
+        "source_type": "rss",
+        "url": "https://www.bloomberght.com/rss",
+        "scope_type": "market",
+        "market": "tr",
+        "description": "Bloomberg HT RSS (Turkish) for Borsa Istanbul market context. Test before enabling.",
+    },
 ]
 _NEWSNOW_DEFAULT_SOURCE_DEFS = [
     {

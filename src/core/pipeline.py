@@ -660,6 +660,15 @@ class StockAnalysisPipeline:
                 except Exception as e:
                     logger.warning(f"{stock_name}({code}) Social sentiment fetch failed: {e}")
 
+            # Step 4.6: KAP company disclosures (Borsa Istanbul only, fail-open)
+            kap_context = self._build_kap_disclosure_context(
+                code=code,
+                stock_name=stock_name,
+                query_id=query_id,
+            )
+            if kap_context:
+                news_context = f"{news_context}\n\n{kap_context}" if news_context else kap_context
+
             if persisted_intelligence_context:
                 news_context = (
                     f"{news_context}\n\n{persisted_intelligence_context}"
@@ -1384,6 +1393,16 @@ class StockAnalysisPipeline:
                         logger.info(f"[{code}] Agent mode: social sentiment data injected into news_context")
                 except Exception as e:
                     logger.warning(f"[{code}] Agent mode: social sentiment fetch failed: {e}")
+
+            kap_context = self._build_kap_disclosure_context(
+                code=code,
+                stock_name=stock_name,
+                query_id=query_id,
+            )
+            if kap_context:
+                existing = initial_context.get("news_context")
+                initial_context["news_context"] = f"{existing}\n\n{kap_context}" if existing else kap_context
+                logger.info(f"[{code}] Agent mode: KAP disclosures injected into news_context")
 
             persisted_intelligence_context = self._load_persisted_intelligence_context(
                 code=code,
@@ -2750,6 +2769,68 @@ class StockAnalysisPipeline:
                 )
             except Exception as exc:
                 logger.warning("回写通知诊断快照失败（fail-open）: %s", exc)
+
+    def _build_kap_disclosure_context(
+        self,
+        *,
+        code: str,
+        stock_name: str,
+        query_id: Optional[str],
+    ) -> str:
+        """Fetch recent KAP disclosures for ``.IS`` stocks and persist them as news intel.
+
+        Fail-open: any error returns an empty string and never interrupts analysis.
+        """
+        if get_market_for_stock(normalize_stock_code(code)) != "tr":
+            return ""
+        try:
+            from data_provider.kap_fetcher import (
+                DEFAULT_LOOKBACK_DAYS,
+                format_kap_disclosure_context,
+                get_kap_fetcher,
+            )
+
+            disclosures = get_kap_fetcher().get_recent_disclosures(code, days=DEFAULT_LOOKBACK_DAYS)
+            if not disclosures:
+                return ""
+            context = format_kap_disclosure_context(
+                disclosures,
+                stock_code=code,
+                lookback_days=DEFAULT_LOOKBACK_DAYS,
+            )
+        except Exception as exc:  # noqa: BLE001 - optional evidence, fail-open
+            logger.warning(f"[{code}] KAP disclosure fetch failed: {exc}")
+            return ""
+
+        try:
+            from src.search_service import SearchResponse, SearchResult
+
+            response = SearchResponse(
+                query=f"KAP {code}",
+                results=[
+                    SearchResult(
+                        title=item["title"],
+                        snippet=f"{item['class_label']} · {item['publisher']}",
+                        url=item["url"],
+                        source="KAP",
+                        published_date=item["published_date"],
+                    )
+                    for item in disclosures
+                ],
+                provider="KAP",
+            )
+            self.db.save_news_intel(
+                code=code,
+                name=stock_name,
+                dimension="announcements",
+                query=response.query,
+                response=response,
+                query_context=self._build_query_context(query_id=query_id),
+            )
+        except Exception as exc:  # noqa: BLE001 - persistence is best-effort
+            logger.warning(f"[{code}] KAP disclosure persistence failed: {exc}")
+        logger.info(f"[{code}] KAP disclosures added: {len(disclosures)}")
+        return context
 
     def _load_persisted_intelligence_context(
         self,

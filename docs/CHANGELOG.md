@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Borsa Istanbul 个股分析接入 KAP 公司公告：新增 fail-open 的 `KapDisclosureFetcher`，读取近 14 天公司特别公告与财报披露（跳过结算类通知），追加到传统与 Agent 分析的 `news_context` 并写入新闻情报（`provider=KAP`）；`.IS` 新闻检索改用英文维度；Intelligence 新增 `tr` 市场土耳其语 RSS 模板
+- [文档] `docs/decision-signals.md` 市场枚举补充 `tr`
 - [新功能] 新增土耳其 Borsa Istanbul 个股支持：`THYAO.IS` 等 `.IS` 后缀代码识别为 `tr` 市场，日线/行情仅走 YFinance，交易日历注册 `XIST / Europe/Istanbul`，报告 Prompt 增加 TRY 汇率、TCMB、KAP 与高通胀语境，财务金额标注土耳其里拉，Portfolio / DecisionSignal / Intelligence 的 API 与 Web 市场枚举放行 `tr`（Portfolio 默认币种 `TRY`）；裸字母代码仍按美股处理，详见 `docs/market-support.md`
 - [新功能] 报告输出语言新增土耳其语（`REPORT_LANGUAGE=tr`），覆盖个股报告标签、操作建议/趋势/置信度本地化与反向识别、Prompt 输出语言指令、Agent 与问股回复、决策护栏（含土耳其语动词否定后缀识别）、通知模板标签、分享图与 Web 报告页文案；结构化上下文与 `ko` 一样复用英文骨架
 - [修复] 首页移动端侧栏的历史、自选与今日列表恢复纵向触摸滚动：外层卡片不再覆盖移动端滚动壳层的 `overflow`，实际滚动视口明确启用纵向手势与边界约束，桌面端继续保留卡片裁剪

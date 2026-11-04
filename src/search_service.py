@@ -43,6 +43,7 @@ from src.data.stock_mapping import (
     canonicalize_foreign_stock_code,
     foreign_stock_english_aliases,
 )
+from src.services.market_symbol_utils import get_suffix_market
 from src.services.run_diagnostics import record_provider_run, record_provider_run_started
 
 logger = logging.getLogger(__name__)
@@ -2520,6 +2521,10 @@ class SearchService:
         # 与 00700.HK 后缀全部归一为 00700 形式，原 lower.startswith('hk')
         # 分支在 canonical 之后为不可达死代码，已删除。
         if code.isdigit() and len(code) == 5:
+            return True
+        # Borsa Istanbul ``THYAO.IS``: Chinese query templates would miss
+        # Turkish/English coverage, so use the foreign (English) dimensions.
+        if get_suffix_market(code) == "tr":
             return True
         return False
 
