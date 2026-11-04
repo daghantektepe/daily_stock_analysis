@@ -1,0 +1,804 @@
+ts_code,symbol,name,enname,aliases
+A1CAP.IS,A1CAP.IS,A1 Capital Yatırım Menkul Değerler A.Ş.,A1 CAPİTAL YATIRIM MENKUL DEĞERLER A.Ş.,A1CAP|A1 Capital Yatırım Menkul Değerler|A1 Capital Yatirim Menkul Degerler|A1 CAPİTAL YATIRIM MENKUL DEĞERLER A.Ş.
+A1YEN.IS,A1YEN.IS,A1 Yenilenebilir Enerji Üretim A.Ş.,A1 YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.,A1YEN|A1 Yenilenebilir Enerji Üretim|A1 Yenilenebilir Enerji Uretim|A1 YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.
+AAGYO.IS,AAGYO.IS,Ağaoğlu Avrasya Gayrimenkul Yatırım Ortaklığı A.Ş.,AĞAOĞLU AVRASYA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AAGYO|Ağaoğlu Avrasya Gayrimenkul Yatırım Ortaklığı|Agaoglu Avrasya Gayrimenkul Yatirim Ortakligi|AĞAOĞLU AVRASYA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ACP.IS,ACP.IS,A1 Capital Yatırım Menkul Değerler A.Ş.,A1 CAPİTAL YATIRIM MENKUL DEĞERLER A.Ş.,ACP|A1 Capital Yatırım Menkul Değerler|A1 Capital Yatirim Menkul Degerler|A1 CAPİTAL YATIRIM MENKUL DEĞERLER A.Ş.
+ACSEL.IS,ACSEL.IS,Acıselsan Acıpayam Selüloz Sanayi ve Ticaret A.Ş.,ACISELSAN ACIPAYAM SELÜLOZ SANAYİ VE TİCARET A.Ş.,ACSEL|Acıselsan Acıpayam Selüloz|Aciselsan Acipayam Seluloz|ACISELSAN ACIPAYAM SELÜLOZ SANAYİ VE TİCARET A.Ş.
+ADB.IS,ADB.IS,Anadolubank A.Ş.,ANADOLUBANK A.Ş.,ADB|Anadolubank|ANADOLUBANK A.Ş.
+ADBNK.IS,ADBNK.IS,Anadolubank A.Ş.,ANADOLUBANK A.Ş.,ADBNK|Anadolubank|ANADOLUBANK A.Ş.
+ADEL.IS,ADEL.IS,Adel Kalemcilik Ticaret ve Sanayi A.Ş.,ADEL KALEMCİLİK TİCARET VE SANAYİ A.Ş.,ADEL|Adel Kalemcilik Ticaret ve Sanayi|ADEL KALEMCİLİK TİCARET VE SANAYİ A.Ş.
+ADESE.IS,ADESE.IS,Adese Gayrimenkul Yatırım A.Ş.,ADESE GAYRİMENKUL YATIRIM A.Ş.,ADESE|Adese Gayrimenkul Yatırım|Adese Gayrimenkul Yatirim|ADESE GAYRİMENKUL YATIRIM A.Ş.
+ADGYO.IS,ADGYO.IS,Adra Gayrimenkul Yatırım Ortaklığı A.Ş.,ADRA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ADGYO|Adra Gayrimenkul Yatırım Ortaklığı|Adra Gayrimenkul Yatirim Ortakligi|ADRA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ADLVY.IS,ADLVY.IS,Adil Varlık Yönetim A.Ş.,ADİL VARLIK YÖNETİM A.Ş.,ADLVY|Adil Varlık Yönetim|Adil Varlik Yonetim|ADİL VARLIK YÖNETİM A.Ş.
+AEFES.IS,AEFES.IS,Anadolu Efes Biracılık ve Malt Sanayii A.Ş.,ANADOLU EFES BİRACILIK VE MALT SANAYİİ A.Ş.,AEFES|Anadolu Efes Biracılık ve Malt Sanayii|Anadolu Efes Biracilik ve Malt Sanayii|ANADOLU EFES BİRACILIK VE MALT SANAYİİ A.Ş.
+AFB.IS,AFB.IS,Aktif Yatırım Bankası A.Ş.,AKTİF YATIRIM BANKASI A.Ş.,AFB|Aktif Yatırım Bankası|Aktif Yatirim Bankasi|AKTİF YATIRIM BANKASI A.Ş.
+AFYON.IS,AFYON.IS,Afyon Çimento Sanayi T.A.Ş.,AFYON ÇİMENTO SANAYİ T.A.Ş.,AFYON|Afyon Çimento Sanayi|Afyon Cimento Sanayi|AFYON ÇİMENTO SANAYİ T.A.Ş.
+AGESA.IS,AGESA.IS,Agesa Hayat ve Emeklilik A.Ş.,AGESA HAYAT VE EMEKLİLİK A.Ş.,AGESA|Agesa Hayat ve Emeklilik|AGESA HAYAT VE EMEKLİLİK A.Ş.
+AGHOL.IS,AGHOL.IS,Ag Anadolu Grubu Holding A.Ş.,AG ANADOLU GRUBU HOLDİNG A.Ş.,AGHOL|Ag Anadolu Grubu Holding|AG ANADOLU GRUBU HOLDİNG A.Ş.
+AGROT.IS,AGROT.IS,Agrotech Yüksek Teknoloji ve Yatırım A.Ş.,AGROTECH YÜKSEK TEKNOLOJİ VE YATIRIM A.Ş.,AGROT|Agrotech Yüksek Teknoloji ve Yatırım|Agrotech Yuksek Teknoloji ve Yatirim|AGROTECH YÜKSEK TEKNOLOJİ VE YATIRIM A.Ş.
+AGYO.IS,AGYO.IS,Atakule Gayrimenkul Yatırım Ortaklığı A.Ş.,ATAKULE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AGYO|Atakule Gayrimenkul Yatırım Ortaklığı|Atakule Gayrimenkul Yatirim Ortakligi|ATAKULE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AHGAZ.IS,AHGAZ.IS,Ahlatcı Doğal Gaz Dağıtım Enerji ve Yatırım A.Ş.,AHLATCI DOĞAL GAZ DAĞITIM ENERJİ VE YATIRIM A.Ş.,AHGAZ|Ahlatcı Doğal Gaz Dağıtım Enerji ve Yatırım|Ahlatci Dogal Gaz Dagitim Enerji ve Yatirim|AHLATCI DOĞAL GAZ DAĞITIM ENERJİ VE YATIRIM A.Ş.
+AHSGY.IS,AHSGY.IS,Ahes Gayrimenkul Yatırım Ortaklığı A.Ş.,AHES GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AHSGY|Ahes Gayrimenkul Yatırım Ortaklığı|Ahes Gayrimenkul Yatirim Ortakligi|AHES GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AKBNK.IS,AKBNK.IS,Akbank T.A.Ş.,AKBANK T.A.Ş.,AKBNK|Akbank|AKBANK T.A.Ş.
+AKCNS.IS,AKCNS.IS,Akçansa Çimento Sanayi ve Ticaret A.Ş.,AKÇANSA ÇİMENTO SANAYİ VE TİCARET A.Ş.,AKCNS|Akçansa Çimento|Akcansa Cimento|AKÇANSA ÇİMENTO SANAYİ VE TİCARET A.Ş.
+AKCVR.IS,AKCVR.IS,Akademi Çevre Entegre Atık Yönetimi Endüstri A.Ş.,AKADEMİ ÇEVRE ENTEGRE ATIK YÖNETİMİ ENDÜSTRİ A.Ş.,AKCVR|Akademi Çevre Entegre Atık Yönetimi Endüstri|Akademi Cevre Entegre Atik Yonetimi Endustri|AKADEMİ ÇEVRE ENTEGRE ATIK YÖNETİMİ ENDÜSTRİ A.Ş.
+AKDFA.IS,AKDFA.IS,Akdeniz Finans Faktoring A.Ş.,AKDENİZ FİNANS FAKTORİNG A.Ş.,AKDFA|Akdeniz Finans Faktoring|AKDENİZ FİNANS FAKTORİNG A.Ş.
+AKENR.IS,AKENR.IS,Akenerji Elektrik Üretim A.Ş.,AKENERJİ ELEKTRİK ÜRETİM A.Ş.,AKENR|Akenerji Elektrik Üretim|Akenerji Elektrik Uretim|AKENERJİ ELEKTRİK ÜRETİM A.Ş.
+AKFGY.IS,AKFGY.IS,Akfen Gayrimenkul Yatırım Ortaklığı A.Ş.,AKFEN GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AKFGY|Akfen Gayrimenkul Yatırım Ortaklığı|Akfen Gayrimenkul Yatirim Ortakligi|AKFEN GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AKFIS.IS,AKFIS.IS,Akfen İnşaat Turizm ve Ticaret A.Ş.,AKFEN İNŞAAT TURİZM VE TİCARET A.Ş.,AKFIS|Akfen İnşaat Turizm ve Ticaret|Akfen Insaat Turizm ve Ticaret|AKFEN İNŞAAT TURİZM VE TİCARET A.Ş.
+AKFK.IS,AKFK.IS,Ak Finansal Kiralama A.Ş.,AK FİNANSAL KİRALAMA A.Ş.,AKFK|Ak Finansal Kiralama|AK FİNANSAL KİRALAMA A.Ş.
+AKFYE.IS,AKFYE.IS,Akfen Yenilenebilir Enerji A.Ş.,AKFEN YENİLENEBİLİR ENERJİ A.Ş.,AKFYE|Akfen Yenilenebilir Enerji|AKFEN YENİLENEBİLİR ENERJİ A.Ş.
+AKGRT.IS,AKGRT.IS,Aksigorta A.Ş.,AKSİGORTA A.Ş.,AKGRT|Aksigorta|AKSİGORTA A.Ş.
+AKHAN.IS,AKHAN.IS,Akhan Un Fabrikası ve Tarım Ürünleri Gıda Sanayi Ticaret A.Ş.,AKHAN UN FABRİKASI VE TARIM ÜRÜNLERİ GIDA SANAYİ TİCARET A.Ş.,AKHAN|Akhan Un Fabrikası ve Tarım Ürünleri Gıda Sanayi Ticaret|Akhan Un Fabrikasi ve Tarim Urunleri Gida Sanayi Ticaret|AKHAN UN FABRİKASI VE TARIM ÜRÜNLERİ GIDA SANAYİ TİCARET A.Ş.
+AKM.IS,AKM.IS,Ak Yatırım Menkul Değerler A.Ş.,AK YATIRIM MENKUL DEĞERLER A.Ş.,AKM|Ak Yatırım Menkul Değerler|Ak Yatirim Menkul Degerler|AK YATIRIM MENKUL DEĞERLER A.Ş.
+AKMEN.IS,AKMEN.IS,Ak Yatırım Menkul Değerler A.Ş.,AK YATIRIM MENKUL DEĞERLER A.Ş.,AKMEN|Ak Yatırım Menkul Değerler|Ak Yatirim Menkul Degerler|AK YATIRIM MENKUL DEĞERLER A.Ş.
+AKMGY.IS,AKMGY.IS,Akmerkez Gayrimenkul Yatırım Ortaklığı A.Ş.,AKMERKEZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AKMGY|Akmerkez Gayrimenkul Yatırım Ortaklığı|Akmerkez Gayrimenkul Yatirim Ortakligi|AKMERKEZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AKSA.IS,AKSA.IS,Aksa Akrilik Kimya Sanayii A.Ş.,AKSA AKRİLİK KİMYA SANAYİİ A.Ş.,AKSA|Aksa Akrilik Kimya Sanayii|AKSA AKRİLİK KİMYA SANAYİİ A.Ş.
+AKSEN.IS,AKSEN.IS,Aksa Enerji Üretim A.Ş.,AKSA ENERJİ ÜRETİM A.Ş.,AKSEN|Aksa Enerji Üretim|Aksa Enerji Uretim|AKSA ENERJİ ÜRETİM A.Ş.
+AKSFA.IS,AKSFA.IS,Ak Faktoring A.Ş.,AK FAKTORİNG A.Ş.,AKSFA|Ak Faktoring|AK FAKTORİNG A.Ş.
+AKSGY.IS,AKSGY.IS,Akiş Gayrimenkul Yatırım Ortaklığı A.Ş.,AKİŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AKSGY|Akiş Gayrimenkul Yatırım Ortaklığı|Akis Gayrimenkul Yatirim Ortakligi|AKİŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AKSUE.IS,AKSUE.IS,Aksu Enerji ve Ticaret A.Ş.,AKSU ENERJİ VE TİCARET A.Ş.,AKSUE|Aksu Enerji ve Ticaret|AKSU ENERJİ VE TİCARET A.Ş.
+AKTIF.IS,AKTIF.IS,Aktif Yatırım Bankası A.Ş.,AKTİF YATIRIM BANKASI A.Ş.,AKTIF|Aktif Yatırım Bankası|Aktif Yatirim Bankasi|AKTİF YATIRIM BANKASI A.Ş.
+AKTVK.IS,AKTVK.IS,Aktif Bank Sukuk Varlık Kiralama A.Ş.,AKTİF BANK SUKUK VARLIK KİRALAMA A.Ş.,AKTVK|Aktif Bank Sukuk Varlık Kiralama|Aktif Bank Sukuk Varlik Kiralama|AKTİF BANK SUKUK VARLIK KİRALAMA A.Ş.
+AKYHO.IS,AKYHO.IS,Akdeniz Yatırım Holding A.Ş.,AKDENİZ YATIRIM HOLDİNG A.Ş.,AKYHO|Akdeniz Yatırım Holding|Akdeniz Yatirim Holding|AKDENİZ YATIRIM HOLDİNG A.Ş.
+ALARK.IS,ALARK.IS,Alarko Holding A.Ş.,ALARKO HOLDİNG A.Ş.,ALARK|Alarko Holding|ALARKO HOLDİNG A.Ş.
+ALBRK.IS,ALBRK.IS,Albaraka Türk Katılım Bankası A.Ş.,ALBARAKA TÜRK KATILIM BANKASI A.Ş.,ALBRK|Albaraka Türk Katılım Bankası|Albaraka Turk Katilim Bankasi|ALBARAKA TÜRK KATILIM BANKASI A.Ş.
+ALBTN.IS,ALBTN.IS,Albayrak Hazır Beton Sanayi ve Ticaret A.Ş.,ALBAYRAK HAZIR BETON SANAYİ VE TİCARET A.Ş.,ALBTN|Albayrak Hazır Beton|Albayrak Hazir Beton|ALBAYRAK HAZIR BETON SANAYİ VE TİCARET A.Ş.
+ALCAR.IS,ALCAR.IS,Alarko Carrıer Sanayi ve Ticaret A.Ş.,ALARKO CARRIER SANAYİ VE TİCARET A.Ş.,ALCAR|Alarko Carrıer|Alarko Carrier|ALARKO CARRIER SANAYİ VE TİCARET A.Ş.
+ALCTL.IS,ALCTL.IS,Alcatel Lucent Teletaş Telekomünikasyon A.Ş.,ALCATEL LUCENT TELETAŞ TELEKOMÜNİKASYON A.Ş.,ALCTL|Alcatel Lucent Teletaş Telekomünikasyon|Alcatel Lucent Teletas Telekomunikasyon|ALCATEL LUCENT TELETAŞ TELEKOMÜNİKASYON A.Ş.
+ALFAS.IS,ALFAS.IS,Alfa Solar Enerji Sanayi ve Ticaret A.Ş.,ALFA SOLAR ENERJİ SANAYİ VE TİCARET A.Ş.,ALFAS|Alfa Solar Enerji|ALFA SOLAR ENERJİ SANAYİ VE TİCARET A.Ş.
+ALGYO.IS,ALGYO.IS,Alarko Gayrimenkul Yatırım Ortaklığı A.Ş.,ALARKO GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ALGYO|Alarko Gayrimenkul Yatırım Ortaklığı|Alarko Gayrimenkul Yatirim Ortakligi|ALARKO GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ALJF.IS,ALJF.IS,Alj Finansman A.Ş.,ALJ FİNANSMAN A.Ş.,ALJF|Alj Finansman|ALJ FİNANSMAN A.Ş.
+ALK.IS,ALK.IS,Albaraka Türk Katılım Bankası A.Ş.,ALBARAKA TÜRK KATILIM BANKASI A.Ş.,ALK|Albaraka Türk Katılım Bankası|Albaraka Turk Katilim Bankasi|ALBARAKA TÜRK KATILIM BANKASI A.Ş.
+ALKA.IS,ALKA.IS,Alkim Kağıt Sanayi ve Ticaret A.Ş.,ALKİM KAĞIT SANAYİ VE TİCARET A.Ş.,ALKA|Alkim Kağıt|Alkim Kagit|ALKİM KAĞIT SANAYİ VE TİCARET A.Ş.
+ALKIM.IS,ALKIM.IS,Alkim Alkali Kimya A.Ş.,ALKİM ALKALİ KİMYA A.Ş.,ALKIM|Alkim Alkali Kimya|ALKİM ALKALİ KİMYA A.Ş.
+ALKLC.IS,ALKLC.IS,Altınkılıç Gıda ve Süt Sanayi Ticaret A.Ş.,ALTINKILIÇ GIDA VE SÜT SANAYİ TİCARET A.Ş.,ALKLC|Altınkılıç Gıda ve Süt Sanayi Ticaret|Altinkilic Gida ve Sut Sanayi Ticaret|ALTINKILIÇ GIDA VE SÜT SANAYİ TİCARET A.Ş.
+ALNUS.IS,ALNUS.IS,Alnus Yatırım Menkul Değerler A.Ş.,ALNUS YATIRIM MENKUL DEĞERLER A.Ş.,ALNUS|Alnus Yatırım Menkul Değerler|Alnus Yatirim Menkul Degerler|ALNUS YATIRIM MENKUL DEĞERLER A.Ş.
+ALTNY.IS,ALTNY.IS,Altınay Savunma Teknolojileri A.Ş.,ALTINAY SAVUNMA TEKNOLOJİLERİ A.Ş.,ALTNY|Altınay Savunma Teknolojileri|Altinay Savunma Teknolojileri|ALTINAY SAVUNMA TEKNOLOJİLERİ A.Ş.
+ALVES.IS,ALVES.IS,Alves Kablo Sanayi ve Ticaret A.Ş.,ALVES KABLO SANAYİ VE TİCARET A.Ş.,ALVES|Alves Kablo|ALVES KABLO SANAYİ VE TİCARET A.Ş.
+ANC.IS,ANC.IS,Alnus Yatırım Menkul Değerler A.Ş.,ALNUS YATIRIM MENKUL DEĞERLER A.Ş.,ANC|Alnus Yatırım Menkul Değerler|Alnus Yatirim Menkul Degerler|ALNUS YATIRIM MENKUL DEĞERLER A.Ş.
+ANELE.IS,ANELE.IS,Anel Elektrik Proje Taahhüt ve Ticaret A.Ş.,ANEL ELEKTRİK PROJE TAAHHÜT VE TİCARET A.Ş.,ANELE|Anel Elektrik Proje Taahhüt ve Ticaret|Anel Elektrik Proje Taahhut ve Ticaret|ANEL ELEKTRİK PROJE TAAHHÜT VE TİCARET A.Ş.
+ANGEN.IS,ANGEN.IS,Anatolia Tanı ve Biyoteknoloji Ürünleri Araştırma Geliştirme Sanayi ve Ticaret A.Ş.,ANATOLİA TANI VE BİYOTEKNOLOJİ ÜRÜNLERİ ARAŞTIRMA GELİŞTİRME SANAYİ VE TİCARET A.Ş.,ANGEN|Anatolia Tanı ve Biyoteknoloji Ürünleri Araştırma Geliştirme|Anatolia Tani ve Biyoteknoloji Urunleri Arastirma Gelistirme|ANATOLİA TANI VE BİYOTEKNOLOJİ ÜRÜNLERİ ARAŞTIRMA GELİŞTİRME SANAYİ VE TİCARET A.Ş.
+ANHYT.IS,ANHYT.IS,Anadolu Hayat Emeklilik A.Ş.,ANADOLU HAYAT EMEKLİLİK A.Ş.,ANHYT|Anadolu Hayat Emeklilik|ANADOLU HAYAT EMEKLİLİK A.Ş.
+ANSGR.IS,ANSGR.IS,Anadolu Anonim Türk Sigorta Şirketi,ANADOLU ANONİM TÜRK SİGORTA ŞİRKETİ,ANSGR|Anadolu Anonim Turk Sigorta Sirketi|ANADOLU ANONİM TÜRK SİGORTA ŞİRKETİ
+ARASE.IS,ARASE.IS,Doğu Aras Enerji Yatırımları A.Ş.,DOĞU ARAS ENERJİ YATIRIMLARI A.Ş.,ARASE|Doğu Aras Enerji Yatırımları|Dogu Aras Enerji Yatirimlari|DOĞU ARAS ENERJİ YATIRIMLARI A.Ş.
+ARCLK.IS,ARCLK.IS,Arçelik A.Ş.,ARÇELİK A.Ş.,ARCLK|Arçelik|Arcelik|ARÇELİK A.Ş.
+ARDYZ.IS,ARDYZ.IS,Ard Grup Bilişim Teknolojileri A.Ş.,ARD GRUP BİLİŞİM TEKNOLOJİLERİ A.Ş.,ARDYZ|Ard Grup Bilişim Teknolojileri|Ard Grup Bilisim Teknolojileri|ARD GRUP BİLİŞİM TEKNOLOJİLERİ A.Ş.
+ARENA.IS,ARENA.IS,Arena Bilgisayar Sanayi ve Ticaret A.Ş.,ARENA BİLGİSAYAR SANAYİ VE TİCARET A.Ş.,ARENA|Arena Bilgisayar|ARENA BİLGİSAYAR SANAYİ VE TİCARET A.Ş.
+ARFYE.IS,ARFYE.IS,Arf Bio Yenilenebilir Enerji Üretim A.Ş.,ARF BİO YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.,ARFYE|Arf Bio Yenilenebilir Enerji Üretim|Arf Bio Yenilenebilir Enerji Uretim|ARF BİO YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.
+ARMGD.IS,ARMGD.IS,Armada Gıda Ticaret Sanayi A.Ş.,ARMADA GIDA TİCARET SANAYİ A.Ş.,ARMGD|Armada Gıda Ticaret Sanayi|Armada Gida Ticaret Sanayi|ARMADA GIDA TİCARET SANAYİ A.Ş.
+ARSAN.IS,ARSAN.IS,Arsan Holding A.Ş.,ARSAN HOLDİNG A.Ş.,ARSAN|Arsan Holding|ARSAN HOLDİNG A.Ş.
+ARSNF.IS,ARSNF.IS,Arsan Finans Faktoring A.Ş.,ARSAN FİNANS FAKTORİNG A.Ş.,ARSNF|Arsan Finans Faktoring|ARSAN FİNANS FAKTORİNG A.Ş.
+ARSVY.IS,ARSVY.IS,Arsan Varlık Yönetim A.Ş.,ARSAN VARLIK YÖNETİM A.Ş.,ARSVY|Arsan Varlık Yönetim|Arsan Varlik Yonetim|ARSAN VARLIK YÖNETİM A.Ş.
+ARTMS.IS,ARTMS.IS,Artemis Halı A.Ş.,ARTEMİS HALI A.Ş.,ARTMS|Artemis Halı|Artemis Hali|ARTEMİS HALI A.Ş.
+ARZUM.IS,ARZUM.IS,Arzum Elektrikli Ev Aletleri Sanayi ve Ticaret A.Ş.,ARZUM ELEKTRİKLİ EV ALETLERİ SANAYİ VE TİCARET A.Ş.,ARZUM|Arzum Elektrikli Ev Aletleri|ARZUM ELEKTRİKLİ EV ALETLERİ SANAYİ VE TİCARET A.Ş.
+ASELS.IS,ASELS.IS,Aselsan Elektronik Sanayi ve Ticaret A.Ş.,ASELSAN ELEKTRONİK SANAYİ VE TİCARET A.Ş.,ASELS|Aselsan Elektronik|ASELSAN ELEKTRONİK SANAYİ VE TİCARET A.Ş.
+ASGYO.IS,ASGYO.IS,Asce Gayrimenkul Yatırım Ortaklığı A.Ş.,ASCE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ASGYO|Asce Gayrimenkul Yatırım Ortaklığı|Asce Gayrimenkul Yatirim Ortakligi|ASCE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ASTOR.IS,ASTOR.IS,Astor Enerji A.Ş.,ASTOR ENERJİ A.Ş.,ASTOR|Astor Enerji|ASTOR ENERJİ A.Ş.
+ASUZU.IS,ASUZU.IS,Anadolu Isuzu Otomotiv Sanayi ve Ticaret A.Ş.,ANADOLU ISUZU OTOMOTİV SANAYİ VE TİCARET A.Ş.,ASUZU|Anadolu Isuzu Otomotiv|ANADOLU ISUZU OTOMOTİV SANAYİ VE TİCARET A.Ş.
+ATA.IS,ATA.IS,Ata Yatırım Menkul Kıymetler A.Ş.,ATA YATIRIM MENKUL KIYMETLER A.Ş.,ATA|Ata Yatırım Menkul Kıymetler|Ata Yatirim Menkul Kiymetler|ATA YATIRIM MENKUL KIYMETLER A.Ş.
+ATAGY.IS,ATAGY.IS,Ata Gayrimenkul Yatırım Ortaklığı A.Ş.,ATA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ATAGY|Ata Gayrimenkul Yatırım Ortaklığı|Ata Gayrimenkul Yatirim Ortakligi|ATA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ATAKP.IS,ATAKP.IS,Atakey Patates Gıda Sanayi ve Ticaret A.Ş.,ATAKEY PATATES GIDA SANAYİ VE TİCARET A.Ş.,ATAKP|Atakey Patates Gıda|Atakey Patates Gida|ATAKEY PATATES GIDA SANAYİ VE TİCARET A.Ş.
+ATATP.IS,ATATP.IS,Atp Yazılım ve Teknoloji A.Ş.,ATP YAZILIM VE TEKNOLOJİ A.Ş.,ATATP|Atp Yazılım ve Teknoloji|Atp Yazilim ve Teknoloji|ATP YAZILIM VE TEKNOLOJİ A.Ş.
+ATATR.IS,ATATR.IS,Ata Turizm İşletmecilik Taşımacılık Madencilik Kuyumculuk Sanayi ve Dış Ticaret A.Ş.,ATA TURİZM İŞLETMECİLİK TAŞIMACILIK MADENCİLİK KUYUMCULUK SANAYİ VE DIŞ TİCARET A.Ş.,ATATR|Ata Turizm İşletmecilik Taşımacılık Madencilik Kuyumculuk Sanayi ve Dış Ticaret|Ata Turizm Isletmecilik Tasimacilik Madencilik Kuyumculuk Sanayi ve Dis Ticaret|ATA TURİZM İŞLETMECİLİK TAŞIMACILIK MADENCİLİK KUYUMCULUK SANAYİ VE DIŞ TİCARET A.Ş.
+ATAVK.IS,ATAVK.IS,Ata Varlık Kiralama A.Ş.,ATA VARLIK KİRALAMA A.Ş.,ATAVK|Ata Varlık Kiralama|Ata Varlik Kiralama|ATA VARLIK KİRALAMA A.Ş.
+ATAYM.IS,ATAYM.IS,Ata Yatırım Menkul Kıymetler A.Ş.,ATA YATIRIM MENKUL KIYMETLER A.Ş.,ATAYM|Ata Yatırım Menkul Kıymetler|Ata Yatirim Menkul Kiymetler|ATA YATIRIM MENKUL KIYMETLER A.Ş.
+ATEKS.IS,ATEKS.IS,Akın Tekstil A.Ş.,AKIN TEKSTİL A.Ş.,ATEKS|Akın Tekstil|Akin Tekstil|AKIN TEKSTİL A.Ş.
+ATLAS.IS,ATLAS.IS,Atlas Menkul Kıymetler Yatırım Ortaklığı A.Ş.,ATLAS MENKUL KIYMETLER YATIRIM ORTAKLIĞI A.Ş.,ATLAS|Atlas Menkul Kıymetler Yatırım Ortaklığı|Atlas Menkul Kiymetler Yatirim Ortakligi|ATLAS MENKUL KIYMETLER YATIRIM ORTAKLIĞI A.Ş.
+ATLFA.IS,ATLFA.IS,Atılım Faktoring A.Ş.,ATILIM FAKTORİNG A.Ş.,ATLFA|Atılım Faktoring|Atilim Faktoring|ATILIM FAKTORİNG A.Ş.
+ATSYH.IS,ATSYH.IS,Atlantis Yatırım Holding A.Ş.,ATLANTİS YATIRIM HOLDİNG A.Ş.,ATSYH|Atlantis Yatırım Holding|Atlantis Yatirim Holding|ATLANTİS YATIRIM HOLDİNG A.Ş.
+AVGYO.IS,AVGYO.IS,Avrasya Gayrimenkul Yatırım Ortaklığı A.Ş.,AVRASYA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AVGYO|Avrasya Gayrimenkul Yatırım Ortaklığı|Avrasya Gayrimenkul Yatirim Ortakligi|AVRASYA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AVHOL.IS,AVHOL.IS,Avrupa Yatırım Holding A.Ş.,AVRUPA YATIRIM HOLDİNG A.Ş.,AVHOL|Avrupa Yatırım Holding|Avrupa Yatirim Holding|AVRUPA YATIRIM HOLDİNG A.Ş.
+AVOD.IS,AVOD.IS,A.V.O.D. Kurutulmuş Gıda ve Tarım Ürünleri Sanayi Ticaret A.Ş.,A.V.O.D. KURUTULMUŞ GIDA VE TARIM ÜRÜNLERİ SANAYİ TİCARET A.Ş.,AVOD|A.V.O.D. Kurutulmuş Gıda ve Tarım Ürünleri Sanayi Ticaret|A.V.O.D. Kurutulmus Gida ve Tarim Urunleri Sanayi Ticaret|A.V.O.D. KURUTULMUŞ GIDA VE TARIM ÜRÜNLERİ SANAYİ TİCARET A.Ş.
+AVPGY.IS,AVPGY.IS,Avrupakent Gayrimenkul Yatırım Ortaklığı A.Ş.,AVRUPAKENT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,AVPGY|Avrupakent Gayrimenkul Yatırım Ortaklığı|Avrupakent Gayrimenkul Yatirim Ortakligi|AVRUPAKENT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+AVTUR.IS,AVTUR.IS,Avrasya Petrol ve Turistik Tesisler Yatırımlar A.Ş.,AVRASYA PETROL VE TURİSTİK TESİSLER YATIRIMLAR A.Ş.,AVTUR|Avrasya Petrol ve Turistik Tesisler Yatırımlar|Avrasya Petrol ve Turistik Tesisler Yatirimlar|AVRASYA PETROL VE TURİSTİK TESİSLER YATIRIMLAR A.Ş.
+AYCES.IS,AYCES.IS,Altın Yunus Çeşme Turistik Tesisler A.Ş.,ALTIN YUNUS ÇEŞME TURİSTİK TESİSLER A.Ş.,AYCES|Altın Yunus Çeşme Turistik Tesisler|Altin Yunus Cesme Turistik Tesisler|ALTIN YUNUS ÇEŞME TURİSTİK TESİSLER A.Ş.
+AYDEM.IS,AYDEM.IS,Aydem Yenilenebilir Enerji A.Ş.,AYDEM YENİLENEBİLİR ENERJİ A.Ş.,AYDEM|Aydem Yenilenebilir Enerji|AYDEM YENİLENEBİLİR ENERJİ A.Ş.
+AYEN.IS,AYEN.IS,Ayen Enerji A.Ş.,AYEN ENERJİ A.Ş.,AYEN|Ayen Enerji|AYEN ENERJİ A.Ş.
+AYES.IS,AYES.IS,Ayes Çelik Hasır ve Çit Sanayi A.Ş.,AYES ÇELİK HASIR VE ÇİT SANAYİ A.Ş.,AYES|Ayes Çelik Hasır ve Çit Sanayi|Ayes Celik Hasir ve Cit Sanayi|AYES ÇELİK HASIR VE ÇİT SANAYİ A.Ş.
+AYGAZ.IS,AYGAZ.IS,Aygaz A.Ş.,AYGAZ A.Ş.,AYGAZ|Aygaz|AYGAZ A.Ş.
+AYTEM.IS,AYTEM.IS,Aytemiz Yatırım Bankası A.Ş.,AYTEMİZ YATIRIM BANKASI A.Ş.,AYTEM|Aytemiz Yatırım Bankası|Aytemiz Yatirim Bankasi|AYTEMİZ YATIRIM BANKASI A.Ş.
+AZTEK.IS,AZTEK.IS,Aztek Teknoloji Ürünleri Ticaret A.Ş.,AZTEK TEKNOLOJİ ÜRÜNLERİ TİCARET A.Ş.,AZTEK|Aztek Teknoloji Ürünleri Ticaret|Aztek Teknoloji Urunleri Ticaret|AZTEK TEKNOLOJİ ÜRÜNLERİ TİCARET A.Ş.
+BAGFS.IS,BAGFS.IS,Bagfaş Bandırma Gübre Fabrikaları A.Ş.,BAGFAŞ BANDIRMA GÜBRE FABRİKALARI A.Ş.,BAGFS|Bagfaş Bandırma Gübre Fabrikaları|Bagfas Bandirma Gubre Fabrikalari|BAGFAŞ BANDIRMA GÜBRE FABRİKALARI A.Ş.
+BAHKM.IS,BAHKM.IS,Bahadır Kimya Sanayi ve Ticaret A.Ş.,BAHADIR KİMYA SANAYİ VE TİCARET A.Ş.,BAHKM|Bahadır Kimya|Bahadir Kimya|BAHADIR KİMYA SANAYİ VE TİCARET A.Ş.
+BAKAB.IS,BAKAB.IS,Bak Ambalaj Sanayi ve Ticaret A.Ş.,BAK AMBALAJ SANAYİ VE TİCARET A.Ş.,BAKAB|Bak Ambalaj|BAK AMBALAJ SANAYİ VE TİCARET A.Ş.
+BALAT.IS,BALAT.IS,Balatacılar Balatacılık Sanayi ve Ticaret A.Ş.,BALATACILAR BALATACILIK SANAYİ VE TİCARET A.Ş.,BALAT|Balatacılar Balatacılık|Balatacilar Balatacilik|BALATACILAR BALATACILIK SANAYİ VE TİCARET A.Ş.
+BALSU.IS,BALSU.IS,Balsu Gıda Sanayi ve Ticaret A.Ş.,BALSU GIDA SANAYİ VE TİCARET A.Ş.,BALSU|Balsu Gıda|Balsu Gida|BALSU GIDA SANAYİ VE TİCARET A.Ş.
+BANVT.IS,BANVT.IS,Banvit Bandırma Vitaminli Yem Sanayi A.Ş.,BANVİT BANDIRMA VİTAMİNLİ YEM SANAYİ A.Ş.,BANVT|Banvit Bandırma Vitaminli Yem Sanayi|Banvit Bandirma Vitaminli Yem Sanayi|BANVİT BANDIRMA VİTAMİNLİ YEM SANAYİ A.Ş.
+BARMA.IS,BARMA.IS,Barem Ambalaj Sanayi ve Ticaret A.Ş.,BAREM AMBALAJ SANAYİ VE TİCARET A.Ş.,BARMA|Barem Ambalaj|BAREM AMBALAJ SANAYİ VE TİCARET A.Ş.
+BASCM.IS,BASCM.IS,Baştaş Başkent Çimento Sanayi ve Ticaret A.Ş.,BAŞTAŞ BAŞKENT ÇİMENTO SANAYİ VE TİCARET A.Ş.,BASCM|Baştaş Başkent Çimento|Bastas Baskent Cimento|BAŞTAŞ BAŞKENT ÇİMENTO SANAYİ VE TİCARET A.Ş.
+BASGZ.IS,BASGZ.IS,Başkent Doğalgaz Dağıtım Gayrimenkul Yatırım Ortaklığı A.Ş.,BAŞKENT DOĞALGAZ DAĞITIM GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,BASGZ|Başkent Doğalgaz Dağıtım Gayrimenkul Yatırım Ortaklığı|Baskent Dogalgaz Dagitim Gayrimenkul Yatirim Ortakligi|BAŞKENT DOĞALGAZ DAĞITIM GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+BAYRK.IS,BAYRK.IS,Bayrak Ebt Taban Sanayi ve Ticaret A.Ş.,BAYRAK EBT TABAN SANAYİ VE TİCARET A.Ş.,BAYRK|Bayrak Ebt Taban|BAYRAK EBT TABAN SANAYİ VE TİCARET A.Ş.
+BEGYO.IS,BEGYO.IS,Batı Ege Gayrimenkul Yatırım Ortaklığı A.Ş.,BATI EGE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,BEGYO|Batı Ege Gayrimenkul Yatırım Ortaklığı|Bati Ege Gayrimenkul Yatirim Ortakligi|BATI EGE GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+BERA.IS,BERA.IS,Bera Holding A.Ş.,BERA HOLDİNG A.Ş.,BERA|Bera Holding|BERA HOLDİNG A.Ş.
+BESLR.IS,BESLR.IS,Besler Gıda ve Kimya Sanayi ve Ticaret A.Ş.,BESLER GIDA VE KİMYA SANAYİ VE TİCARET A.Ş.,BESLR|Besler Gıda ve Kimya|Besler Gida ve Kimya|BESLER GIDA VE KİMYA SANAYİ VE TİCARET A.Ş.
+BESTE.IS,BESTE.IS,Best Brands Grup Enerji Yatırım A.Ş.,BEST BRANDS GRUP ENERJİ YATIRIM A.Ş.,BESTE|Best Brands Grup Enerji Yatırım|Best Brands Grup Enerji Yatirim|BEST BRANDS GRUP ENERJİ YATIRIM A.Ş.
+BETAE.IS,BETAE.IS,Beta Enerji ve Teknoloji A.Ş.,BETA ENERJİ VE TEKNOLOJİ A.Ş.,BETAE|Beta Enerji ve Teknoloji|BETA ENERJİ VE TEKNOLOJİ A.Ş.
+BEYAZ.IS,BEYAZ.IS,Beyaz Filo Oto Kiralama A.Ş.,BEYAZ FİLO OTO KİRALAMA A.Ş.,BEYAZ|Beyaz Filo Oto Kiralama|BEYAZ FİLO OTO KİRALAMA A.Ş.
+BFREN.IS,BFREN.IS,Bosch Fren Sistemleri Sanayi ve Ticaret A.Ş.,BOSCH FREN SİSTEMLERİ SANAYİ VE TİCARET A.Ş.,BFREN|Bosch Fren Sistemleri|BOSCH FREN SİSTEMLERİ SANAYİ VE TİCARET A.Ş.
+BIENY.IS,BIENY.IS,Bien Yapı Ürünleri Sanayi Turizm ve Ticaret A.Ş.,BİEN YAPI ÜRÜNLERİ SANAYİ TURİZM VE TİCARET A.Ş.,BIENY|Bien Yapı Ürünleri Sanayi Turizm ve Ticaret|Bien Yapi Urunleri Sanayi Turizm ve Ticaret|BİEN YAPI ÜRÜNLERİ SANAYİ TURİZM VE TİCARET A.Ş.
+BIGCH.IS,BIGCH.IS,Büyük Şefler Gıda Turizm Tekstil Danışmanlık Organizasyon Eğitim Sanayi ve Ticaret A.Ş.,BÜYÜK ŞEFLER GIDA TURİZM TEKSTİL DANIŞMANLIK ORGANİZASYON EĞİTİM SANAYİ VE TİCARET A.Ş.,BIGCH|Büyük Şefler Gıda Turizm Tekstil Danışmanlık Organizasyon Eğitim|Buyuk Sefler Gida Turizm Tekstil Danismanlik Organizasyon Egitim|BÜYÜK ŞEFLER GIDA TURİZM TEKSTİL DANIŞMANLIK ORGANİZASYON EĞİTİM SANAYİ VE TİCARET A.Ş.
+BIGEN.IS,BIGEN.IS,Birleşim Grup Enerji Yatırımları A.Ş.,BİRLEŞİM GRUP ENERJİ YATIRIMLARI A.Ş.,BIGEN|Birleşim Grup Enerji Yatırımları|Birlesim Grup Enerji Yatirimlari|BİRLEŞİM GRUP ENERJİ YATIRIMLARI A.Ş.
+BIGTK.IS,BIGTK.IS,Big Medya Teknoloji A.Ş.,BİG MEDYA TEKNOLOJİ A.Ş.,BIGTK|Big Medya Teknoloji|BİG MEDYA TEKNOLOJİ A.Ş.
+BIMAS.IS,BIMAS.IS,Bim Birleşik Mağazalar A.Ş.,BİM BİRLEŞİK MAĞAZALAR A.Ş.,BIMAS|Bim Birleşik Mağazalar|Bim Birlesik Magazalar|BİM BİRLEŞİK MAĞAZALAR A.Ş.
+BINBN.IS,BINBN.IS,Bin Ulaşım ve Akıllı Şehir Teknolojileri A.Ş.,BİN ULAŞIM VE AKILLI ŞEHİR TEKNOLOJİLERİ A.Ş.,BINBN|Bin Ulaşım ve Akıllı Şehir Teknolojileri|Bin Ulasim ve Akilli Sehir Teknolojileri|BİN ULAŞIM VE AKILLI ŞEHİR TEKNOLOJİLERİ A.Ş.
+BINHO.IS,BINHO.IS,1000 Yatırımlar Holding A.Ş.,1000 YATIRIMLAR HOLDİNG A.Ş.,BINHO|1000 Yatırımlar Holding|1000 Yatirimlar Holding|1000 YATIRIMLAR HOLDİNG A.Ş.
+BIOEN.IS,BIOEN.IS,Biotrend Çevre ve Enerji Yatırımları A.Ş.,BİOTREND ÇEVRE VE ENERJİ YATIRIMLARI A.Ş.,BIOEN|Biotrend Çevre ve Enerji Yatırımları|Biotrend Cevre ve Enerji Yatirimlari|BİOTREND ÇEVRE VE ENERJİ YATIRIMLARI A.Ş.
+BIZIM.IS,BIZIM.IS,Bizim Toptan Satış Mağazaları A.Ş.,BİZİM TOPTAN SATIŞ MAĞAZALARI A.Ş.,BIZIM|Bizim Toptan Satış Mağazaları|Bizim Toptan Satis Magazalari|BİZİM TOPTAN SATIŞ MAĞAZALARI A.Ş.
+BJKAS.IS,BJKAS.IS,Beşiktaş Futbol Yatırımları Sanayi ve Ticaret A.Ş.,BEŞİKTAŞ FUTBOL YATIRIMLARI SANAYİ VE TİCARET A.Ş.,BJKAS|Beşiktaş Futbol Yatırımları|Besiktas Futbol Yatirimlari|BEŞİKTAŞ FUTBOL YATIRIMLARI SANAYİ VE TİCARET A.Ş.
+BKRGY.IS,BKRGY.IS,Bakırcı Gayrimenkul Yatırım Ortaklığı A.Ş.,BAKIRCI GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,BKRGY|Bakırcı Gayrimenkul Yatırım Ortaklığı|Bakirci Gayrimenkul Yatirim Ortakligi|BAKIRCI GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+BLCYT.IS,BLCYT.IS,Bilici Yatırım Sanayi ve Ticaret A.Ş.,BİLİCİ YATIRIM SANAYİ VE TİCARET A.Ş.,BLCYT|Bilici Yatırım|Bilici Yatirim|BİLİCİ YATIRIM SANAYİ VE TİCARET A.Ş.
+BLKOM.IS,BLKOM.IS,Bilkom Bilişim Hizmetleri A.Ş.,BİLKOM BİLİŞİM HİZMETLERİ A.Ş.,BLKOM|Bilkom Bilişim Hizmetleri|Bilkom Bilisim Hizmetleri|BİLKOM BİLİŞİM HİZMETLERİ A.Ş.
+BLS.IS,BLS.IS,Bulls Yatırım Menkul Değerler A.Ş.,BULLS YATIRIM MENKUL DEĞERLER A.Ş.,BLS|Bulls Yatırım Menkul Değerler|Bulls Yatirim Menkul Degerler|BULLS YATIRIM MENKUL DEĞERLER A.Ş.
+BLSMD.IS,BLSMD.IS,Bulls Yatırım Menkul Değerler A.Ş.,BULLS YATIRIM MENKUL DEĞERLER A.Ş.,BLSMD|Bulls Yatırım Menkul Değerler|Bulls Yatirim Menkul Degerler|BULLS YATIRIM MENKUL DEĞERLER A.Ş.
+BLUME.IS,BLUME.IS,Blume Metal Kimya A.Ş.,BLUME METAL KİMYA A.Ş.,BLUME|Blume Metal Kimya|BLUME METAL KİMYA A.Ş.
+BMSCH.IS,BMSCH.IS,BMS Çelik Hasır Sanayi ve Ticaret A.Ş.,BMS ÇELİK HASIR SANAYİ VE TİCARET A.Ş.,BMSCH|BMS Çelik Hasır|BMS Celik Hasir|BMS ÇELİK HASIR SANAYİ VE TİCARET A.Ş.
+BMSTL.IS,BMSTL.IS,BMS Birleşik Metal Sanayi ve Ticaret A.Ş.,BMS BİRLEŞİK METAL SANAYİ VE TİCARET A.Ş.,BMSTL|BMS Birleşik Metal|BMS Birlesik Metal|BMS BİRLEŞİK METAL SANAYİ VE TİCARET A.Ş.
+BNPPI.IS,BNPPI.IS,BNP Parıbas Issuance B.V.,BNP PARIBAS ISSUANCE B.V.,BNPPI|BNP Paribas Issuance B.V.|BNP PARIBAS ISSUANCE B.V.
+BNTAS.IS,BNTAS.IS,Bantaş Bandırma Ambalaj Sanayi ve Ticaret A.Ş.,BANTAŞ BANDIRMA AMBALAJ SANAYİ VE TİCARET A.Ş.,BNTAS|Bantaş Bandırma Ambalaj|Bantas Bandirma Ambalaj|BANTAŞ BANDIRMA AMBALAJ SANAYİ VE TİCARET A.Ş.
+BOBET.IS,BOBET.IS,Boğaziçi Beton Sanayi ve Ticaret A.Ş.,BOĞAZİÇİ BETON SANAYİ VE TİCARET A.Ş.,BOBET|Boğaziçi Beton|Bogazici Beton|BOĞAZİÇİ BETON SANAYİ VE TİCARET A.Ş.
+BORLS.IS,BORLS.IS,Borlease Otomotiv A.Ş.,BORLEASE OTOMOTİV A.Ş.,BORLS|Borlease Otomotiv|BORLEASE OTOMOTİV A.Ş.
+BORSK.IS,BORSK.IS,Bor Şeker A.Ş.,BOR ŞEKER A.Ş.,BORSK|Bor Şeker|Bor Seker|BOR ŞEKER A.Ş.
+BOSSA.IS,BOSSA.IS,Bossa Ticaret ve Sanayi İşletmeleri T.A.Ş.,BOSSA TİCARET VE SANAYİ İŞLETMELERİ T.A.Ş.,BOSSA|Bossa Ticaret ve Sanayi İşletmeleri|Bossa Ticaret ve Sanayi Isletmeleri|BOSSA TİCARET VE SANAYİ İŞLETMELERİ T.A.Ş.
+BRGFK.IS,BRGFK.IS,Burgan Finansal Kiralama A.Ş.,BURGAN FİNANSAL KİRALAMA A.Ş.,BRGFK|Burgan Finansal Kiralama|BURGAN FİNANSAL KİRALAMA A.Ş.
+BRISA.IS,BRISA.IS,Brisa Bridgestone Sabancı Lastik Sanayi ve Ticaret A.Ş.,BRİSA BRİDGESTONE SABANCI LASTİK SANAYİ VE TİCARET A.Ş.,BRISA|Brisa Bridgestone Sabancı Lastik|Brisa Bridgestone Sabanci Lastik|BRİSA BRİDGESTONE SABANCI LASTİK SANAYİ VE TİCARET A.Ş.
+BRKO.IS,BRKO.IS,Birko Birleşik Koyunlulular Mensucat Ticaret ve Sanayi A.Ş.,BİRKO BİRLEŞİK KOYUNLULULAR MENSUCAT TİCARET VE SANAYİ A.Ş.,BRKO|Birko Birleşik Koyunlulular Mensucat Ticaret ve Sanayi|Birko Birlesik Koyunlulular Mensucat Ticaret ve Sanayi|BİRKO BİRLEŞİK KOYUNLULULAR MENSUCAT TİCARET VE SANAYİ A.Ş.
+BRKSN.IS,BRKSN.IS,Berkosan Yalıtım ve Tecrit Maddeleri Üretim ve Ticaret A.Ş.,BERKOSAN YALITIM VE TECRİT MADDELERİ ÜRETİM VE TİCARET A.Ş.,BRKSN|Berkosan Yalıtım ve Tecrit Maddeleri Üretim ve Ticaret|Berkosan Yalitim ve Tecrit Maddeleri Uretim ve Ticaret|BERKOSAN YALITIM VE TECRİT MADDELERİ ÜRETİM VE TİCARET A.Ş.
+BRKT.IS,BRKT.IS,Bereket Varlık Kiralama A.Ş.,BEREKET VARLIK KİRALAMA A.Ş.,BRKT|Bereket Varlık Kiralama|Bereket Varlik Kiralama|BEREKET VARLIK KİRALAMA A.Ş.
+BRKVY.IS,BRKVY.IS,Birikim Varlık Yönetim A.Ş.,BİRİKİM VARLIK YÖNETİM A.Ş.,BRKVY|Birikim Varlık Yönetim|Birikim Varlik Yonetim|BİRİKİM VARLIK YÖNETİM A.Ş.
+BRLSM.IS,BRLSM.IS,Birleşim Mühendislik Isıtma Soğutma Havalandırma Sanayi ve Ticaret A.Ş.,BİRLEŞİM MÜHENDİSLİK ISITMA SOĞUTMA HAVALANDIRMA SANAYİ VE TİCARET A.Ş.,BRLSM|Birleşim Mühendislik Isıtma Soğutma Havalandırma|Birlesim Muhendislik Isitma Sogutma Havalandirma|BİRLEŞİM MÜHENDİSLİK ISITMA SOĞUTMA HAVALANDIRMA SANAYİ VE TİCARET A.Ş.
+BRMEN.IS,BRMEN.IS,Birlik Mensucat Ticaret ve Sanayi İşletmesi A.Ş.,BİRLİK MENSUCAT TİCARET VE SANAYİ İŞLETMESİ A.Ş.,BRMEN|Birlik Mensucat Ticaret ve Sanayi İşletmesi|Birlik Mensucat Ticaret ve Sanayi Isletmesi|BİRLİK MENSUCAT TİCARET VE SANAYİ İŞLETMESİ A.Ş.
+BRSAN.IS,BRSAN.IS,Borusan Birleşik Boru Fabrikaları Sanayi ve Ticaret A.Ş.,BORUSAN BİRLEŞİK BORU FABRİKALARI SANAYİ VE TİCARET A.Ş.,BRSAN|Borusan Birleşik Boru Fabrikaları|Borusan Birlesik Boru Fabrikalari|BORUSAN BİRLEŞİK BORU FABRİKALARI SANAYİ VE TİCARET A.Ş.
+BRYAT.IS,BRYAT.IS,Borusan Yatırım ve Pazarlama A.Ş.,BORUSAN YATIRIM VE PAZARLAMA A.Ş.,BRYAT|Borusan Yatırım ve Pazarlama|Borusan Yatirim ve Pazarlama|BORUSAN YATIRIM VE PAZARLAMA A.Ş.
+BSOKE.IS,BSOKE.IS,Batıçim Çimento Sanayi A.Ş.,BATIÇİM ÇİMENTO SANAYİ A.Ş.,BSOKE|Batıçim Çimento Sanayi|Baticim Cimento Sanayi|BATIÇİM ÇİMENTO SANAYİ A.Ş.
+BTCIM.IS,BTCIM.IS,Batıçim Batı Anadolu Sanayi ve Ticaret A.Ş.,BATIÇİM BATI ANADOLU SANAYİ VE TİCARET A.Ş.,BTCIM|Batıçim Batı Anadolu|Baticim Bati Anadolu|BATIÇİM BATI ANADOLU SANAYİ VE TİCARET A.Ş.
+BUCIM.IS,BUCIM.IS,Bursa Çimento Fabrikası A.Ş.,BURSA ÇİMENTO FABRİKASI A.Ş.,BUCIM|Bursa Çimento Fabrikası|Bursa Cimento Fabrikasi|BURSA ÇİMENTO FABRİKASI A.Ş.
+BULGS.IS,BULGS.IS,Bulls Girişim Sermayesi Yatırım Ortaklığı A.Ş.,BULLS GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,BULGS|Bulls Girişim Sermayesi Yatırım Ortaklığı|Bulls Girisim Sermayesi Yatirim Ortakligi|BULLS GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+BURCE.IS,BURCE.IS,Burçelik Bursa Çelik Döküm Sanayii A.Ş.,BURÇELİK BURSA ÇELİK DÖKÜM SANAYİİ A.Ş.,BURCE|Burçelik Bursa Çelik Döküm Sanayii|Burcelik Bursa Celik Dokum Sanayii|BURÇELİK BURSA ÇELİK DÖKÜM SANAYİİ A.Ş.
+BURVA.IS,BURVA.IS,Burçelik Vana Sanayi ve Ticaret A.Ş.,BURÇELİK VANA SANAYİ VE TİCARET A.Ş.,BURVA|Burçelik Vana|Burcelik Vana|BURÇELİK VANA SANAYİ VE TİCARET A.Ş.
+BVSAN.IS,BVSAN.IS,Bülbüloğlu Vinç Sanayi ve Ticaret A.Ş.,BÜLBÜLOĞLU VİNÇ SANAYİ VE TİCARET A.Ş.,BVSAN|Bülbüloğlu Vinç|Bulbuloglu Vinc|BÜLBÜLOĞLU VİNÇ SANAYİ VE TİCARET A.Ş.
+BYDNR.IS,BYDNR.IS,Baydöner Restoranları A.Ş.,BAYDÖNER RESTORANLARI A.Ş.,BYDNR|Baydöner Restoranları|Baydoner Restoranlari|BAYDÖNER RESTORANLARI A.Ş.
+CAGFA.IS,CAGFA.IS,Çağdaş Faktoring A.Ş.,ÇAĞDAŞ FAKTORİNG A.Ş.,CAGFA|Çağdaş Faktoring|Cagdas Faktoring|ÇAĞDAŞ FAKTORİNG A.Ş.
+CANTE.IS,CANTE.IS,Çan2 Termik A.Ş.,ÇAN2 TERMİK A.Ş.,CANTE|Çan2 Termik|Can2 Termik|ÇAN2 TERMİK A.Ş.
+CASA.IS,CASA.IS,Casa Emtia Petrol Kimyevi ve Türevleri Sanayi ve Ticaret A.Ş.,CASA EMTİA PETROL KİMYEVİ VE TÜREVLERİ SANAYİ VE TİCARET A.Ş.,CASA|Casa Emtia Petrol Kimyevi ve Türevleri|Casa Emtia Petrol Kimyevi ve Turevleri|CASA EMTİA PETROL KİMYEVİ VE TÜREVLERİ SANAYİ VE TİCARET A.Ş.
+CATES.IS,CATES.IS,Çates Elektrik Üretim A.Ş.,ÇATES ELEKTRİK ÜRETİM A.Ş.,CATES|Çates Elektrik Üretim|Cates Elektrik Uretim|ÇATES ELEKTRİK ÜRETİM A.Ş.
+CCOLA.IS,CCOLA.IS,Coca-Cola İçecek A.Ş.,COCA-COLA İÇECEK A.Ş.,CCOLA|Coca-Cola İçecek|Coca-Cola Icecek|COCA-COLA İÇECEK A.Ş.
+CELHA.IS,CELHA.IS,Çelik Halat ve Tel Sanayii A.Ş.,ÇELİK HALAT VE TEL SANAYİİ A.Ş.,CELHA|Çelik Halat ve Tel Sanayii|Celik Halat ve Tel Sanayii|ÇELİK HALAT VE TEL SANAYİİ A.Ş.
+CEMAS.IS,CEMAS.IS,Çemaş Döküm Sanayi A.Ş.,ÇEMAŞ DÖKÜM SANAYİ A.Ş.,CEMAS|Çemaş Döküm Sanayi|Cemas Dokum Sanayi|ÇEMAŞ DÖKÜM SANAYİ A.Ş.
+CEMTS.IS,CEMTS.IS,Çemtaş Çelik Makina Sanayi ve Ticaret A.Ş.,ÇEMTAŞ ÇELİK MAKİNA SANAYİ VE TİCARET A.Ş.,CEMTS|Çemtaş Çelik Makina|Cemtas Celik Makina|ÇEMTAŞ ÇELİK MAKİNA SANAYİ VE TİCARET A.Ş.
+CEMZY.IS,CEMZY.IS,Cem Zeytin A.Ş.,CEM ZEYTİN A.Ş.,CEMZY|Cem Zeytin|CEM ZEYTİN A.Ş.
+CEOEM.IS,CEOEM.IS,Ceo Event Medya A.Ş.,CEO EVENT MEDYA A.Ş.,CEOEM|Ceo Event Medya|CEO EVENT MEDYA A.Ş.
+CGCAM.IS,CGCAM.IS,Çağdaş Cam Sanayi ve Ticaret A.Ş.,ÇAĞDAŞ CAM SANAYİ VE TİCARET A.Ş.,CGCAM|Çağdaş Cam|Cagdas Cam|ÇAĞDAŞ CAM SANAYİ VE TİCARET A.Ş.
+CIMSA.IS,CIMSA.IS,Çimsa Çimento Sanayi ve Ticaret A.Ş.,ÇİMSA ÇİMENTO SANAYİ VE TİCARET A.Ş.,CIMSA|Çimsa Çimento|Cimsa Cimento|ÇİMSA ÇİMENTO SANAYİ VE TİCARET A.Ş.
+CITAS.IS,CITAS.IS,Çitlekçi Mağazacılık Gıda A.Ş.,ÇİTLEKÇİ MAĞAZACILIK GIDA A.Ş.,CITAS|Çitlekçi Mağazacılık Gıda|Citlekci Magazacilik Gida|ÇİTLEKÇİ MAĞAZACILIK GIDA A.Ş.
+CLEBI.IS,CLEBI.IS,Çelebi Hava Servisi A.Ş.,ÇELEBİ HAVA SERVİSİ A.Ş.,CLEBI|Çelebi Hava Servisi|Celebi Hava Servisi|ÇELEBİ HAVA SERVİSİ A.Ş.
+CLKMT.IS,CLKMT.IS,Çelik Motor Ticaret A.Ş.,ÇELİK MOTOR TİCARET A.Ş.,CLKMT|Çelik Motor Ticaret|Celik Motor Ticaret|ÇELİK MOTOR TİCARET A.Ş.
+CMBTN.IS,CMBTN.IS,Çimbeton Hazırbeton ve Prefabrik Yapı Elemanları Sanayi ve Ticaret A.Ş.,ÇİMBETON HAZIRBETON VE PREFABRİK YAPI ELEMANLARI SANAYİ VE TİCARET A.Ş.,CMBTN|Çimbeton Hazırbeton ve Prefabrik Yapı Elemanları|Cimbeton Hazirbeton ve Prefabrik Yapi Elemanlari|ÇİMBETON HAZIRBETON VE PREFABRİK YAPI ELEMANLARI SANAYİ VE TİCARET A.Ş.
+CMENT.IS,CMENT.IS,Çimentaş İzmir Çimento Fabrikası T.A.Ş.,ÇİMENTAŞ İZMİR ÇİMENTO FABRİKASI T.A.Ş.,CMENT|Çimentaş İzmir Çimento Fabrikası|Cimentas Izmir Cimento Fabrikasi|ÇİMENTAŞ İZMİR ÇİMENTO FABRİKASI T.A.Ş.
+CMSAN.IS,CMSAN.IS,Çamsan Entegre Ağaç Sanayi ve Ticaret A.Ş.,ÇAMSAN ENTEGRE AĞAÇ SANAYİ VE TİCARET A.Ş.,CMSAN|Çamsan Entegre Ağaç|Camsan Entegre Agac|ÇAMSAN ENTEGRE AĞAÇ SANAYİ VE TİCARET A.Ş.
+CONSE.IS,CONSE.IS,Consus Enerji İşletmeciliği ve Hizmetleri A.Ş.,CONSUS ENERJİ İŞLETMECİLİĞİ VE HİZMETLERİ A.Ş.,CONSE|Consus Enerji İşletmeciliği ve Hizmetleri|Consus Enerji Isletmeciligi ve Hizmetleri|CONSUS ENERJİ İŞLETMECİLİĞİ VE HİZMETLERİ A.Ş.
+COSMO.IS,COSMO.IS,Cosmos Yatırım Holding A.Ş.,COSMOS YATIRIM HOLDİNG A.Ş.,COSMO|Cosmos Yatırım Holding|Cosmos Yatirim Holding|COSMOS YATIRIM HOLDİNG A.Ş.
+CRDFA.IS,CRDFA.IS,Credıtwest Faktoring A.Ş.,CREDITWEST FAKTORİNG A.Ş.,CRDFA|Credıtwest Faktoring|Creditwest Faktoring|CREDITWEST FAKTORİNG A.Ş.
+CRFSA.IS,CRFSA.IS,Carrefoursa Carrefour Sabancı Ticaret Merkezi A.Ş.,CARREFOURSA CARREFOUR SABANCI TİCARET MERKEZİ A.Ş.,CRFSA|Carrefoursa Carrefour Sabancı Ticaret Merkezi|Carrefoursa Carrefour Sabanci Ticaret Merkezi|CARREFOURSA CARREFOUR SABANCI TİCARET MERKEZİ A.Ş.
+CUSAN.IS,CUSAN.IS,Çuhadaroğlu Metal Sanayi ve Pazarlama A.Ş.,ÇUHADAROĞLU METAL SANAYİ VE PAZARLAMA A.Ş.,CUSAN|Çuhadaroğlu Metal Sanayi ve Pazarlama|Cuhadaroglu Metal Sanayi ve Pazarlama|ÇUHADAROĞLU METAL SANAYİ VE PAZARLAMA A.Ş.
+CVKMD.IS,CVKMD.IS,CVK Maden İşletmeleri Sanayi ve Ticaret A.Ş.,CVK MADEN İŞLETMELERİ SANAYİ VE TİCARET A.Ş.,CVKMD|CVK Maden İşletmeleri|CVK Maden Isletmeleri|CVK MADEN İŞLETMELERİ SANAYİ VE TİCARET A.Ş.
+CWENE.IS,CWENE.IS,CW Enerji Mühendislik Ticaret ve Sanayi A.Ş.,CW ENERJİ MÜHENDİSLİK TİCARET VE SANAYİ A.Ş.,CWENE|CW Enerji Mühendislik Ticaret ve Sanayi|CW Enerji Muhendislik Ticaret ve Sanayi|CW ENERJİ MÜHENDİSLİK TİCARET VE SANAYİ A.Ş.
+DAGI.IS,DAGI.IS,Dagi Giyim Sanayi ve Ticaret A.Ş.,DAGİ GİYİM SANAYİ VE TİCARET A.Ş.,DAGI|Dagi Giyim|DAGİ GİYİM SANAYİ VE TİCARET A.Ş.
+DAPGM.IS,DAPGM.IS,Dap Gayrimenkul Geliştirme A.Ş.,DAP GAYRİMENKUL GELİŞTİRME A.Ş.,DAPGM|Dap Gayrimenkul Geliştirme|Dap Gayrimenkul Gelistirme|DAP GAYRİMENKUL GELİŞTİRME A.Ş.
+DARDL.IS,DARDL.IS,Dardanel Önentaş Gıda Sanayi A.Ş.,DARDANEL ÖNENTAŞ GIDA SANAYİ A.Ş.,DARDL|Dardanel Önentaş Gıda Sanayi|Dardanel Onentas Gida Sanayi|DARDANEL ÖNENTAŞ GIDA SANAYİ A.Ş.
+DCTTR.IS,DCTTR.IS,DCT Trading Dış Ticaret A.Ş.,DCT TRADİNG DIŞ TİCARET A.Ş.,DCTTR|DCT Trading Dış Ticaret|DCT Trading Dis Ticaret|DCT TRADİNG DIŞ TİCARET A.Ş.
+DENFA.IS,DENFA.IS,Deniz Faktoring A.Ş.,DENİZ FAKTORİNG A.Ş.,DENFA|Deniz Faktoring|DENİZ FAKTORİNG A.Ş.
+DENGE.IS,DENGE.IS,Denge Yatırım Holding A.Ş.,DENGE YATIRIM HOLDİNG A.Ş.,DENGE|Denge Yatırım Holding|Denge Yatirim Holding|DENGE YATIRIM HOLDİNG A.Ş.
+DENVA.IS,DENVA.IS,Denge Varlık Yönetim A.Ş.,DENGE VARLIK YÖNETİM A.Ş.,DENVA|Denge Varlık Yönetim|Denge Varlik Yonetim|DENGE VARLIK YÖNETİM A.Ş.
+DERHL.IS,DERHL.IS,Derlüks Yatırım Holding A.Ş.,DERLÜKS YATIRIM HOLDİNG A.Ş.,DERHL|Derlüks Yatırım Holding|Derluks Yatirim Holding|DERLÜKS YATIRIM HOLDİNG A.Ş.
+DERIM.IS,DERIM.IS,Derimod Konfeksiyon Ayakkabı Deri Sanayi ve Ticaret A.Ş.,DERİMOD KONFEKSİYON AYAKKABI DERİ SANAYİ VE TİCARET A.Ş.,DERIM|Derimod Konfeksiyon Ayakkabı Deri|Derimod Konfeksiyon Ayakkabi Deri|DERİMOD KONFEKSİYON AYAKKABI DERİ SANAYİ VE TİCARET A.Ş.
+DESA.IS,DESA.IS,Desa Deri Sanayi ve Ticaret A.Ş.,DESA DERİ SANAYİ VE TİCARET A.Ş.,DESA|Desa Deri|DESA DERİ SANAYİ VE TİCARET A.Ş.
+DESPC.IS,DESPC.IS,Despec Bilgisayar Pazarlama ve Ticaret A.Ş.,DESPEC BİLGİSAYAR PAZARLAMA VE TİCARET A.Ş.,DESPC|Despec Bilgisayar Pazarlama ve Ticaret|DESPEC BİLGİSAYAR PAZARLAMA VE TİCARET A.Ş.
+DEVA.IS,DEVA.IS,Deva Holding A.Ş.,DEVA HOLDİNG A.Ş.,DEVA|Deva Holding|DEVA HOLDİNG A.Ş.
+DFKTR.IS,DFKTR.IS,Doruk Faktoring A.Ş.,DORUK FAKTORİNG A.Ş.,DFKTR|Doruk Faktoring|DORUK FAKTORİNG A.Ş.
+DGATE.IS,DGATE.IS,Datagate Bilgisayar Malzemeleri Ticaret A.Ş.,DATAGATE BİLGİSAYAR MALZEMELERİ TİCARET A.Ş.,DGATE|Datagate Bilgisayar Malzemeleri Ticaret|DATAGATE BİLGİSAYAR MALZEMELERİ TİCARET A.Ş.
+DGGYO.IS,DGGYO.IS,Doğuş Gayrimenkul Yatırım Ortaklığı A.Ş.,DOĞUŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,DGGYO|Doğuş Gayrimenkul Yatırım Ortaklığı|Dogus Gayrimenkul Yatirim Ortakligi|DOĞUŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+DGNMO.IS,DGNMO.IS,Doğanlar Mobilya Grubu İmalat Sanayi ve Ticaret A.Ş.,DOĞANLAR MOBİLYA GRUBU İMALAT SANAYİ VE TİCARET A.Ş.,DGNMO|Doğanlar Mobilya Grubu İmalat|Doganlar Mobilya Grubu Imalat|DOĞANLAR MOBİLYA GRUBU İMALAT SANAYİ VE TİCARET A.Ş.
+DGRVK.IS,DGRVK.IS,Değer Varlık Kiralama A.Ş.,DEĞER VARLIK KİRALAMA A.Ş.,DGRVK|Değer Varlık Kiralama|Deger Varlik Kiralama|DEĞER VARLIK KİRALAMA A.Ş.
+DIMES.IS,DIMES.IS,Dimes Gıda Sanayi ve Ticaret A.Ş.,DİMES GIDA SANAYİ VE TİCARET A.Ş.,DIMES|Dimes Gıda|Dimes Gida|DİMES GIDA SANAYİ VE TİCARET A.Ş.
+DIRIT.IS,DIRIT.IS,Diriteks Diriliş Tekstil Sanayi ve Ticaret A.Ş.,DİRİTEKS DİRİLİŞ TEKSTİL SANAYİ VE TİCARET A.Ş.,DIRIT|Diriteks Diriliş Tekstil|Diriteks Dirilis Tekstil|DİRİTEKS DİRİLİŞ TEKSTİL SANAYİ VE TİCARET A.Ş.
+DITAS.IS,DITAS.IS,Ditaş BDY Yedek Parça İmalat ve Teknik A.Ş.,DİTAŞ BDY YEDEK PARÇA İMALAT VE TEKNİK A.Ş.,DITAS|Ditaş BDY Yedek Parça İmalat ve Teknik|Ditas BDY Yedek Parca Imalat ve Teknik|DİTAŞ BDY YEDEK PARÇA İMALAT VE TEKNİK A.Ş.
+DKVRL.IS,DKVRL.IS,DK Varlık Kiralama A.Ş.,DK VARLIK KİRALAMA A.Ş.,DKVRL|DK Varlık Kiralama|DK Varlik Kiralama|DK VARLIK KİRALAMA A.Ş.
+DKYVK.IS,DKYVK.IS,DK Yıldız Varlık Kiralama A.Ş.,DK YILDIZ VARLIK KİRALAMA A.Ş.,DKYVK|DK Yıldız Varlık Kiralama|DK Yildiz Varlik Kiralama|DK YILDIZ VARLIK KİRALAMA A.Ş.
+DMLKT.IS,DMLKT.IS,Emlak Konut Damla Kent GMS,EMLAK KONUT DAMLA KENT GMS,DMLKT|EMLAK KONUT DAMLA KENT GMS
+DMRGD.IS,DMRGD.IS,DMR Unlu Mamuller Üretim Gıda Toptan Perakende İhracat A.Ş.,DMR UNLU MAMULLER ÜRETİM GIDA TOPTAN PERAKENDE İHRACAT A.Ş.,DMRGD|DMR Unlu Mamuller Üretim Gıda Toptan Perakende İhracat|DMR Unlu Mamuller Uretim Gida Toptan Perakende Ihracat|DMR UNLU MAMULLER ÜRETİM GIDA TOPTAN PERAKENDE İHRACAT A.Ş.
+DMSAS.IS,DMSAS.IS,Demisaş Döküm Emaye Mamülleri Sanayi A.Ş.,DEMİSAŞ DÖKÜM EMAYE MAMÜLLERİ SANAYİ A.Ş.,DMSAS|Demisaş Döküm Emaye Mamülleri Sanayi|Demisas Dokum Emaye Mamulleri Sanayi|DEMİSAŞ DÖKÜM EMAYE MAMÜLLERİ SANAYİ A.Ş.
+DNFIN.IS,DNFIN.IS,Deniz Finansal Kiralama A.Ş.,DENİZ FİNANSAL KİRALAMA A.Ş.,DNFIN|Deniz Finansal Kiralama|DENİZ FİNANSAL KİRALAMA A.Ş.
+DNISI.IS,DNISI.IS,Dinamik Isı Makina Yalıtım Malzemeleri Sanayi ve Ticaret A.Ş.,DİNAMİK ISI MAKİNA YALITIM MALZEMELERİ SANAYİ VE TİCARET A.Ş.,DNISI|Dinamik Isı Makina Yalıtım Malzemeleri|Dinamik Isi Makina Yalitim Malzemeleri|DİNAMİK ISI MAKİNA YALITIM MALZEMELERİ SANAYİ VE TİCARET A.Ş.
+DNYVA.IS,DNYVA.IS,Dünya Varlık Yönetim A.Ş.,DÜNYA VARLIK YÖNETİM A.Ş.,DNYVA|Dünya Varlık Yönetim|Dunya Varlik Yonetim|DÜNYA VARLIK YÖNETİM A.Ş.
+DNZEN.IS,DNZEN.IS,Deniz Eko Enerji ve Geri Dönüşüm A.Ş.,DENİZ EKO ENERJİ VE GERİ DÖNÜŞÜM A.Ş.,DNZEN|Deniz Eko Enerji ve Geri Dönüşüm|Deniz Eko Enerji ve Geri Donusum|DENİZ EKO ENERJİ VE GERİ DÖNÜŞÜM A.Ş.
+DOAS.IS,DOAS.IS,Doğuş Otomotiv Servis ve Ticaret A.Ş.,DOĞUŞ OTOMOTİV SERVİS VE TİCARET A.Ş.,DOAS|Doğuş Otomotiv Servis ve Ticaret|Dogus Otomotiv Servis ve Ticaret|DOĞUŞ OTOMOTİV SERVİS VE TİCARET A.Ş.
+DOCO.IS,DOCO.IS,Do & Co Aktıengesellschaft,DO & CO AKTIENGESELLSCHAFT,DOCO|Do & Co Aktiengesellschaft|DO & CO AKTIENGESELLSCHAFT
+DOFER.IS,DOFER.IS,Dofer Yapı Malzemeleri Sanayi ve Ticaret A.Ş.,DOFER YAPI MALZEMELERİ SANAYİ VE TİCARET A.Ş.,DOFER|Dofer Yapı Malzemeleri|Dofer Yapi Malzemeleri|DOFER YAPI MALZEMELERİ SANAYİ VE TİCARET A.Ş.
+DOFRB.IS,DOFRB.IS,Dof Robotik Sanayi A.Ş.,DOF ROBOTİK SANAYİ A.Ş.,DOFRB|Dof Robotik Sanayi|DOF ROBOTİK SANAYİ A.Ş.
+DOGUB.IS,DOGUB.IS,Doğusan Boru Sanayi ve Ticaret A.Ş.,DOĞUSAN BORU SANAYİ VE TİCARET A.Ş.,DOGUB|Doğusan Boru|Dogusan Boru|DOĞUSAN BORU SANAYİ VE TİCARET A.Ş.
+DOGVY.IS,DOGVY.IS,Doğru Varlık Yönetim A.Ş.,DOĞRU VARLIK YÖNETİM A.Ş.,DOGVY|Doğru Varlık Yönetim|Dogru Varlik Yonetim|DOĞRU VARLIK YÖNETİM A.Ş.
+DOHOL.IS,DOHOL.IS,Doğan Şirketler Grubu Holding A.Ş.,DOĞAN ŞİRKETLER GRUBU HOLDİNG A.Ş.,DOHOL|Doğan Şirketler Grubu Holding|Dogan Sirketler Grubu Holding|DOĞAN ŞİRKETLER GRUBU HOLDİNG A.Ş.
+DOKTA.IS,DOKTA.IS,Döktaş Dökümcülük Ticaret ve Sanayi A.Ş.,DÖKTAŞ DÖKÜMCÜLÜK TİCARET VE SANAYİ A.Ş.,DOKTA|Döktaş Dökümcülük Ticaret ve Sanayi|Doktas Dokumculuk Ticaret ve Sanayi|DÖKTAŞ DÖKÜMCÜLÜK TİCARET VE SANAYİ A.Ş.
+DRPHN.IS,DRPHN.IS,T.C. Hazine ve Maliye Bakanlığı Darphane ve Damga Matbaası Genel Müdürlüğü,T.C. HAZİNE VE MALİYE BAKANLIĞI DARPHANE VE DAMGA MATBAASI GENEL MÜDÜRLÜĞÜ,DRPHN|T.C. Hazine ve Maliye Bakanligi Darphane ve Damga Matbaasi Genel Mudurlugu|T.C. HAZİNE VE MALİYE BAKANLIĞI DARPHANE VE DAMGA MATBAASI GENEL MÜDÜRLÜĞÜ
+DSTKF.IS,DSTKF.IS,Destek Finans Faktoring A.Ş.,DESTEK FİNANS FAKTORİNG A.Ş.,DSTKF|Destek Finans Faktoring|DESTEK FİNANS FAKTORİNG A.Ş.
+DTRND.IS,DTRND.IS,Doğan Trend Otomotiv Ticaret Hizmet ve Teknoloji A.Ş.,DOĞAN TREND OTOMOTİV TİCARET HİZMET VE TEKNOLOJİ A.Ş.,DTRND|Doğan Trend Otomotiv Ticaret Hizmet ve Teknoloji|Dogan Trend Otomotiv Ticaret Hizmet ve Teknoloji|DOĞAN TREND OTOMOTİV TİCARET HİZMET VE TEKNOLOJİ A.Ş.
+DUNYH.IS,DUNYH.IS,Dünya Holding A.Ş.,DÜNYA HOLDİNG A.Ş.,DUNYH|Dünya Holding|Dunya Holding|DÜNYA HOLDİNG A.Ş.
+DURDO.IS,DURDO.IS,Duran Doğan Basım ve Ambalaj Sanayi A.Ş.,DURAN DOĞAN BASIM VE AMBALAJ SANAYİ A.Ş.,DURDO|Duran Doğan Basım ve Ambalaj Sanayi|Duran Dogan Basim ve Ambalaj Sanayi|DURAN DOĞAN BASIM VE AMBALAJ SANAYİ A.Ş.
+DURKN.IS,DURKN.IS,Durukan Şekerleme Sanayi ve Ticaret A.Ş.,DURUKAN ŞEKERLEME SANAYİ VE TİCARET A.Ş.,DURKN|Durukan Şekerleme|Durukan Sekerleme|DURUKAN ŞEKERLEME SANAYİ VE TİCARET A.Ş.
+DVRLK.IS,DVRLK.IS,D Varlık Kiralama A.Ş.,D VARLIK KİRALAMA A.Ş.,DVRLK|D Varlık Kiralama|D Varlik Kiralama|D VARLIK KİRALAMA A.Ş.
+DYBNK.IS,DYBNK.IS,D Yatırım Bankası A.Ş.,D YATIRIM BANKASI A.Ş.,DYBNK|D Yatırım Bankası|D Yatirim Bankasi|D YATIRIM BANKASI A.Ş.
+DYOBY.IS,DYOBY.IS,Dyo Boya Fabrikaları Sanayi ve Ticaret A.Ş.,DYO BOYA FABRİKALARI SANAYİ VE TİCARET A.Ş.,DYOBY|Dyo Boya Fabrikaları|Dyo Boya Fabrikalari|DYO BOYA FABRİKALARI SANAYİ VE TİCARET A.Ş.
+DZGYO.IS,DZGYO.IS,Deniz Gayrimenkul Yatırım Ortaklığı A.Ş.,DENİZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,DZGYO|Deniz Gayrimenkul Yatırım Ortaklığı|Deniz Gayrimenkul Yatirim Ortakligi|DENİZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+EBEBK.IS,EBEBK.IS,Ebebek Mağazacılık A.Ş.,EBEBEK MAĞAZACILIK A.Ş.,EBEBK|Ebebek Mağazacılık|Ebebek Magazacilik|EBEBEK MAĞAZACILIK A.Ş.
+ECILC.IS,ECILC.IS,Eis Eczacıbaşı İlaç Sınai ve Finansal Yatırımlar Sanayi ve Ticaret A.Ş.,EİS ECZACIBAŞI İLAÇ SINAİ VE FİNANSAL YATIRIMLAR SANAYİ VE TİCARET A.Ş.,ECILC|Eis Eczacıbaşı İlaç Sınai ve Finansal Yatırımlar|Eis Eczacibasi Ilac Sinai ve Finansal Yatirimlar|EİS ECZACIBAŞI İLAÇ SINAİ VE FİNANSAL YATIRIMLAR SANAYİ VE TİCARET A.Ş.
+ECOGR.IS,ECOGR.IS,Ecogreen Enerji Holding A.Ş.,ECOGREEN ENERJİ HOLDİNG A.Ş.,ECOGR|Ecogreen Enerji Holding|ECOGREEN ENERJİ HOLDİNG A.Ş.
+ECZIP.IS,ECZIP.IS,Eip Eczacıbaşı İlaç Pazarlama A.Ş.,EİP ECZACIBAŞI İLAÇ PAZARLAMA A.Ş.,ECZIP|Eip Eczacıbaşı İlaç Pazarlama|Eip Eczacibasi Ilac Pazarlama|EİP ECZACIBAŞI İLAÇ PAZARLAMA A.Ş.
+ECZYT.IS,ECZYT.IS,Eczacıbaşı Yatırım Holding Ortaklığı A.Ş.,ECZACIBAŞI YATIRIM HOLDİNG ORTAKLIĞI A.Ş.,ECZYT|Eczacıbaşı Yatırım Holding Ortaklığı|Eczacibasi Yatirim Holding Ortakligi|ECZACIBAŞI YATIRIM HOLDİNG ORTAKLIĞI A.Ş.
+EDATA.IS,EDATA.IS,E-Data Teknoloji Pazarlama A.Ş.,E-DATA TEKNOLOJİ PAZARLAMA A.Ş.,EDATA|E-Data Teknoloji Pazarlama|E-DATA TEKNOLOJİ PAZARLAMA A.Ş.
+EDIP.IS,EDIP.IS,Edip Gayrimenkul Yatırım Sanayi ve Ticaret A.Ş.,EDİP GAYRİMENKUL YATIRIM SANAYİ VE TİCARET A.Ş.,EDIP|Edip Gayrimenkul Yatırım|Edip Gayrimenkul Yatirim|EDİP GAYRİMENKUL YATIRIM SANAYİ VE TİCARET A.Ş.
+EFOR.IS,EFOR.IS,Efor Yatırım Sanayi Ticaret A.Ş.,EFOR YATIRIM SANAYİ TİCARET A.Ş.,EFOR|Efor Yatırım Sanayi Ticaret|Efor Yatirim Sanayi Ticaret|EFOR YATIRIM SANAYİ TİCARET A.Ş.
+EGEEN.IS,EGEEN.IS,Ege Endüstri ve Ticaret A.Ş.,EGE ENDÜSTRİ VE TİCARET A.Ş.,EGEEN|Ege Endüstri ve Ticaret|Ege Endustri ve Ticaret|EGE ENDÜSTRİ VE TİCARET A.Ş.
+EGEGY.IS,EGEGY.IS,Egeyapı Avrupa Gayrimenkul Yatırım Ortaklığı A.Ş.,EGEYAPI AVRUPA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,EGEGY|Egeyapı Avrupa Gayrimenkul Yatırım Ortaklığı|Egeyapi Avrupa Gayrimenkul Yatirim Ortakligi|EGEYAPI AVRUPA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+EGEPO.IS,EGEPO.IS,Nasmed Özel Sağlık Hizmetleri Ticaret A.Ş.,NASMED ÖZEL SAĞLIK HİZMETLERİ TİCARET A.Ş.,EGEPO|Nasmed Özel Sağlık Hizmetleri Ticaret|Nasmed Ozel Saglik Hizmetleri Ticaret|NASMED ÖZEL SAĞLIK HİZMETLERİ TİCARET A.Ş.
+EGGUB.IS,EGGUB.IS,Ege Gübre Sanayii A.Ş.,EGE GÜBRE SANAYİİ A.Ş.,EGGUB|Ege Gübre Sanayii|Ege Gubre Sanayii|EGE GÜBRE SANAYİİ A.Ş.
+EGPRO.IS,EGPRO.IS,Ege Profil Ticaret ve Sanayi A.Ş.,EGE PROFİL TİCARET VE SANAYİ A.Ş.,EGPRO|Ege Profil Ticaret ve Sanayi|EGE PROFİL TİCARET VE SANAYİ A.Ş.
+EGSER.IS,EGSER.IS,Ege Seramik Sanayi ve Ticaret A.Ş.,EGE SERAMİK SANAYİ VE TİCARET A.Ş.,EGSER|Ege Seramik|EGE SERAMİK SANAYİ VE TİCARET A.Ş.
+EKDMR.IS,EKDMR.IS,Ekinciler Demir ve Çelik Sanayi A.Ş.,EKİNCİLER DEMİR VE ÇELİK SANAYİ A.Ş.,EKDMR|Ekinciler Demir ve Çelik Sanayi|Ekinciler Demir ve Celik Sanayi|EKİNCİLER DEMİR VE ÇELİK SANAYİ A.Ş.
+EKER.IS,EKER.IS,Eker Süt Ürünleri Gıda Sanayi ve Ticaret A.Ş.,EKER SÜT ÜRÜNLERİ GIDA SANAYİ VE TİCARET A.Ş.,EKER|Eker Süt Ürünleri Gıda|Eker Sut Urunleri Gida|EKER SÜT ÜRÜNLERİ GIDA SANAYİ VE TİCARET A.Ş.
+EKGYO.IS,EKGYO.IS,Emlak Konut Gayrimenkul Yatırım Ortaklığı A.Ş.,EMLAK KONUT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,EKGYO|Emlak Konut Gayrimenkul Yatırım Ortaklığı|Emlak Konut Gayrimenkul Yatirim Ortakligi|EMLAK KONUT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+EKIM.IS,EKIM.IS,Ekim Turizm Ticaret ve Sanayi A.Ş.,EKİM TURİZM TİCARET VE SANAYİ A.Ş.,EKIM|Ekim Turizm Ticaret ve Sanayi|EKİM TURİZM TİCARET VE SANAYİ A.Ş.
+EKIZ.IS,EKIZ.IS,Ekiz Kimya Sanayi ve Ticaret A.Ş.,EKİZ KİMYA SANAYİ VE TİCARET A.Ş.,EKIZ|Ekiz Kimya|EKİZ KİMYA SANAYİ VE TİCARET A.Ş.
+EKOFA.IS,EKOFA.IS,Eko Faktoring A.Ş.,EKO FAKTORİNG A.Ş.,EKOFA|Eko Faktoring|EKO FAKTORİNG A.Ş.
+EKOS.IS,EKOS.IS,Ekos Teknoloji ve Elektrik A.Ş.,EKOS TEKNOLOJİ VE ELEKTRİK A.Ş.,EKOS|Ekos Teknoloji ve Elektrik|EKOS TEKNOLOJİ VE ELEKTRİK A.Ş.
+EKSUN.IS,EKSUN.IS,Eksun Gıda Tarım Sanayi ve Ticaret A.Ş.,EKSUN GIDA TARIM SANAYİ VE TİCARET A.Ş.,EKSUN|Eksun Gıda Tarım|Eksun Gida Tarim|EKSUN GIDA TARIM SANAYİ VE TİCARET A.Ş.
+EKTVK.IS,EKTVK.IS,Emlak Katılım Varlık Kiralama A.Ş.,EMLAK KATILIM VARLIK KİRALAMA A.Ş.,EKTVK|Emlak Katılım Varlık Kiralama|Emlak Katilim Varlik Kiralama|EMLAK KATILIM VARLIK KİRALAMA A.Ş.
+ELITE.IS,ELITE.IS,Elite Naturel Organik Gıda Sanayi ve Ticaret A.Ş.,ELİTE NATUREL ORGANİK GIDA SANAYİ VE TİCARET A.Ş.,ELITE|Elite Naturel Organik Gıda|Elite Naturel Organik Gida|ELİTE NATUREL ORGANİK GIDA SANAYİ VE TİCARET A.Ş.
+EMIRV.IS,EMIRV.IS,Emir Varlık Yönetim A.Ş.,EMİR VARLIK YÖNETİM A.Ş.,EMIRV|Emir Varlık Yönetim|Emir Varlik Yonetim|EMİR VARLIK YÖNETİM A.Ş.
+EMKEL.IS,EMKEL.IS,Emek Elektrik Endüstrisi A.Ş.,EMEK ELEKTRİK ENDÜSTRİSİ A.Ş.,EMKEL|Emek Elektrik Endüstrisi|Emek Elektrik Endustrisi|EMEK ELEKTRİK ENDÜSTRİSİ A.Ş.
+EMNIS.IS,EMNIS.IS,Eminiş Ambalaj Sanayi ve Ticaret A.Ş.,EMİNİŞ AMBALAJ SANAYİ VE TİCARET A.Ş.,EMNIS|Eminiş Ambalaj|Eminis Ambalaj|EMİNİŞ AMBALAJ SANAYİ VE TİCARET A.Ş.
+EMPAE.IS,EMPAE.IS,Empa Elektronik Sanayi ve Ticaret A.Ş.,EMPA ELEKTRONİK SANAYİ VE TİCARET A.Ş.,EMPAE|Empa Elektronik|EMPA ELEKTRONİK SANAYİ VE TİCARET A.Ş.
+EMVAR.IS,EMVAR.IS,Emlak Varlık Kiralama A.Ş.,EMLAK VARLIK KİRALAMA A.Ş.,EMVAR|Emlak Varlık Kiralama|Emlak Varlik Kiralama|EMLAK VARLIK KİRALAMA A.Ş.
+ENDAE.IS,ENDAE.IS,Enda Enerji Holding A.Ş.,ENDA ENERJİ HOLDİNG A.Ş.,ENDAE|Enda Enerji Holding|ENDA ENERJİ HOLDİNG A.Ş.
+ENERY.IS,ENERY.IS,Enerya Enerji A.Ş.,ENERYA ENERJİ A.Ş.,ENERY|Enerya Enerji|ENERYA ENERJİ A.Ş.
+ENJSA.IS,ENJSA.IS,Enerjisa Enerji A.Ş.,ENERJİSA ENERJİ A.Ş.,ENJSA|Enerjisa Enerji|ENERJİSA ENERJİ A.Ş.
+ENKAI.IS,ENKAI.IS,Enka İnşaat ve Sanayi A.Ş.,ENKA İNŞAAT VE SANAYİ A.Ş.,ENKAI|Enka İnşaat ve Sanayi|Enka Insaat ve Sanayi|ENKA İNŞAAT VE SANAYİ A.Ş.
+ENPRA.IS,ENPRA.IS,Enpara Bank A.Ş.,ENPARA BANK A.Ş.,ENPRA|Enpara Bank|ENPARA BANK A.Ş.
+ENSRI.IS,ENSRI.IS,Ensari Sınai Yatırımlar A.Ş.,ENSARİ SINAİ YATIRIMLAR A.Ş.,ENSRI|Ensari Sınai Yatırımlar|Ensari Sinai Yatirimlar|ENSARİ SINAİ YATIRIMLAR A.Ş.
+ENTRA.IS,ENTRA.IS,Ic Enterra Yenilenebilir Enerji A.Ş.,IC ENTERRA YENİLENEBİLİR ENERJİ A.Ş.,ENTRA|Ic Enterra Yenilenebilir Enerji|IC ENTERRA YENİLENEBİLİR ENERJİ A.Ş.
+EPLAS.IS,EPLAS.IS,Egeplast Ege Plastik Ticaret ve Sanayi A.Ş.,EGEPLAST EGE PLASTİK TİCARET VE SANAYİ A.Ş.,EPLAS|Egeplast Ege Plastik Ticaret ve Sanayi|EGEPLAST EGE PLASTİK TİCARET VE SANAYİ A.Ş.
+ERBOS.IS,ERBOS.IS,Erbosan Erciyas Boru Sanayi ve Ticaret A.Ş.,ERBOSAN ERCİYAS BORU SANAYİ VE TİCARET A.Ş.,ERBOS|Erbosan Erciyas Boru|ERBOSAN ERCİYAS BORU SANAYİ VE TİCARET A.Ş.
+ERCB.IS,ERCB.IS,Erciyas Çelik Boru Sanayi A.Ş.,ERCİYAS ÇELİK BORU SANAYİ A.Ş.,ERCB|Erciyas Çelik Boru Sanayi|Erciyas Celik Boru Sanayi|ERCİYAS ÇELİK BORU SANAYİ A.Ş.
+EREGL.IS,EREGL.IS,Ereğli Demir ve Çelik Fabrikaları T.A.Ş.,EREĞLİ DEMİR VE ÇELİK FABRİKALARI T.A.Ş.,EREGL|Ereğli Demir ve Çelik Fabrikaları|Eregli Demir ve Celik Fabrikalari|EREĞLİ DEMİR VE ÇELİK FABRİKALARI T.A.Ş.
+ERGLI.IS,ERGLI.IS,Ereğli Tekstil Turizm Sanayi ve Ticaret A.Ş.,EREĞLİ TEKSTİL TURİZM SANAYİ VE TİCARET A.Ş.,ERGLI|Ereğli Tekstil Turizm|Eregli Tekstil Turizm|EREĞLİ TEKSTİL TURİZM SANAYİ VE TİCARET A.Ş.
+ERSU.IS,ERSU.IS,Ersu Meyve ve Gıda Sanayi A.Ş.,ERSU MEYVE VE GIDA SANAYİ A.Ş.,ERSU|Ersu Meyve ve Gıda Sanayi|Ersu Meyve ve Gida Sanayi|ERSU MEYVE VE GIDA SANAYİ A.Ş.
+ESCAR.IS,ESCAR.IS,Escar Filo Kiralama Hizmetleri A.Ş.,ESCAR FİLO KİRALAMA HİZMETLERİ A.Ş.,ESCAR|Escar Filo Kiralama Hizmetleri|ESCAR FİLO KİRALAMA HİZMETLERİ A.Ş.
+ESCOM.IS,ESCOM.IS,Escort Teknoloji Yatırım A.Ş.,ESCORT TEKNOLOJİ YATIRIM A.Ş.,ESCOM|Escort Teknoloji Yatırım|Escort Teknoloji Yatirim|ESCORT TEKNOLOJİ YATIRIM A.Ş.
+ESEN.IS,ESEN.IS,Esenboğa Elektrik Üretim A.Ş.,ESENBOĞA ELEKTRİK ÜRETİM A.Ş.,ESEN|Esenboğa Elektrik Üretim|Esenboga Elektrik Uretim|ESENBOĞA ELEKTRİK ÜRETİM A.Ş.
+ETILR.IS,ETILR.IS,Etiler Gıda ve Ticari Yatırımlar Sanayi ve Ticaret A.Ş.,ETİLER GIDA VE TİCARİ YATIRIMLAR SANAYİ VE TİCARET A.Ş.,ETILR|Etiler Gıda ve Ticari Yatırımlar|Etiler Gida ve Ticari Yatirimlar|ETİLER GIDA VE TİCARİ YATIRIMLAR SANAYİ VE TİCARET A.Ş.
+ETYAT.IS,ETYAT.IS,Euro Trend Yatırım Ortaklığı A.Ş.,EURO TREND YATIRIM ORTAKLIĞI A.Ş.,ETYAT|Euro Trend Yatırım Ortaklığı|Euro Trend Yatirim Ortakligi|EURO TREND YATIRIM ORTAKLIĞI A.Ş.
+EUHOL.IS,EUHOL.IS,Euro Yatırım Holding A.Ş.,EURO YATIRIM HOLDİNG A.Ş.,EUHOL|Euro Yatırım Holding|Euro Yatirim Holding|EURO YATIRIM HOLDİNG A.Ş.
+EUKYO.IS,EUKYO.IS,Euro Kapital Yatırım Ortaklığı A.Ş.,EURO KAPİTAL YATIRIM ORTAKLIĞI A.Ş.,EUKYO|Euro Kapital Yatırım Ortaklığı|Euro Kapital Yatirim Ortakligi|EURO KAPİTAL YATIRIM ORTAKLIĞI A.Ş.
+EUPWR.IS,EUPWR.IS,Europower Enerji ve Otomasyon Teknolojileri Sanayi Ticaret A.Ş.,EUROPOWER ENERJİ VE OTOMASYON TEKNOLOJİLERİ SANAYİ TİCARET A.Ş.,EUPWR|Europower Enerji ve Otomasyon Teknolojileri Sanayi Ticaret|EUROPOWER ENERJİ VE OTOMASYON TEKNOLOJİLERİ SANAYİ TİCARET A.Ş.
+EUREN.IS,EUREN.IS,Europen Endüstri İnşaat Sanayi ve Ticaret A.Ş.,EUROPEN ENDÜSTRİ İNŞAAT SANAYİ VE TİCARET A.Ş.,EUREN|Europen Endüstri İnşaat|Europen Endustri Insaat|EUROPEN ENDÜSTRİ İNŞAAT SANAYİ VE TİCARET A.Ş.
+EUYO.IS,EUYO.IS,Euro Menkul Kıymet Yatırım Ortaklığı A.Ş.,EURO MENKUL KIYMET YATIRIM ORTAKLIĞI A.Ş.,EUYO|Euro Menkul Kıymet Yatırım Ortaklığı|Euro Menkul Kiymet Yatirim Ortakligi|EURO MENKUL KIYMET YATIRIM ORTAKLIĞI A.Ş.
+EXIMB.IS,EXIMB.IS,Türkiye İhracat Kredi Bankası A.Ş.,TÜRKİYE İHRACAT KREDİ BANKASI A.Ş.,EXIMB|Türkiye İhracat Kredi Bankası|Turkiye Ihracat Kredi Bankasi|TÜRKİYE İHRACAT KREDİ BANKASI A.Ş.
+EYGYO.IS,EYGYO.IS,Eyg Gayrimenkul Yatırım Ortaklığı A.Ş.,EYG GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,EYGYO|Eyg Gayrimenkul Yatırım Ortaklığı|Eyg Gayrimenkul Yatirim Ortakligi|EYG GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+FADE.IS,FADE.IS,Fade Gıda Yatırım Sanayi Ticaret A.Ş.,FADE GIDA YATIRIM SANAYİ TİCARET A.Ş.,FADE|Fade Gıda Yatırım Sanayi Ticaret|Fade Gida Yatirim Sanayi Ticaret|FADE GIDA YATIRIM SANAYİ TİCARET A.Ş.
+FAIRF.IS,FAIRF.IS,Fair Finansman A.Ş.,FAİR FİNANSMAN A.Ş.,FAIRF|Fair Finansman|FAİR FİNANSMAN A.Ş.
+FBB.IS,FBB.IS,Fibabanka A.Ş.,FİBABANKA A.Ş.,FBB|Fibabanka|FİBABANKA A.Ş.
+FBBNK.IS,FBBNK.IS,Fibabanka A.Ş.,FİBABANKA A.Ş.,FBBNK|Fibabanka|FİBABANKA A.Ş.
+FENER.IS,FENER.IS,Fenerbahçe Futbol A.Ş.,FENERBAHÇE FUTBOL A.Ş.,FENER|Fenerbahçe Futbol|Fenerbahce Futbol|FENERBAHÇE FUTBOL A.Ş.
+FIGOF.IS,FIGOF.IS,Figo Finans Faktoring A.Ş.,FİGO FİNANS FAKTORİNG A.Ş.,FIGOF|Figo Finans Faktoring|FİGO FİNANS FAKTORİNG A.Ş.
+FIN.IS,FIN.IS,QNB Bank A.Ş.,QNB BANK A.Ş.,FIN|QNB Bank|QNB BANK A.Ş.
+FKPET.IS,FKPET.IS,Fikret Petrol Ürünleri Pazarlama Sanayi ve Ticaret A.Ş.,FİKRET PETROL ÜRÜNLERİ PAZARLAMA SANAYİ VE TİCARET A.Ş.,FKPET|Fikret Petrol Ürünleri Pazarlama|Fikret Petrol Urunleri Pazarlama|FİKRET PETROL ÜRÜNLERİ PAZARLAMA SANAYİ VE TİCARET A.Ş.
+FLAP.IS,FLAP.IS,Flap Kongre Toplantı Hizmetleri Otomotiv ve Turizm A.Ş.,FLAP KONGRE TOPLANTI HİZMETLERİ OTOMOTİV VE TURİZM A.Ş.,FLAP|Flap Kongre Toplantı Hizmetleri Otomotiv ve Turizm|Flap Kongre Toplanti Hizmetleri Otomotiv ve Turizm|FLAP KONGRE TOPLANTI HİZMETLERİ OTOMOTİV VE TURİZM A.Ş.
+FMIZP.IS,FMIZP.IS,Federal Mogul İzmit Piston ve Pim Üretim Tesisleri A.Ş.,FEDERAL MOGUL İZMİT PİSTON VE PİM ÜRETİM TESİSLERİ A.Ş.,FMIZP|Federal Mogul İzmit Piston ve Pim Üretim Tesisleri|Federal Mogul Izmit Piston ve Pim Uretim Tesisleri|FEDERAL MOGUL İZMİT PİSTON VE PİM ÜRETİM TESİSLERİ A.Ş.
+FONET.IS,FONET.IS,Fonet Bilgi Teknolojileri A.Ş.,FONET BİLGİ TEKNOLOJİLERİ A.Ş.,FONET|Fonet Bilgi Teknolojileri|FONET BİLGİ TEKNOLOJİLERİ A.Ş.
+FORMT.IS,FORMT.IS,Formet Metal ve Cam Sanayi A.Ş.,FORMET METAL VE CAM SANAYİ A.Ş.,FORMT|Formet Metal ve Cam Sanayi|FORMET METAL VE CAM SANAYİ A.Ş.
+FORTE.IS,FORTE.IS,Forte Bilgi İletişim Teknolojileri ve Savunma Sanayi A.Ş.,FORTE BİLGİ İLETİŞİM TEKNOLOJİLERİ VE SAVUNMA SANAYİ A.Ş.,FORTE|Forte Bilgi İletişim Teknolojileri ve Savunma Sanayi|Forte Bilgi Iletisim Teknolojileri ve Savunma Sanayi|FORTE BİLGİ İLETİŞİM TEKNOLOJİLERİ VE SAVUNMA SANAYİ A.Ş.
+FRIGO.IS,FRIGO.IS,Frigo-Pak Gıda Maddeleri Sanayi ve Ticaret A.Ş.,FRİGO-PAK GIDA MADDELERİ SANAYİ VE TİCARET A.Ş.,FRIGO|Frigo-Pak Gıda Maddeleri|Frigo-Pak Gida Maddeleri|FRİGO-PAK GIDA MADDELERİ SANAYİ VE TİCARET A.Ş.
+FRMPL.IS,FRMPL.IS,Formül Plastik ve Metal Sanayi A.Ş.,FORMÜL PLASTİK VE METAL SANAYİ A.Ş.,FRMPL|Formül Plastik ve Metal Sanayi|Formul Plastik ve Metal Sanayi|FORMÜL PLASTİK VE METAL SANAYİ A.Ş.
+FROTO.IS,FROTO.IS,Ford Otomotiv Sanayi A.Ş.,FORD OTOMOTİV SANAYİ A.Ş.,FROTO|Ford Otomotiv Sanayi|FORD OTOMOTİV SANAYİ A.Ş.
+FZLGY.IS,FZLGY.IS,Fuzul Gayrimenkul Yatırım Ortaklığı A.Ş.,FUZUL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,FZLGY|Fuzul Gayrimenkul Yatırım Ortaklığı|Fuzul Gayrimenkul Yatirim Ortakligi|FUZUL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+GARAN.IS,GARAN.IS,Türkiye Garanti Bankası A.Ş.,TÜRKİYE GARANTİ BANKASI A.Ş.,GARAN|Türkiye Garanti Bankası|Turkiye Garanti Bankasi|TÜRKİYE GARANTİ BANKASI A.Ş.
+GARFA.IS,GARFA.IS,Garanti Faktoring A.Ş.,GARANTİ FAKTORİNG A.Ş.,GARFA|Garanti Faktoring|GARANTİ FAKTORİNG A.Ş.
+GARFL.IS,GARFL.IS,Garanti Bbva Operasyonel Kiralama Hizmetleri A.Ş.,GARANTİ BBVA OPERASYONEL KİRALAMA HİZMETLERİ A.Ş.,GARFL|Garanti Bbva Operasyonel Kiralama Hizmetleri|GARANTİ BBVA OPERASYONEL KİRALAMA HİZMETLERİ A.Ş.
+GATEG.IS,GATEG.IS,Gate Group Teknoloji Medya ve Siber Güvenlik Hizmetleri A.Ş.,GATE GROUP TEKNOLOJİ MEDYA VE SİBER GÜVENLİK HİZMETLERİ A.Ş.,GATEG|Gate Group Teknoloji Medya ve Siber Güvenlik Hizmetleri|Gate Group Teknoloji Medya ve Siber Guvenlik Hizmetleri|GATE GROUP TEKNOLOJİ MEDYA VE SİBER GÜVENLİK HİZMETLERİ A.Ş.
+GEDIK.IS,GEDIK.IS,Gedik Yatırım Menkul Değerler A.Ş.,GEDİK YATIRIM MENKUL DEĞERLER A.Ş.,GEDIK|Gedik Yatırım Menkul Değerler|Gedik Yatirim Menkul Degerler|GEDİK YATIRIM MENKUL DEĞERLER A.Ş.
+GEDZA.IS,GEDZA.IS,Gediz Ambalaj Sanayi ve Ticaret A.Ş.,GEDİZ AMBALAJ SANAYİ VE TİCARET A.Ş.,GEDZA|Gediz Ambalaj|GEDİZ AMBALAJ SANAYİ VE TİCARET A.Ş.
+GENIL.IS,GENIL.IS,Gen İlaç ve Sağlık Ürünleri Sanayi ve Ticaret A.Ş.,GEN İLAÇ VE SAĞLIK ÜRÜNLERİ SANAYİ VE TİCARET A.Ş.,GENIL|Gen İlaç ve Sağlık Ürünleri|Gen Ilac ve Saglik Urunleri|GEN İLAÇ VE SAĞLIK ÜRÜNLERİ SANAYİ VE TİCARET A.Ş.
+GENKM.IS,GENKM.IS,Gentaş Kimya Sanayi ve Ticaret Pazarlama A.Ş.,GENTAŞ KİMYA SANAYİ VE TİCARET PAZARLAMA A.Ş.,GENKM|Gentaş Kimya Sanayi ve Ticaret Pazarlama|Gentas Kimya Sanayi ve Ticaret Pazarlama|GENTAŞ KİMYA SANAYİ VE TİCARET PAZARLAMA A.Ş.
+GENTS.IS,GENTS.IS,Gentaş Dekoratif Yüzeyler Sanayi ve Ticaret A.Ş.,GENTAŞ DEKORATİF YÜZEYLER SANAYİ VE TİCARET A.Ş.,GENTS|Gentaş Dekoratif Yüzeyler|Gentas Dekoratif Yuzeyler|GENTAŞ DEKORATİF YÜZEYLER SANAYİ VE TİCARET A.Ş.
+GEREL.IS,GEREL.IS,Gersan Elektrik Ticaret ve Sanayi A.Ş.,GERSAN ELEKTRİK TİCARET VE SANAYİ A.Ş.,GEREL|Gersan Elektrik Ticaret ve Sanayi|GERSAN ELEKTRİK TİCARET VE SANAYİ A.Ş.
+GESAN.IS,GESAN.IS,Girişim Elektrik Sanayi Taahhüt ve Ticaret A.Ş.,GİRİŞİM ELEKTRİK SANAYİ TAAHHÜT VE TİCARET A.Ş.,GESAN|Girişim Elektrik Sanayi Taahhüt ve Ticaret|Girisim Elektrik Sanayi Taahhut ve Ticaret|GİRİŞİM ELEKTRİK SANAYİ TAAHHÜT VE TİCARET A.Ş.
+GGBVK.IS,GGBVK.IS,Golden Global Varlık Kiralama A.Ş.,GOLDEN GLOBAL VARLIK KİRALAMA A.Ş.,GGBVK|Golden Global Varlık Kiralama|Golden Global Varlik Kiralama|GOLDEN GLOBAL VARLIK KİRALAMA A.Ş.
+GIPTA.IS,GIPTA.IS,Gıpta Ofis Kırtasiye ve Promosyon Ürünleri İmalat Sanayi A.Ş.,GIPTA OFİS KIRTASİYE VE PROMOSYON ÜRÜNLERİ İMALAT SANAYİ A.Ş.,GIPTA|Gıpta Ofis Kırtasiye ve Promosyon Ürünleri İmalat Sanayi|Gipta Ofis Kirtasiye ve Promosyon Urunleri Imalat Sanayi|GIPTA OFİS KIRTASİYE VE PROMOSYON ÜRÜNLERİ İMALAT SANAYİ A.Ş.
+GLB.IS,GLB.IS,Global Menkul Değerler A.Ş.,GLOBAL MENKUL DEĞERLER A.Ş.,GLB|Global Menkul Değerler|Global Menkul Degerler|GLOBAL MENKUL DEĞERLER A.Ş.
+GLBMD.IS,GLBMD.IS,Global Menkul Değerler A.Ş.,GLOBAL MENKUL DEĞERLER A.Ş.,GLBMD|Global Menkul Değerler|Global Menkul Degerler|GLOBAL MENKUL DEĞERLER A.Ş.
+GLCVY.IS,GLCVY.IS,Gelecek Varlık Yönetimi A.Ş.,GELECEK VARLIK YÖNETİMİ A.Ş.,GLCVY|Gelecek Varlık Yönetimi|Gelecek Varlik Yonetimi|GELECEK VARLIK YÖNETİMİ A.Ş.
+GLRMK.IS,GLRMK.IS,Gülermak Ağır Sanayi İnşaat ve Taahhüt A.Ş.,GÜLERMAK AĞIR SANAYİ İNŞAAT VE TAAHHÜT A.Ş.,GLRMK|Gülermak Ağır Sanayi İnşaat ve Taahhüt|Gulermak Agir Sanayi Insaat ve Taahhut|GÜLERMAK AĞIR SANAYİ İNŞAAT VE TAAHHÜT A.Ş.
+GLRYH.IS,GLRYH.IS,Güler Yatırım Holding A.Ş.,GÜLER YATIRIM HOLDİNG A.Ş.,GLRYH|Güler Yatırım Holding|Guler Yatirim Holding|GÜLER YATIRIM HOLDİNG A.Ş.
+GLYHO.IS,GLYHO.IS,Global Yatırım Holding A.Ş.,GLOBAL YATIRIM HOLDİNG A.Ş.,GLYHO|Global Yatırım Holding|Global Yatirim Holding|GLOBAL YATIRIM HOLDİNG A.Ş.
+GMTAS.IS,GMTAS.IS,Gimat Mağazacılık Sanayi ve Ticaret A.Ş.,GİMAT MAĞAZACILIK SANAYİ VE TİCARET A.Ş.,GMTAS|Gimat Mağazacılık|Gimat Magazacilik|GİMAT MAĞAZACILIK SANAYİ VE TİCARET A.Ş.
+GOKNR.IS,GOKNR.IS,Göknur Gıda Maddeleri Enerji İmalat İthalat İhracat Ticaret ve Sanayi A.Ş.,GÖKNUR GIDA MADDELERİ ENERJİ İMALAT İTHALAT İHRACAT TİCARET VE SANAYİ A.Ş.,GOKNR|Göknur Gıda Maddeleri Enerji İmalat İthalat İhracat Ticaret ve Sanayi|Goknur Gida Maddeleri Enerji Imalat Ithalat Ihracat Ticaret ve Sanayi|GÖKNUR GIDA MADDELERİ ENERJİ İMALAT İTHALAT İHRACAT TİCARET VE SANAYİ A.Ş.
+GOLDA.IS,GOLDA.IS,Golda Gıda Sanayi ve Ticaret A.Ş.,GOLDA GIDA SANAYİ VE TİCARET A.Ş.,GOLDA|Golda Gıda|Golda Gida|GOLDA GIDA SANAYİ VE TİCARET A.Ş.
+GOLTS.IS,GOLTS.IS,Göltaş Göller Bölgesi Çimento Sanayi ve Ticaret A.Ş.,GÖLTAŞ GÖLLER BÖLGESİ ÇİMENTO SANAYİ VE TİCARET A.Ş.,GOLTS|Göltaş Göller Bölgesi Çimento|Goltas Goller Bolgesi Cimento|GÖLTAŞ GÖLLER BÖLGESİ ÇİMENTO SANAYİ VE TİCARET A.Ş.
+GOODY.IS,GOODY.IS,Goodyear Lastikleri T.A.Ş.,GOODYEAR LASTİKLERİ T.A.Ş.,GOODY|Goodyear Lastikleri|GOODYEAR LASTİKLERİ T.A.Ş.
+GOZDE.IS,GOZDE.IS,Gözde Girişim Sermayesi Yatırım Ortaklığı A.Ş.,GÖZDE GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,GOZDE|Gözde Girişim Sermayesi Yatırım Ortaklığı|Gozde Girisim Sermayesi Yatirim Ortakligi|GÖZDE GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+GRM.IS,GRM.IS,Garanti Yatırım Menkul Kıymetler A.Ş.,GARANTİ YATIRIM MENKUL KIYMETLER A.Ş.,GRM|Garanti Yatırım Menkul Kıymetler|Garanti Yatirim Menkul Kiymetler|GARANTİ YATIRIM MENKUL KIYMETLER A.Ş.
+GRNYO.IS,GRNYO.IS,Garanti Yatırım Ortaklığı A.Ş.,GARANTİ YATIRIM ORTAKLIĞI A.Ş.,GRNYO|Garanti Yatırım Ortaklığı|Garanti Yatirim Ortakligi|GARANTİ YATIRIM ORTAKLIĞI A.Ş.
+GRSEL.IS,GRSEL.IS,Gür-Sel Turizm Taşımacılık ve Servis Ticaret A.Ş.,GÜR-SEL TURİZM TAŞIMACILIK VE SERVİS TİCARET A.Ş.,GRSEL|Gür-Sel Turizm Taşımacılık ve Servis Ticaret|Gur-Sel Turizm Tasimacilik ve Servis Ticaret|GÜR-SEL TURİZM TAŞIMACILIK VE SERVİS TİCARET A.Ş.
+GRTHO.IS,GRTHO.IS,Graınturk Holding A.Ş.,GRAINTURK HOLDİNG A.Ş.,GRTHO|Graınturk Holding|Grainturk Holding|GRAINTURK HOLDİNG A.Ş.
+GRYAT.IS,GRYAT.IS,Garanti Yatırım Menkul Kıymetler A.Ş.,GARANTİ YATIRIM MENKUL KIYMETLER A.Ş.,GRYAT|Garanti Yatırım Menkul Kıymetler|Garanti Yatirim Menkul Kiymetler|GARANTİ YATIRIM MENKUL KIYMETLER A.Ş.
+GSDDE.IS,GSDDE.IS,GSD Denizcilik Gayrimenkul İnşaat Sanayi ve Ticaret A.Ş.,GSD DENİZCİLİK GAYRİMENKUL İNŞAAT SANAYİ VE TİCARET A.Ş.,GSDDE|GSD Denizcilik Gayrimenkul İnşaat|GSD Denizcilik Gayrimenkul Insaat|GSD DENİZCİLİK GAYRİMENKUL İNŞAAT SANAYİ VE TİCARET A.Ş.
+GSDHO.IS,GSDHO.IS,GSD Holding A.Ş.,GSD HOLDİNG A.Ş.,GSDHO|GSD Holding|GSD HOLDİNG A.Ş.
+GSIPD.IS,GSIPD.IS,Goldman Sachs Internatıonal,GOLDMAN SACHS INTERNATIONAL,GSIPD|Goldman Sachs International|GOLDMAN SACHS INTERNATIONAL
+GSRAY.IS,GSRAY.IS,Galatasaray Sportif Sınai ve Ticari Yatırımlar A.Ş.,GALATASARAY SPORTİF SINAİ VE TİCARİ YATIRIMLAR A.Ş.,GSRAY|Galatasaray Sportif Sınai ve Ticari Yatırımlar|Galatasaray Sportif Sinai ve Ticari Yatirimlar|GALATASARAY SPORTİF SINAİ VE TİCARİ YATIRIMLAR A.Ş.
+GUBRF.IS,GUBRF.IS,Gübre Fabrikaları T.A.Ş.,GÜBRE FABRİKALARI T.A.Ş.,GUBRF|Gübre Fabrikaları|Gubre Fabrikalari|GÜBRE FABRİKALARI T.A.Ş.
+GUNDG.IS,GUNDG.IS,Gündoğdu Gıda Süt Ürünleri Sanayi ve Dış Ticaret A.Ş.,GÜNDOĞDU GIDA SÜT ÜRÜNLERİ SANAYİ VE DIŞ TİCARET A.Ş.,GUNDG|Gündoğdu Gıda Süt Ürünleri Sanayi ve Dış Ticaret|Gundogdu Gida Sut Urunleri Sanayi ve Dis Ticaret|GÜNDOĞDU GIDA SÜT ÜRÜNLERİ SANAYİ VE DIŞ TİCARET A.Ş.
+GWIND.IS,GWIND.IS,Galata Wınd Enerji A.Ş.,GALATA WIND ENERJİ A.Ş.,GWIND|Galata Wınd Enerji|Galata Wind Enerji|GALATA WIND ENERJİ A.Ş.
+GYVAR.IS,GYVAR.IS,GY Varlık Kiralama A.Ş.,GY VARLIK KİRALAMA A.Ş.,GYVAR|GY Varlık Kiralama|GY Varlik Kiralama|GY VARLIK KİRALAMA A.Ş.
+GZNMI.IS,GZNMI.IS,Gezinomi Seyahat Turizm Ticaret A.Ş.,GEZİNOMİ SEYAHAT TURİZM TİCARET A.Ş.,GZNMI|Gezinomi Seyahat Turizm Ticaret|GEZİNOMİ SEYAHAT TURİZM TİCARET A.Ş.
+HALKB.IS,HALKB.IS,Türkiye Halk Bankası A.Ş.,TÜRKİYE HALK BANKASI A.Ş.,HALKB|Türkiye Halk Bankası|Turkiye Halk Bankasi|TÜRKİYE HALK BANKASI A.Ş.
+HALKF.IS,HALKF.IS,Halk Finansal Kiralama A.Ş.,HALK FİNANSAL KİRALAMA A.Ş.,HALKF|Halk Finansal Kiralama|HALK FİNANSAL KİRALAMA A.Ş.
+HALKI.IS,HALKI.IS,Halk Yatırım Menkul Değerler A.Ş.,HALK YATIRIM MENKUL DEĞERLER A.Ş.,HALKI|Halk Yatırım Menkul Değerler|Halk Yatirim Menkul Degerler|HALK YATIRIM MENKUL DEĞERLER A.Ş.
+HATEK.IS,HATEK.IS,Hateks Hatay Tekstil İşletmeleri A.Ş.,HATEKS HATAY TEKSTİL İŞLETMELERİ A.Ş.,HATEK|Hateks Hatay Tekstil İşletmeleri|Hateks Hatay Tekstil Isletmeleri|HATEKS HATAY TEKSTİL İŞLETMELERİ A.Ş.
+HATSN.IS,HATSN.IS,Hat-San Gemi İnşaa Bakım Onarım Deniz Nakliyat Sanayi ve Ticaret A.Ş.,HAT-SAN GEMİ İNŞAA BAKIM ONARIM DENİZ NAKLİYAT SANAYİ VE TİCARET A.Ş.,HATSN|Hat-San Gemi İnşaa Bakım Onarım Deniz Nakliyat|Hat-San Gemi Insaa Bakim Onarim Deniz Nakliyat|HAT-SAN GEMİ İNŞAA BAKIM ONARIM DENİZ NAKLİYAT SANAYİ VE TİCARET A.Ş.
+HAYVK.IS,HAYVK.IS,Hayat Varlık Kiralama A.Ş.,HAYAT VARLIK KİRALAMA A.Ş.,HAYVK|Hayat Varlık Kiralama|Hayat Varlik Kiralama|HAYAT VARLIK KİRALAMA A.Ş.
+HDFFL.IS,HDFFL.IS,Hedef Araç Kiralama ve Servis A.Ş.,HEDEF ARAÇ KİRALAMA VE SERVİS A.Ş.,HDFFL|Hedef Araç Kiralama ve Servis|Hedef Arac Kiralama ve Servis|HEDEF ARAÇ KİRALAMA VE SERVİS A.Ş.
+HDFGS.IS,HDFGS.IS,Hedef Girişim Sermayesi Yatırım Ortaklığı A.Ş.,HEDEF GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,HDFGS|Hedef Girişim Sermayesi Yatırım Ortaklığı|Hedef Girisim Sermayesi Yatirim Ortakligi|HEDEF GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+HDFVK.IS,HDFVK.IS,Hedef Varlık Kiralama A.Ş.,HEDEF VARLIK KİRALAMA A.Ş.,HDFVK|Hedef Varlık Kiralama|Hedef Varlik Kiralama|HEDEF VARLIK KİRALAMA A.Ş.
+HDFYB.IS,HDFYB.IS,Hedef Yatırım Bankası A.Ş.,HEDEF YATIRIM BANKASI A.Ş.,HDFYB|Hedef Yatırım Bankası|Hedef Yatirim Bankasi|HEDEF YATIRIM BANKASI A.Ş.
+HEDEF.IS,HEDEF.IS,Hedef Holding A.Ş.,HEDEF HOLDİNG A.Ş.,HEDEF|Hedef Holding|HEDEF HOLDİNG A.Ş.
+HEKTS.IS,HEKTS.IS,Hektaş Ticaret T.A.Ş.,HEKTAŞ TİCARET T.A.Ş.,HEKTS|Hektaş Ticaret|Hektas Ticaret|HEKTAŞ TİCARET T.A.Ş.
+HKTM.IS,HKTM.IS,Hidropar Hareket Kontrol Teknolojileri Merkezi Sanayi ve Ticaret A.Ş.,HİDROPAR HAREKET KONTROL TEKNOLOJİLERİ MERKEZİ SANAYİ VE TİCARET A.Ş.,HKTM|Hidropar Hareket Kontrol Teknolojileri Merkezi|HİDROPAR HAREKET KONTROL TEKNOLOJİLERİ MERKEZİ SANAYİ VE TİCARET A.Ş.
+HLGYO.IS,HLGYO.IS,Halk Gayrimenkul Yatırım Ortaklığı A.Ş.,HALK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,HLGYO|Halk Gayrimenkul Yatırım Ortaklığı|Halk Gayrimenkul Yatirim Ortakligi|HALK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+HLVKS.IS,HLVKS.IS,Halk Varlık Kiralama A.Ş.,HALK VARLIK KİRALAMA A.Ş.,HLVKS|Halk Varlık Kiralama|Halk Varlik Kiralama|HALK VARLIK KİRALAMA A.Ş.
+HLY.IS,HLY.IS,Halk Yatırım Menkul Değerler A.Ş.,HALK YATIRIM MENKUL DEĞERLER A.Ş.,HLY|Halk Yatırım Menkul Değerler|Halk Yatirim Menkul Degerler|HALK YATIRIM MENKUL DEĞERLER A.Ş.
+HOROZ.IS,HOROZ.IS,Horoz Lojistik Kargo Hizmetleri ve Ticaret A.Ş.,HOROZ LOJİSTİK KARGO HİZMETLERİ VE TİCARET A.Ş.,HOROZ|Horoz Lojistik Kargo Hizmetleri ve Ticaret|HOROZ LOJİSTİK KARGO HİZMETLERİ VE TİCARET A.Ş.
+HRKET.IS,HRKET.IS,Hareket Proje Taşımacılığı ve Yük Mühendisliği A.Ş.,HAREKET PROJE TAŞIMACILIĞI VE YÜK MÜHENDİSLİĞİ A.Ş.,HRKET|Hareket Proje Taşımacılığı ve Yük Mühendisliği|Hareket Proje Tasimaciligi ve Yuk Muhendisligi|HAREKET PROJE TAŞIMACILIĞI VE YÜK MÜHENDİSLİĞİ A.Ş.
+HTTBT.IS,HTTBT.IS,Hitit Bilgisayar Hizmetleri A.Ş.,HİTİT BİLGİSAYAR HİZMETLERİ A.Ş.,HTTBT|Hitit Bilgisayar Hizmetleri|HİTİT BİLGİSAYAR HİZMETLERİ A.Ş.
+HUBVC.IS,HUBVC.IS,Hub Girişim Sermayesi Yatırım Ortaklığı A.Ş.,HUB GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,HUBVC|Hub Girişim Sermayesi Yatırım Ortaklığı|Hub Girisim Sermayesi Yatirim Ortakligi|HUB GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+HUNER.IS,HUNER.IS,Hun Yenilenebilir Enerji Üretim A.Ş.,HUN YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.,HUNER|Hun Yenilenebilir Enerji Üretim|Hun Yenilenebilir Enerji Uretim|HUN YENİLENEBİLİR ENERJİ ÜRETİM A.Ş.
+HURGZ.IS,HURGZ.IS,Hürriyet Gazetecilik ve Matbaacılık A.Ş.,HÜRRİYET GAZETECİLİK VE MATBAACILIK A.Ş.,HURGZ|Hürriyet Gazetecilik ve Matbaacılık|Hurriyet Gazetecilik ve Matbaacilik|HÜRRİYET GAZETECİLİK VE MATBAACILIK A.Ş.
+HUZFA.IS,HUZFA.IS,Huzur Faktoring A.Ş.,HUZUR FAKTORİNG A.Ş.,HUZFA|Huzur Faktoring|HUZUR FAKTORİNG A.Ş.
+HYB.IS,HYB.IS,Hedef Yatırım Bankası A.Ş.,HEDEF YATIRIM BANKASI A.Ş.,HYB|Hedef Yatırım Bankası|Hedef Yatirim Bankasi|HEDEF YATIRIM BANKASI A.Ş.
+IAZ.IS,IAZ.IS,Invest-Az Yatırım Menkul Değerler A.Ş.,INVEST-AZ YATIRIM MENKUL DEĞERLER A.Ş.,IAZ|Invest-Az Yatırım Menkul Değerler|Invest-Az Yatirim Menkul Degerler|INVEST-AZ YATIRIM MENKUL DEĞERLER A.Ş.
+ICB.IS,ICB.IS,Icbc Turkey Bank A.Ş.,ICBC TURKEY BANK A.Ş.,ICB|Icbc Turkey Bank|ICBC TURKEY BANK A.Ş.
+ICBCT.IS,ICBCT.IS,Icbc Turkey Bank A.Ş.,ICBC TURKEY BANK A.Ş.,ICBCT|Icbc Turkey Bank|ICBC TURKEY BANK A.Ş.
+ICUGS.IS,ICUGS.IS,Icu Girişim Sermayesi Yatırım Ortaklığı A.Ş.,ICU GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,ICUGS|Icu Girişim Sermayesi Yatırım Ortaklığı|Icu Girisim Sermayesi Yatirim Ortakligi|ICU GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+IDGYO.IS,IDGYO.IS,İdealist Gayrimenkul Yatırım Ortaklığı A.Ş.,İDEALİST GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,IDGYO|İdealist Gayrimenkul Yatırım Ortaklığı|Idealist Gayrimenkul Yatirim Ortakligi|İDEALİST GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+IEYHO.IS,IEYHO.IS,Işıklar Enerji ve Yapı Holding A.Ş.,IŞIKLAR ENERJİ VE YAPI HOLDİNG A.Ş.,IEYHO|Işıklar Enerji ve Yapı Holding|Isiklar Enerji ve Yapi Holding|IŞIKLAR ENERJİ VE YAPI HOLDİNG A.Ş.
+IHAAS.IS,IHAAS.IS,İhlas Haber Ajansı A.Ş.,İHLAS HABER AJANSI A.Ş.,IHAAS|İhlas Haber Ajansı|Ihlas Haber Ajansi|İHLAS HABER AJANSI A.Ş.
+IHEVA.IS,IHEVA.IS,İhlas Ev Aletleri İmalat Sanayi ve Ticaret A.Ş.,İHLAS EV ALETLERİ İMALAT SANAYİ VE TİCARET A.Ş.,IHEVA|İhlas Ev Aletleri İmalat|Ihlas Ev Aletleri Imalat|İHLAS EV ALETLERİ İMALAT SANAYİ VE TİCARET A.Ş.
+IHGZT.IS,IHGZT.IS,İhlas Gazetecilik A.Ş.,İHLAS GAZETECİLİK A.Ş.,IHGZT|İhlas Gazetecilik|Ihlas Gazetecilik|İHLAS GAZETECİLİK A.Ş.
+IHLAS.IS,IHLAS.IS,İhlas Holding A.Ş.,İHLAS HOLDİNG A.Ş.,IHLAS|İhlas Holding|Ihlas Holding|İHLAS HOLDİNG A.Ş.
+IHLGM.IS,IHLGM.IS,İhlas Gayrimenkul Proje Geliştirme ve Ticaret A.Ş.,İHLAS GAYRİMENKUL PROJE GELİŞTİRME VE TİCARET A.Ş.,IHLGM|İhlas Gayrimenkul Proje Geliştirme ve Ticaret|Ihlas Gayrimenkul Proje Gelistirme ve Ticaret|İHLAS GAYRİMENKUL PROJE GELİŞTİRME VE TİCARET A.Ş.
+IHYAY.IS,IHYAY.IS,İhlas Yayın Holding A.Ş.,İHLAS YAYIN HOLDİNG A.Ş.,IHYAY|İhlas Yayın Holding|Ihlas Yayin Holding|İHLAS YAYIN HOLDİNG A.Ş.
+IMASM.IS,IMASM.IS,İmaş Makina Sanayi A.Ş.,İMAŞ MAKİNA SANAYİ A.Ş.,IMASM|İmaş Makina Sanayi|Imas Makina Sanayi|İMAŞ MAKİNA SANAYİ A.Ş.
+INALR.IS,INALR.IS,İnallar Otomotiv Sanayi ve Ticaret A.Ş.,İNALLAR OTOMOTİV SANAYİ VE TİCARET A.Ş.,INALR|İnallar Otomotiv|Inallar Otomotiv|İNALLAR OTOMOTİV SANAYİ VE TİCARET A.Ş.
+INDES.IS,INDES.IS,İndeks Bilgisayar Sistemleri Mühendislik Sanayi ve Ticaret A.Ş.,İNDEKS BİLGİSAYAR SİSTEMLERİ MÜHENDİSLİK SANAYİ VE TİCARET A.Ş.,INDES|İndeks Bilgisayar Sistemleri Mühendislik|Indeks Bilgisayar Sistemleri Muhendislik|İNDEKS BİLGİSAYAR SİSTEMLERİ MÜHENDİSLİK SANAYİ VE TİCARET A.Ş.
+INFO.IS,INFO.IS,İnfo Yatırım Menkul Değerler A.Ş.,İNFO YATIRIM MENKUL DEĞERLER A.Ş.,INFO|İnfo Yatırım Menkul Değerler|Info Yatirim Menkul Degerler|İNFO YATIRIM MENKUL DEĞERLER A.Ş.
+INGRM.IS,INGRM.IS,Ingram Micro Bilişim Sistemleri A.Ş.,INGRAM MİCRO BİLİŞİM SİSTEMLERİ A.Ş.,INGRM|Ingram Micro Bilişim Sistemleri|Ingram Micro Bilisim Sistemleri|INGRAM MİCRO BİLİŞİM SİSTEMLERİ A.Ş.
+INTEK.IS,INTEK.IS,İnnosa Teknoloji A.Ş.,İNNOSA TEKNOLOJİ A.Ş.,INTEK|İnnosa Teknoloji|Innosa Teknoloji|İNNOSA TEKNOLOJİ A.Ş.
+INTEM.IS,INTEM.IS,İntema İnşaat ve Tesisat Malzemeleri Yatırım ve Pazarlama A.Ş.,İNTEMA İNŞAAT VE TESİSAT MALZEMELERİ YATIRIM VE PAZARLAMA A.Ş.,INTEM|İntema İnşaat ve Tesisat Malzemeleri Yatırım ve Pazarlama|Intema Insaat ve Tesisat Malzemeleri Yatirim ve Pazarlama|İNTEMA İNŞAAT VE TESİSAT MALZEMELERİ YATIRIM VE PAZARLAMA A.Ş.
+INTET.IS,INTET.IS,İntetra Teknoloji ve Bilişim Hizmetleri A.Ş.,İNTETRA TEKNOLOJİ VE BİLİŞİM HİZMETLERİ A.Ş.,INTET|İntetra Teknoloji ve Bilişim Hizmetleri|Intetra Teknoloji ve Bilisim Hizmetleri|İNTETRA TEKNOLOJİ VE BİLİŞİM HİZMETLERİ A.Ş.
+INVAZ.IS,INVAZ.IS,Invest-Az Yatırım Menkul Değerler A.Ş.,INVEST-AZ YATIRIM MENKUL DEĞERLER A.Ş.,INVAZ|Invest-Az Yatırım Menkul Değerler|Invest-Az Yatirim Menkul Degerler|INVEST-AZ YATIRIM MENKUL DEĞERLER A.Ş.
+INVEO.IS,INVEO.IS,Inveo Yatırım Holding A.Ş.,INVEO YATIRIM HOLDİNG A.Ş.,INVEO|Inveo Yatırım Holding|Inveo Yatirim Holding|INVEO YATIRIM HOLDİNG A.Ş.
+INVES.IS,INVES.IS,Investco Holding A.Ş.,INVESTCO HOLDİNG A.Ş.,INVES|Investco Holding|INVESTCO HOLDİNG A.Ş.
+ISATR.IS,ISATR.IS,Türkiye İş Bankası A.Ş.,TÜRKİYE İŞ BANKASI A.Ş.,ISATR|Türkiye İş Bankası|Turkiye Is Bankasi|TÜRKİYE İŞ BANKASI A.Ş.
+ISBIR.IS,ISBIR.IS,İşbir Holding A.Ş.,İŞBİR HOLDİNG A.Ş.,ISBIR|İşbir Holding|Isbir Holding|İŞBİR HOLDİNG A.Ş.
+ISBTR.IS,ISBTR.IS,Türkiye İş Bankası A.Ş.,TÜRKİYE İŞ BANKASI A.Ş.,ISBTR|Türkiye İş Bankası|Turkiye Is Bankasi|TÜRKİYE İŞ BANKASI A.Ş.
+ISCTR.IS,ISCTR.IS,Türkiye İş Bankası A.Ş.,TÜRKİYE İŞ BANKASI A.Ş.,ISCTR|Türkiye İş Bankası|Turkiye Is Bankasi|TÜRKİYE İŞ BANKASI A.Ş.
+ISDMR.IS,ISDMR.IS,İskenderun Demir ve Çelik A.Ş.,İSKENDERUN DEMİR VE ÇELİK A.Ş.,ISDMR|İskenderun Demir ve Çelik|Iskenderun Demir ve Celik|İSKENDERUN DEMİR VE ÇELİK A.Ş.
+ISFAK.IS,ISFAK.IS,İş Faktoring A.Ş.,İŞ FAKTORİNG A.Ş.,ISFAK|İş Faktoring|Is Faktoring|İŞ FAKTORİNG A.Ş.
+ISFIN.IS,ISFIN.IS,İş Finansal Kiralama A.Ş.,İŞ FİNANSAL KİRALAMA A.Ş.,ISFIN|İş Finansal Kiralama|Is Finansal Kiralama|İŞ FİNANSAL KİRALAMA A.Ş.
+ISGSY.IS,ISGSY.IS,İş Girişim Sermayesi Yatırım Ortaklığı A.Ş.,İŞ GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,ISGSY|İş Girişim Sermayesi Yatırım Ortaklığı|Is Girisim Sermayesi Yatirim Ortakligi|İŞ GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+ISGYO.IS,ISGYO.IS,İş Gayrimenkul Yatırım Ortaklığı A.Ş.,İŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ISGYO|İş Gayrimenkul Yatırım Ortaklığı|Is Gayrimenkul Yatirim Ortakligi|İŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ISKPL.IS,ISKPL.IS,Işık Plastik Sanayi ve Dış Ticaret Pazarlama A.Ş.,IŞIK PLASTİK SANAYİ VE DIŞ TİCARET PAZARLAMA A.Ş.,ISKPL|Işık Plastik Sanayi ve Dış Ticaret Pazarlama|Isik Plastik Sanayi ve Dis Ticaret Pazarlama|IŞIK PLASTİK SANAYİ VE DIŞ TİCARET PAZARLAMA A.Ş.
+ISKUR.IS,ISKUR.IS,Türkiye İş Bankası A.Ş.,TÜRKİYE İŞ BANKASI A.Ş.,ISKUR|Türkiye İş Bankası|Turkiye Is Bankasi|TÜRKİYE İŞ BANKASI A.Ş.
+ISMEN.IS,ISMEN.IS,İş Yatırım Menkul Değerler A.Ş.,İŞ YATIRIM MENKUL DEĞERLER A.Ş.,ISMEN|İş Yatırım Menkul Değerler|Is Yatirim Menkul Degerler|İŞ YATIRIM MENKUL DEĞERLER A.Ş.
+ISSEN.IS,ISSEN.IS,İşbir Sentetik Dokuma Sanayi A.Ş.,İŞBİR SENTETİK DOKUMA SANAYİ A.Ş.,ISSEN|İşbir Sentetik Dokuma Sanayi|Isbir Sentetik Dokuma Sanayi|İŞBİR SENTETİK DOKUMA SANAYİ A.Ş.
+ISTFK.IS,ISTFK.IS,İstanbul Faktoring A.Ş.,İSTANBUL FAKTORİNG A.Ş.,ISTFK|İstanbul Faktoring|Istanbul Faktoring|İSTANBUL FAKTORİNG A.Ş.
+ISTVY.IS,ISTVY.IS,İstanbul Varlık Yönetim A.Ş.,İSTANBUL VARLIK YÖNETİM A.Ş.,ISTVY|İstanbul Varlık Yönetim|Istanbul Varlik Yonetim|İSTANBUL VARLIK YÖNETİM A.Ş.
+ISVEA.IS,ISVEA.IS,İsvea Seramik ve Banyo Ürünleri Sanayi A.Ş.,İSVEA SERAMİK VE BANYO ÜRÜNLERİ SANAYİ A.Ş.,ISVEA|İsvea Seramik ve Banyo Ürünleri Sanayi|Isvea Seramik ve Banyo Urunleri Sanayi|İSVEA SERAMİK VE BANYO ÜRÜNLERİ SANAYİ A.Ş.
+ISYAT.IS,ISYAT.IS,İş Yatırım Ortaklığı A.Ş.,İŞ YATIRIM ORTAKLIĞI A.Ş.,ISYAT|İş Yatırım Ortaklığı|Is Yatirim Ortakligi|İŞ YATIRIM ORTAKLIĞI A.Ş.
+IYF.IS,IYF.IS,İnfo Yatırım Menkul Değerler A.Ş.,İNFO YATIRIM MENKUL DEĞERLER A.Ş.,IYF|İnfo Yatırım Menkul Değerler|Info Yatirim Menkul Degerler|İNFO YATIRIM MENKUL DEĞERLER A.Ş.
+IYM.IS,IYM.IS,İş Yatırım Menkul Değerler A.Ş.,İŞ YATIRIM MENKUL DEĞERLER A.Ş.,IYM|İş Yatırım Menkul Değerler|Is Yatirim Menkul Degerler|İŞ YATIRIM MENKUL DEĞERLER A.Ş.
+IZENR.IS,IZENR.IS,İzdemir Enerji Elektrik Üretim A.Ş.,İZDEMİR ENERJİ ELEKTRİK ÜRETİM A.Ş.,IZENR|İzdemir Enerji Elektrik Üretim|Izdemir Enerji Elektrik Uretim|İZDEMİR ENERJİ ELEKTRİK ÜRETİM A.Ş.
+IZFAS.IS,IZFAS.IS,İzmir Fırça Sanayi ve Ticaret A.Ş.,İZMİR FIRÇA SANAYİ VE TİCARET A.Ş.,IZFAS|İzmir Fırça|Izmir Firca|İZMİR FIRÇA SANAYİ VE TİCARET A.Ş.
+IZINV.IS,IZINV.IS,İz Yatırım Holding A.Ş.,İZ YATIRIM HOLDİNG A.Ş.,IZINV|İz Yatırım Holding|Iz Yatirim Holding|İZ YATIRIM HOLDİNG A.Ş.
+IZMDC.IS,IZMDC.IS,İzmir Demir Çelik Sanayi A.Ş.,İZMİR DEMİR ÇELİK SANAYİ A.Ş.,IZMDC|İzmir Demir Çelik Sanayi|Izmir Demir Celik Sanayi|İZMİR DEMİR ÇELİK SANAYİ A.Ş.
+JANTS.IS,JANTS.IS,Jantsa Jant Sanayi ve Ticaret A.Ş.,JANTSA JANT SANAYİ VE TİCARET A.Ş.,JANTS|Jantsa Jant|JANTSA JANT SANAYİ VE TİCARET A.Ş.
+KAPLM.IS,KAPLM.IS,Kaplamin Ambalaj Sanayi ve Ticaret A.Ş.,KAPLAMİN AMBALAJ SANAYİ VE TİCARET A.Ş.,KAPLM|Kaplamin Ambalaj|KAPLAMİN AMBALAJ SANAYİ VE TİCARET A.Ş.
+KARCL.IS,KARCL.IS,Kardemir Çelik Sanayi A.Ş.,KARDEMİR ÇELİK SANAYİ A.Ş.,KARCL|Kardemir Çelik Sanayi|Kardemir Celik Sanayi|KARDEMİR ÇELİK SANAYİ A.Ş.
+KAREL.IS,KAREL.IS,Karel Elektronik Sanayi ve Ticaret A.Ş.,KAREL ELEKTRONİK SANAYİ VE TİCARET A.Ş.,KAREL|Karel Elektronik|KAREL ELEKTRONİK SANAYİ VE TİCARET A.Ş.
+KARSN.IS,KARSN.IS,Karsan Otomotiv Sanayii ve Ticaret A.Ş.,KARSAN OTOMOTİV SANAYİİ VE TİCARET A.Ş.,KARSN|Karsan Otomotiv Sanayii ve Ticaret|KARSAN OTOMOTİV SANAYİİ VE TİCARET A.Ş.
+KARTN.IS,KARTN.IS,Kartonsan Karton Sanayi ve Ticaret A.Ş.,KARTONSAN KARTON SANAYİ VE TİCARET A.Ş.,KARTN|Kartonsan Karton|KARTONSAN KARTON SANAYİ VE TİCARET A.Ş.
+KATMR.IS,KATMR.IS,Katmerciler Araç Üstü Ekipman Sanayi ve Ticaret A.Ş.,KATMERCİLER ARAÇ ÜSTÜ EKİPMAN SANAYİ VE TİCARET A.Ş.,KATMR|Katmerciler Araç Üstü Ekipman|Katmerciler Arac Ustu Ekipman|KATMERCİLER ARAÇ ÜSTÜ EKİPMAN SANAYİ VE TİCARET A.Ş.
+KATVK.IS,KATVK.IS,Katılım Varlık Kiralama A.Ş.,KATILIM VARLIK KİRALAMA A.Ş.,KATVK|Katılım Varlık Kiralama|Katilim Varlik Kiralama|KATILIM VARLIK KİRALAMA A.Ş.
+KAYSE.IS,KAYSE.IS,Kayseri Şeker Fabrikası A.Ş.,KAYSERİ ŞEKER FABRİKASI A.Ş.,KAYSE|Kayseri Şeker Fabrikası|Kayseri Seker Fabrikasi|KAYSERİ ŞEKER FABRİKASI A.Ş.
+KBORU.IS,KBORU.IS,Kuzey Boru A.Ş.,KUZEY BORU A.Ş.,KBORU|Kuzey Boru|KUZEY BORU A.Ş.
+KCAER.IS,KCAER.IS,Kocaer Çelik Sanayi ve Ticaret A.Ş.,KOCAER ÇELİK SANAYİ VE TİCARET A.Ş.,KCAER|Kocaer Çelik|Kocaer Celik|KOCAER ÇELİK SANAYİ VE TİCARET A.Ş.
+KCHOL.IS,KCHOL.IS,Koç Holding A.Ş.,KOÇ HOLDİNG A.Ş.,KCHOL|Koç Holding|Koc Holding|KOÇ HOLDİNG A.Ş.
+KENT.IS,KENT.IS,Kent Gıda Maddeleri Sanayii ve Ticaret A.Ş.,KENT GIDA MADDELERİ SANAYİİ VE TİCARET A.Ş.,KENT|Kent Gıda Maddeleri Sanayii ve Ticaret|Kent Gida Maddeleri Sanayii ve Ticaret|KENT GIDA MADDELERİ SANAYİİ VE TİCARET A.Ş.
+KERVN.IS,KERVN.IS,Kervansaray Yatırım Holding A.Ş.,KERVANSARAY YATIRIM HOLDİNG A.Ş.,KERVN|Kervansaray Yatırım Holding|Kervansaray Yatirim Holding|KERVANSARAY YATIRIM HOLDİNG A.Ş.
+KFEIN.IS,KFEIN.IS,Kafein Yazılım Hizmetleri Ticaret A.Ş.,KAFEİN YAZILIM HİZMETLERİ TİCARET A.Ş.,KFEIN|Kafein Yazılım Hizmetleri Ticaret|Kafein Yazilim Hizmetleri Ticaret|KAFEİN YAZILIM HİZMETLERİ TİCARET A.Ş.
+KFILO.IS,KFILO.IS,Kayatur Filo Kiralama A.Ş.,KAYATUR FİLO KİRALAMA A.Ş.,KFILO|Kayatur Filo Kiralama|KAYATUR FİLO KİRALAMA A.Ş.
+KGYO.IS,KGYO.IS,Koray Gayrimenkul Yatırım Ortaklığı A.Ş.,KORAY GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,KGYO|Koray Gayrimenkul Yatırım Ortaklığı|Koray Gayrimenkul Yatirim Ortakligi|KORAY GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+KIMMR.IS,KIMMR.IS,Ersan Alışveriş Hizmetleri ve Gıda Sanayi Ticaret A.Ş.,ERSAN ALIŞVERİŞ HİZMETLERİ VE GIDA SANAYİ TİCARET A.Ş.,KIMMR|Ersan Alışveriş Hizmetleri ve Gıda Sanayi Ticaret|Ersan Alisveris Hizmetleri ve Gida Sanayi Ticaret|ERSAN ALIŞVERİŞ HİZMETLERİ VE GIDA SANAYİ TİCARET A.Ş.
+KLGYO.IS,KLGYO.IS,Kiler Gayrimenkul Yatırım Ortaklığı A.Ş.,KİLER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,KLGYO|Kiler Gayrimenkul Yatırım Ortaklığı|Kiler Gayrimenkul Yatirim Ortakligi|KİLER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+KLKIM.IS,KLKIM.IS,Kalekim Kimyevi Maddeler Sanayi ve Ticaret A.Ş.,KALEKİM KİMYEVİ MADDELER SANAYİ VE TİCARET A.Ş.,KLKIM|Kalekim Kimyevi Maddeler|KALEKİM KİMYEVİ MADDELER SANAYİ VE TİCARET A.Ş.
+KLMSN.IS,KLMSN.IS,Klimasan Klima Sanayi ve Ticaret A.Ş.,KLİMASAN KLİMA SANAYİ VE TİCARET A.Ş.,KLMSN|Klimasan Klima|KLİMASAN KLİMA SANAYİ VE TİCARET A.Ş.
+KLN.IS,KLN.IS,Türkiye Kalkınma ve Yatırım Bankası A.Ş.,TÜRKİYE KALKINMA VE YATIRIM BANKASI A.Ş.,KLN|Türkiye Kalkınma ve Yatırım Bankası|Turkiye Kalkinma ve Yatirim Bankasi|TÜRKİYE KALKINMA VE YATIRIM BANKASI A.Ş.
+KLNMA.IS,KLNMA.IS,Türkiye Kalkınma ve Yatırım Bankası A.Ş.,TÜRKİYE KALKINMA VE YATIRIM BANKASI A.Ş.,KLNMA|Türkiye Kalkınma ve Yatırım Bankası|Turkiye Kalkinma ve Yatirim Bankasi|TÜRKİYE KALKINMA VE YATIRIM BANKASI A.Ş.
+KLRHO.IS,KLRHO.IS,Kiler Holding A.Ş.,KİLER HOLDİNG A.Ş.,KLRHO|Kiler Holding|KİLER HOLDİNG A.Ş.
+KLSER.IS,KLSER.IS,Kaleseramik Çanakkale Kalebodur Seramik Sanayi A.Ş.,KALESERAMİK ÇANAKKALE KALEBODUR SERAMİK SANAYİ A.Ş.,KLSER|Kaleseramik Çanakkale Kalebodur Seramik Sanayi|Kaleseramik Canakkale Kalebodur Seramik Sanayi|KALESERAMİK ÇANAKKALE KALEBODUR SERAMİK SANAYİ A.Ş.
+KLSYN.IS,KLSYN.IS,Koleksiyon Mobilya Sanayi A.Ş.,KOLEKSİYON MOBİLYA SANAYİ A.Ş.,KLSYN|Koleksiyon Mobilya Sanayi|KOLEKSİYON MOBİLYA SANAYİ A.Ş.
+KLVKS.IS,KLVKS.IS,Kalkınma Yatırım Varlık Kiralama A.Ş.,KALKINMA YATIRIM VARLIK KİRALAMA A.Ş.,KLVKS|Kalkınma Yatırım Varlık Kiralama|Kalkinma Yatirim Varlik Kiralama|KALKINMA YATIRIM VARLIK KİRALAMA A.Ş.
+KLYPV.IS,KLYPV.IS,Kalyon Güneş Teknolojileri Üretim A.Ş.,KALYON GÜNEŞ TEKNOLOJİLERİ ÜRETİM A.Ş.,KLYPV|Kalyon Güneş Teknolojileri Üretim|Kalyon Gunes Teknolojileri Uretim|KALYON GÜNEŞ TEKNOLOJİLERİ ÜRETİM A.Ş.
+KMPUR.IS,KMPUR.IS,Kimteks Poliüretan Sanayi ve Ticaret A.Ş.,KİMTEKS POLİÜRETAN SANAYİ VE TİCARET A.Ş.,KMPUR|Kimteks Poliüretan|Kimteks Poliuretan|KİMTEKS POLİÜRETAN SANAYİ VE TİCARET A.Ş.
+KNFRT.IS,KNFRT.IS,Konfrut Tarım A.Ş.,KONFRUT TARIM A.Ş.,KNFRT|Konfrut Tarım|Konfrut Tarim|KONFRUT TARIM A.Ş.
+KNTFA.IS,KNTFA.IS,Kent Finans Faktoring A.Ş.,KENT FİNANS FAKTORİNG A.Ş.,KNTFA|Kent Finans Faktoring|KENT FİNANS FAKTORİNG A.Ş.
+KOCFN.IS,KOCFN.IS,Koç Finansman A.Ş.,KOÇ FİNANSMAN A.Ş.,KOCFN|Koç Finansman|Koc Finansman|KOÇ FİNANSMAN A.Ş.
+KOCMT.IS,KOCMT.IS,Koç Metalurji A.Ş.,KOÇ METALURJİ A.Ş.,KOCMT|Koç Metalurji|Koc Metalurji|KOÇ METALURJİ A.Ş.
+KONKA.IS,KONKA.IS,Konya Kağıt Sanayi ve Ticaret A.Ş.,KONYA KAĞIT SANAYİ VE TİCARET A.Ş.,KONKA|Konya Kağıt|Konya Kagit|KONYA KAĞIT SANAYİ VE TİCARET A.Ş.
+KONTR.IS,KONTR.IS,Kontrolmatik Teknoloji Enerji ve Mühendislik A.Ş.,KONTROLMATİK TEKNOLOJİ ENERJİ VE MÜHENDİSLİK A.Ş.,KONTR|Kontrolmatik Teknoloji Enerji ve Mühendislik|Kontrolmatik Teknoloji Enerji ve Muhendislik|KONTROLMATİK TEKNOLOJİ ENERJİ VE MÜHENDİSLİK A.Ş.
+KONYA.IS,KONYA.IS,Konya Çimento Sanayii A.Ş.,KONYA ÇİMENTO SANAYİİ A.Ş.,KONYA|Konya Çimento Sanayii|Konya Cimento Sanayii|KONYA ÇİMENTO SANAYİİ A.Ş.
+KOPOL.IS,KOPOL.IS,Koza Polyester Sanayi ve Ticaret A.Ş.,KOZA POLYESTER SANAYİ VE TİCARET A.Ş.,KOPOL|Koza Polyester|KOZA POLYESTER SANAYİ VE TİCARET A.Ş.
+KORDS.IS,KORDS.IS,Kordsa Teknik Tekstil A.Ş.,KORDSA TEKNİK TEKSTİL A.Ş.,KORDS|Kordsa Teknik Tekstil|KORDSA TEKNİK TEKSTİL A.Ş.
+KORTS.IS,KORTS.IS,Korteks Mensucat Sanayi ve Ticaret A.Ş.,KORTEKS MENSUCAT SANAYİ VE TİCARET A.Ş.,KORTS|Korteks Mensucat|KORTEKS MENSUCAT SANAYİ VE TİCARET A.Ş.
+KOTON.IS,KOTON.IS,Koton Mağazacılık Tekstil Sanayi ve Ticaret A.Ş.,KOTON MAĞAZACILIK TEKSTİL SANAYİ VE TİCARET A.Ş.,KOTON|Koton Mağazacılık Tekstil|Koton Magazacilik Tekstil|KOTON MAĞAZACILIK TEKSTİL SANAYİ VE TİCARET A.Ş.
+KPEKS.IS,KPEKS.IS,Kapeks Kimya Sanayi A.Ş.,KAPEKS KİMYA SANAYİ A.Ş.,KPEKS|Kapeks Kimya Sanayi|KAPEKS KİMYA SANAYİ A.Ş.
+KPTGY.IS,KPTGY.IS,Kapital Gayrimenkul Yatırımı Geliştirme ve İşletmecilik A.Ş.,KAPİTAL GAYRİMENKUL YATIRIMI GELİŞTİRME VE İŞLETMECİLİK A.Ş.,KPTGY|Kapital Gayrimenkul Yatırımı Geliştirme ve İşletmecilik|Kapital Gayrimenkul Yatirimi Gelistirme ve Isletmecilik|KAPİTAL GAYRİMENKUL YATIRIMI GELİŞTİRME VE İŞLETMECİLİK A.Ş.
+KRDMA.IS,KRDMA.IS,Kardemir Karabük Demir Çelik Sanayi ve Ticaret A.Ş.,KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.,KRDMA|Kardemir Karabük Demir Çelik|Kardemir Karabuk Demir Celik|KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.
+KRDMB.IS,KRDMB.IS,Kardemir Karabük Demir Çelik Sanayi ve Ticaret A.Ş.,KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.,KRDMB|Kardemir Karabük Demir Çelik|Kardemir Karabuk Demir Celik|KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.
+KRDMD.IS,KRDMD.IS,Kardemir Karabük Demir Çelik Sanayi ve Ticaret A.Ş.,KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.,KRDMD|Kardemir Karabük Demir Çelik|Kardemir Karabuk Demir Celik|KARDEMİR KARABÜK DEMİR ÇELİK SANAYİ VE TİCARET A.Ş.
+KRGYO.IS,KRGYO.IS,Körfez Gayrimenkul Yatırım Ortaklığı A.Ş.,KÖRFEZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,KRGYO|Körfez Gayrimenkul Yatırım Ortaklığı|Korfez Gayrimenkul Yatirim Ortakligi|KÖRFEZ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+KRONT.IS,KRONT.IS,Kron Teknoloji A.Ş.,KRON TEKNOLOJİ A.Ş.,KRONT|Kron Teknoloji|KRON TEKNOLOJİ A.Ş.
+KRPLS.IS,KRPLS.IS,Koroplast Temizlik Ambalaj Ürünleri Sanayi ve Dış Ticaret A.Ş.,KOROPLAST TEMİZLİK AMBALAJ ÜRÜNLERİ SANAYİ VE DIŞ TİCARET A.Ş.,KRPLS|Koroplast Temizlik Ambalaj Ürünleri Sanayi ve Dış Ticaret|Koroplast Temizlik Ambalaj Urunleri Sanayi ve Dis Ticaret|KOROPLAST TEMİZLİK AMBALAJ ÜRÜNLERİ SANAYİ VE DIŞ TİCARET A.Ş.
+KRSTL.IS,KRSTL.IS,Kristal Kola ve Meşrubat Sanayi Ticaret A.Ş.,KRİSTAL KOLA VE MEŞRUBAT SANAYİ TİCARET A.Ş.,KRSTL|Kristal Kola ve Meşrubat Sanayi Ticaret|Kristal Kola ve Mesrubat Sanayi Ticaret|KRİSTAL KOLA VE MEŞRUBAT SANAYİ TİCARET A.Ş.
+KRTEK.IS,KRTEK.IS,Karsu Tekstil Sanayii ve Ticaret A.Ş.,KARSU TEKSTİL SANAYİİ VE TİCARET A.Ş.,KRTEK|Karsu Tekstil Sanayii ve Ticaret|KARSU TEKSTİL SANAYİİ VE TİCARET A.Ş.
+KRVGD.IS,KRVGD.IS,Kervan Gıda Sanayi ve Ticaret A.Ş.,KERVAN GIDA SANAYİ VE TİCARET A.Ş.,KRVGD|Kervan Gıda|Kervan Gida|KERVAN GIDA SANAYİ VE TİCARET A.Ş.
+KSFIN.IS,KSFIN.IS,Koç Stellantis Finansman A.Ş.,KOÇ STELLANTİS FİNANSMAN A.Ş.,KSFIN|Koç Stellantis Finansman|Koc Stellantis Finansman|KOÇ STELLANTİS FİNANSMAN A.Ş.
+KSTUR.IS,KSTUR.IS,Kuştur Kuşadası Turizm Endüstrisi A.Ş.,KUŞTUR KUŞADASI TURİZM ENDÜSTRİSİ A.Ş.,KSTUR|Kuştur Kuşadası Turizm Endüstrisi|Kustur Kusadasi Turizm Endustrisi|KUŞTUR KUŞADASI TURİZM ENDÜSTRİSİ A.Ş.
+KTEST.IS,KTEST.IS,Kap Test A.Ş.,KAP TEST A.Ş.,KTEST|Kap Test|KAP TEST A.Ş.
+KTKVK.IS,KTKVK.IS,KT Kira Sertifikaları Varlık Kiralama A.Ş.,KT KİRA SERTİFİKALARI VARLIK KİRALAMA A.Ş.,KTKVK|KT Kira Sertifikaları Varlık Kiralama|KT Kira Sertifikalari Varlik Kiralama|KT KİRA SERTİFİKALARI VARLIK KİRALAMA A.Ş.
+KTLEV.IS,KTLEV.IS,Katılımevim Tasarruf Finansman A.Ş.,KATILIMEVİM TASARRUF FİNANSMAN A.Ş.,KTLEV|Katılımevim Tasarruf Finansman|Katilimevim Tasarruf Finansman|KATILIMEVİM TASARRUF FİNANSMAN A.Ş.
+KTSKR.IS,KTSKR.IS,Kütahya Şeker Fabrikası A.Ş.,KÜTAHYA ŞEKER FABRİKASI A.Ş.,KTSKR|Kütahya Şeker Fabrikası|Kutahya Seker Fabrikasi|KÜTAHYA ŞEKER FABRİKASI A.Ş.
+KTSVK.IS,KTSVK.IS,KT Sukuk Varlık Kiralama A.Ş.,KT SUKUK VARLIK KİRALAMA A.Ş.,KTSVK|KT Sukuk Varlık Kiralama|KT Sukuk Varlik Kiralama|KT SUKUK VARLIK KİRALAMA A.Ş.
+KUTPO.IS,KUTPO.IS,Kütahya Porselen Sanayi A.Ş.,KÜTAHYA PORSELEN SANAYİ A.Ş.,KUTPO|Kütahya Porselen Sanayi|Kutahya Porselen Sanayi|KÜTAHYA PORSELEN SANAYİ A.Ş.
+KUVVA.IS,KUVVA.IS,Kuvva Gıda Ticaret ve Sanayi Yatırımları A.Ş.,KUVVA GIDA TİCARET VE SANAYİ YATIRIMLARI A.Ş.,KUVVA|Kuvva Gıda Ticaret ve Sanayi Yatırımları|Kuvva Gida Ticaret ve Sanayi Yatirimlari|KUVVA GIDA TİCARET VE SANAYİ YATIRIMLARI A.Ş.
+KUYAS.IS,KUYAS.IS,Kuyaş Yatırım A.Ş.,KUYAŞ YATIRIM A.Ş.,KUYAS|Kuyaş Yatırım|Kuyas Yatirim|KUYAŞ YATIRIM A.Ş.
+KZBGY.IS,KZBGY.IS,Kızılbük Gayrimenkul Yatırım Ortaklığı A.Ş.,KIZILBÜK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,KZBGY|Kızılbük Gayrimenkul Yatırım Ortaklığı|Kizilbuk Gayrimenkul Yatirim Ortakligi|KIZILBÜK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+KZGYO.IS,KZGYO.IS,Kuzugrup Gayrimenkul Yatırım Ortaklığı A.Ş.,KUZUGRUP GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,KZGYO|Kuzugrup Gayrimenkul Yatırım Ortaklığı|Kuzugrup Gayrimenkul Yatirim Ortakligi|KUZUGRUP GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+LIDER.IS,LIDER.IS,LDR Turizm A.Ş.,LDR TURİZM A.Ş.,LIDER|LDR Turizm|LDR TURİZM A.Ş.
+LIDFA.IS,LIDFA.IS,Lider Faktoring A.Ş.,LİDER FAKTORİNG A.Ş.,LIDFA|Lider Faktoring|LİDER FAKTORİNG A.Ş.
+LILAK.IS,LILAK.IS,Lila Kağıt Sanayi ve Ticaret A.Ş.,LİLA KAĞIT SANAYİ VE TİCARET A.Ş.,LILAK|Lila Kağıt|Lila Kagit|LİLA KAĞIT SANAYİ VE TİCARET A.Ş.
+LINK.IS,LINK.IS,Link Bilgisayar Sistemleri Yazılımı ve Donanımı Sanayi ve Ticaret A.Ş.,LİNK BİLGİSAYAR SİSTEMLERİ YAZILIMI VE DONANIMI SANAYİ VE TİCARET A.Ş.,LINK|Link Bilgisayar Sistemleri Yazılımı ve Donanımı|Link Bilgisayar Sistemleri Yazilimi ve Donanimi|LİNK BİLGİSAYAR SİSTEMLERİ YAZILIMI VE DONANIMI SANAYİ VE TİCARET A.Ş.
+LKMNH.IS,LKMNH.IS,Lokman Hekim Engürüsağ Sağlık Turizm Eğitim Hizmetleri ve İnşaat Taahhüt A.Ş.,LOKMAN HEKİM ENGÜRÜSAĞ SAĞLIK TURİZM EĞİTİM HİZMETLERİ VE İNŞAAT TAAHHÜT A.Ş.,LKMNH|Lokman Hekim Engürüsağ Sağlık Turizm Eğitim Hizmetleri ve İnşaat Taahhüt|Lokman Hekim Engurusag Saglik Turizm Egitim Hizmetleri ve Insaat Taahhut|LOKMAN HEKİM ENGÜRÜSAĞ SAĞLIK TURİZM EĞİTİM HİZMETLERİ VE İNŞAAT TAAHHÜT A.Ş.
+LMKDC.IS,LMKDC.IS,Limak Doğu Anadolu Çimento Sanayi ve Ticaret A.Ş.,LİMAK DOĞU ANADOLU ÇİMENTO SANAYİ VE TİCARET A.Ş.,LMKDC|Limak Doğu Anadolu Çimento|Limak Dogu Anadolu Cimento|LİMAK DOĞU ANADOLU ÇİMENTO SANAYİ VE TİCARET A.Ş.
+LOGO.IS,LOGO.IS,Logo Yazılım Sanayi ve Ticaret A.Ş.,LOGO YAZILIM SANAYİ VE TİCARET A.Ş.,LOGO|Logo Yazılım|Logo Yazilim|LOGO YAZILIM SANAYİ VE TİCARET A.Ş.
+LRSHO.IS,LRSHO.IS,Loras Holding A.Ş.,LORAS HOLDİNG A.Ş.,LRSHO|Loras Holding|LORAS HOLDİNG A.Ş.
+LUKSK.IS,LUKSK.IS,Lüks Kadife Ticaret ve Sanayii A.Ş.,LÜKS KADİFE TİCARET VE SANAYİİ A.Ş.,LUKSK|Lüks Kadife Ticaret ve Sanayii|Luks Kadife Ticaret ve Sanayii|LÜKS KADİFE TİCARET VE SANAYİİ A.Ş.
+LXGYO.IS,LXGYO.IS,Luxera Gayrimenkul Yatırım Ortaklığı A.Ş.,LUXERA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,LXGYO|Luxera Gayrimenkul Yatırım Ortaklığı|Luxera Gayrimenkul Yatirim Ortakligi|LUXERA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+LYDHO.IS,LYDHO.IS,Lydia Holding A.Ş.,LYDİA HOLDİNG A.Ş.,LYDHO|Lydia Holding|LYDİA HOLDİNG A.Ş.
+LYDYE.IS,LYDYE.IS,Lydia Yeşil Enerji Kaynakları A.Ş.,LYDİA YEŞİL ENERJİ KAYNAKLARI A.Ş.,LYDYE|Lydia Yeşil Enerji Kaynakları|Lydia Yesil Enerji Kaynaklari|LYDİA YEŞİL ENERJİ KAYNAKLARI A.Ş.
+MAALT.IS,MAALT.IS,Marmaris Altınyunus Turistik Tesisler A.Ş.,MARMARİS ALTINYUNUS TURİSTİK TESİSLER A.Ş.,MAALT|Marmaris Altınyunus Turistik Tesisler|Marmaris Altinyunus Turistik Tesisler|MARMARİS ALTINYUNUS TURİSTİK TESİSLER A.Ş.
+MACKO.IS,MACKO.IS,Mackolik İnternet Hizmetleri Ticaret A.Ş.,MACKOLİK İNTERNET HİZMETLERİ TİCARET A.Ş.,MACKO|Mackolik İnternet Hizmetleri Ticaret|Mackolik Internet Hizmetleri Ticaret|MACKOLİK İNTERNET HİZMETLERİ TİCARET A.Ş.
+MAGEN.IS,MAGEN.IS,Margün Enerji Üretim Sanayi ve Ticaret A.Ş.,MARGÜN ENERJİ ÜRETİM SANAYİ VE TİCARET A.Ş.,MAGEN|Margün Enerji Üretim|Margun Enerji Uretim|MARGÜN ENERJİ ÜRETİM SANAYİ VE TİCARET A.Ş.
+MAKIM.IS,MAKIM.IS,Makim Makina Teknolojileri Sanayi ve Ticaret A.Ş.,MAKİM MAKİNA TEKNOLOJİLERİ SANAYİ VE TİCARET A.Ş.,MAKIM|Makim Makina Teknolojileri|MAKİM MAKİNA TEKNOLOJİLERİ SANAYİ VE TİCARET A.Ş.
+MAKTK.IS,MAKTK.IS,Makina Takım Endüstrisi A.Ş.,MAKİNA TAKIM ENDÜSTRİSİ A.Ş.,MAKTK|Makina Takım Endüstrisi|Makina Takim Endustrisi|MAKİNA TAKIM ENDÜSTRİSİ A.Ş.
+MANAS.IS,MANAS.IS,Manas Enerji Yönetimi Sanayi ve Ticaret A.Ş.,MANAS ENERJİ YÖNETİMİ SANAYİ VE TİCARET A.Ş.,MANAS|Manas Enerji Yönetimi|Manas Enerji Yonetimi|MANAS ENERJİ YÖNETİMİ SANAYİ VE TİCARET A.Ş.
+MARBL.IS,MARBL.IS,Tureks Turunç Madencilik İç ve Dış Ticaret A.Ş.,TUREKS TURUNÇ MADENCİLİK İÇ VE DIŞ TİCARET A.Ş.,MARBL|Tureks Turunç Madencilik İç ve Dış Ticaret|Tureks Turunc Madencilik Ic ve Dis Ticaret|TUREKS TURUNÇ MADENCİLİK İÇ VE DIŞ TİCARET A.Ş.
+MARMR.IS,MARMR.IS,Marmara Holding A.Ş.,MARMARA HOLDİNG A.Ş.,MARMR|Marmara Holding|MARMARA HOLDİNG A.Ş.
+MARTI.IS,MARTI.IS,Martı Otel İşletmeleri A.Ş.,MARTI OTEL İŞLETMELERİ A.Ş.,MARTI|Martı Otel İşletmeleri|Marti Otel Isletmeleri|MARTI OTEL İŞLETMELERİ A.Ş.
+MASFN.IS,MASFN.IS,Masfen Enerji A.Ş.,MASFEN ENERJİ A.Ş.,MASFN|Masfen Enerji|MASFEN ENERJİ A.Ş.
+MAVI.IS,MAVI.IS,Mavi Giyim Sanayi ve Ticaret A.Ş.,MAVİ GİYİM SANAYİ VE TİCARET A.Ş.,MAVI|Mavi Giyim|MAVİ GİYİM SANAYİ VE TİCARET A.Ş.
+MBFTR.IS,MBFTR.IS,Mercedes-Benz Finansman Türk A.Ş.,MERCEDES-BENZ FİNANSMAN TÜRK A.Ş.,MBFTR|Mercedes-Benz Finansman Türk|Mercedes-Benz Finansman Turk|MERCEDES-BENZ FİNANSMAN TÜRK A.Ş.
+MCARD.IS,MCARD.IS,Metropal Kurumsal Hizmetler A.Ş.,METROPAL KURUMSAL HİZMETLER A.Ş.,MCARD|Metropal Kurumsal Hizmetler|METROPAL KURUMSAL HİZMETLER A.Ş.
+MDASM.IS,MDASM.IS,Midas Menkul Değerler A.Ş.,MİDAS MENKUL DEĞERLER A.Ş.,MDASM|Midas Menkul Değerler|Midas Menkul Degerler|MİDAS MENKUL DEĞERLER A.Ş.
+MDIAZ.IS,MDIAZ.IS,Mediazz Yeni Medya ve Teknoloji Yatırımları A.Ş.,MEDİAZZ YENİ MEDYA VE TEKNOLOJİ YATIRIMLARI A.Ş.,MDIAZ|Mediazz Yeni Medya ve Teknoloji Yatırımları|Mediazz Yeni Medya ve Teknoloji Yatirimlari|MEDİAZZ YENİ MEDYA VE TEKNOLOJİ YATIRIMLARI A.Ş.
+MDS.IS,MDS.IS,Midas Menkul Değerler A.Ş.,MİDAS MENKUL DEĞERLER A.Ş.,MDS|Midas Menkul Değerler|Midas Menkul Degerler|MİDAS MENKUL DEĞERLER A.Ş.
+MEDTR.IS,MEDTR.IS,Meditera Tıbbi Malzeme Sanayi ve Ticaret A.Ş.,MEDİTERA TIBBİ MALZEME SANAYİ VE TİCARET A.Ş.,MEDTR|Meditera Tıbbi Malzeme|Meditera Tibbi Malzeme|MEDİTERA TIBBİ MALZEME SANAYİ VE TİCARET A.Ş.
+MEGAP.IS,MEGAP.IS,Mega Polietilen Köpük Sanayi ve Ticaret A.Ş.,MEGA POLİETİLEN KÖPÜK SANAYİ VE TİCARET A.Ş.,MEGAP|Mega Polietilen Köpük|Mega Polietilen Kopuk|MEGA POLİETİLEN KÖPÜK SANAYİ VE TİCARET A.Ş.
+MEGMT.IS,MEGMT.IS,Mega Metal Sanayi ve Ticaret A.Ş.,MEGA METAL SANAYİ VE TİCARET A.Ş.,MEGMT|Mega Metal|MEGA METAL SANAYİ VE TİCARET A.Ş.
+MEKAG.IS,MEKAG.IS,Meka Global Makine İmalat Sanayi ve Ticaret A.Ş.,MEKA GLOBAL MAKİNE İMALAT SANAYİ VE TİCARET A.Ş.,MEKAG|Meka Global Makine İmalat|Meka Global Makine Imalat|MEKA GLOBAL MAKİNE İMALAT SANAYİ VE TİCARET A.Ş.
+MEKMD.IS,MEKMD.IS,Meksa Yatırım Menkul Değerler A.Ş.,MEKSA YATIRIM MENKUL DEĞERLER A.Ş.,MEKMD|Meksa Yatırım Menkul Değerler|Meksa Yatirim Menkul Degerler|MEKSA YATIRIM MENKUL DEĞERLER A.Ş.
+MEPET.IS,MEPET.IS,Mepet Metro Petrol ve Tesisleri Sanayi Ticaret A.Ş.,MEPET METRO PETROL VE TESİSLERİ SANAYİ TİCARET A.Ş.,MEPET|Mepet Metro Petrol ve Tesisleri Sanayi Ticaret|MEPET METRO PETROL VE TESİSLERİ SANAYİ TİCARET A.Ş.
+MERCN.IS,MERCN.IS,Mercan Kimya Sanayi ve Ticaret A.Ş.,MERCAN KİMYA SANAYİ VE TİCARET A.Ş.,MERCN|Mercan Kimya|MERCAN KİMYA SANAYİ VE TİCARET A.Ş.
+MERIT.IS,MERIT.IS,Merit Turizm Yatırım ve İşletme A.Ş.,MERİT TURİZM YATIRIM VE İŞLETME A.Ş.,MERIT|Merit Turizm Yatırım ve İşletme|Merit Turizm Yatirim ve Isletme|MERİT TURİZM YATIRIM VE İŞLETME A.Ş.
+MERKO.IS,MERKO.IS,Merko Gıda Sanayi ve Ticaret A.Ş.,MERKO GIDA SANAYİ VE TİCARET A.Ş.,MERKO|Merko Gıda|Merko Gida|MERKO GIDA SANAYİ VE TİCARET A.Ş.
+METEN.IS,METEN.IS,Metgün Enerji Yatırımları A.Ş.,METGÜN ENERJİ YATIRIMLARI A.Ş.,METEN|Metgün Enerji Yatırımları|Metgun Enerji Yatirimlari|METGÜN ENERJİ YATIRIMLARI A.Ş.
+METRO.IS,METRO.IS,Metro Ticari ve Mali Yatırımlar Holding A.Ş.,METRO TİCARİ VE MALİ YATIRIMLAR HOLDİNG A.Ş.,METRO|Metro Ticari ve Mali Yatırımlar Holding|Metro Ticari ve Mali Yatirimlar Holding|METRO TİCARİ VE MALİ YATIRIMLAR HOLDİNG A.Ş.
+MEYSU.IS,MEYSU.IS,Meysu Gıda Sanayi ve Ticaret A.Ş.,MEYSU GIDA SANAYİ VE TİCARET A.Ş.,MEYSU|Meysu Gıda|Meysu Gida|MEYSU GIDA SANAYİ VE TİCARET A.Ş.
+MGROS.IS,MGROS.IS,Migros Ticaret A.Ş.,MİGROS TİCARET A.Ş.,MGROS|Migros Ticaret|MİGROS TİCARET A.Ş.
+MHRGY.IS,MHRGY.IS,MHR Gayrimenkul Yatırım Ortaklığı A.Ş.,MHR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,MHRGY|MHR Gayrimenkul Yatırım Ortaklığı|MHR Gayrimenkul Yatirim Ortakligi|MHR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+MIATK.IS,MIATK.IS,Mia Teknoloji A.Ş.,MİA TEKNOLOJİ A.Ş.,MIATK|Mia Teknoloji|MİA TEKNOLOJİ A.Ş.
+MILKS.IS,MILKS.IS,Milk Academy Süt Ürünleri Sanayi ve Ticaret A.Ş.,MİLK ACADEMY SÜT ÜRÜNLERİ SANAYİ VE TİCARET A.Ş.,MILKS|Milk Academy Süt Ürünleri|Milk Academy Sut Urunleri|MİLK ACADEMY SÜT ÜRÜNLERİ SANAYİ VE TİCARET A.Ş.
+MINTF.IS,MINTF.IS,Mint Finansman A.Ş.,MİNT FİNANSMAN A.Ş.,MINTF|Mint Finansman|MİNT FİNANSMAN A.Ş.
+MMCAS.IS,MMCAS.IS,MMC Sanayi ve Ticari Yatırımlar A.Ş.,MMC SANAYİ VE TİCARİ YATIRIMLAR A.Ş.,MMCAS|MMC Sanayi ve Ticari Yatırımlar|MMC Sanayi ve Ticari Yatirimlar|MMC SANAYİ VE TİCARİ YATIRIMLAR A.Ş.
+MNDRS.IS,MNDRS.IS,Menderes Tekstil Sanayi ve Ticaret A.Ş.,MENDERES TEKSTİL SANAYİ VE TİCARET A.Ş.,MNDRS|Menderes Tekstil|MENDERES TEKSTİL SANAYİ VE TİCARET A.Ş.
+MNDTR.IS,MNDTR.IS,Mondi Turkey Oluklu Mukavva Kağıt ve Ambalaj Sanayi A.Ş.,MONDİ TURKEY OLUKLU MUKAVVA KAĞIT VE AMBALAJ SANAYİ A.Ş.,MNDTR|Mondi Turkey Oluklu Mukavva Kağıt ve Ambalaj Sanayi|Mondi Turkey Oluklu Mukavva Kagit ve Ambalaj Sanayi|MONDİ TURKEY OLUKLU MUKAVVA KAĞIT VE AMBALAJ SANAYİ A.Ş.
+MNGFA.IS,MNGFA.IS,MNG Faktoring A.Ş.,MNG FAKTORİNG A.Ş.,MNGFA|MNG Faktoring|MNG FAKTORİNG A.Ş.
+MOBTL.IS,MOBTL.IS,Mobiltel İletişim Hizmetleri Sanayi ve Ticaret A.Ş.,MOBİLTEL İLETİŞİM HİZMETLERİ SANAYİ VE TİCARET A.Ş.,MOBTL|Mobiltel İletişim Hizmetleri|Mobiltel Iletisim Hizmetleri|MOBİLTEL İLETİŞİM HİZMETLERİ SANAYİ VE TİCARET A.Ş.
+MOGAN.IS,MOGAN.IS,Mogan Enerji Yatırım Holding A.Ş.,MOGAN ENERJİ YATIRIM HOLDİNG A.Ş.,MOGAN|Mogan Enerji Yatırım Holding|Mogan Enerji Yatirim Holding|MOGAN ENERJİ YATIRIM HOLDİNG A.Ş.
+MOPAS.IS,MOPAS.IS,Mopaş Marketçilik Gıda Sanayi ve Ticaret A.Ş.,MOPAŞ MARKETÇİLİK GIDA SANAYİ VE TİCARET A.Ş.,MOPAS|Mopaş Marketçilik Gıda|Mopas Marketcilik Gida|MOPAŞ MARKETÇİLİK GIDA SANAYİ VE TİCARET A.Ş.
+MPARK.IS,MPARK.IS,MLP Sağlık Hizmetleri A.Ş.,MLP SAĞLIK HİZMETLERİ A.Ş.,MPARK|MLP Sağlık Hizmetleri|MLP Saglik Hizmetleri|MLP SAĞLIK HİZMETLERİ A.Ş.
+MRBAS.IS,MRBAS.IS,Marbaş Menkul Değerler A.Ş.,MARBAŞ MENKUL DEĞERLER A.Ş.,MRBAS|Marbaş Menkul Değerler|Marbas Menkul Degerler|MARBAŞ MENKUL DEĞERLER A.Ş.
+MRBKF.IS,MRBKF.IS,Mercedes Benz Kamyon Finansman A.Ş.,MERCEDES BENZ KAMYON FİNANSMAN A.Ş.,MRBKF|Mercedes Benz Kamyon Finansman|MERCEDES BENZ KAMYON FİNANSMAN A.Ş.
+MRGYO.IS,MRGYO.IS,Martı Gayrimenkul Yatırım Ortaklığı A.Ş.,MARTI GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,MRGYO|Martı Gayrimenkul Yatırım Ortaklığı|Marti Gayrimenkul Yatirim Ortakligi|MARTI GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+MRS.IS,MRS.IS,Marbaş Menkul Değerler A.Ş.,MARBAŞ MENKUL DEĞERLER A.Ş.,MRS|Marbaş Menkul Değerler|Marbas Menkul Degerler|MARBAŞ MENKUL DEĞERLER A.Ş.
+MRSHL.IS,MRSHL.IS,Marshall Boya ve Vernik Sanayii A.Ş.,MARSHALL BOYA VE VERNİK SANAYİİ A.Ş.,MRSHL|Marshall Boya ve Vernik Sanayii|MARSHALL BOYA VE VERNİK SANAYİİ A.Ş.
+MSA.IS,MSA.IS,Meksa Yatırım Menkul Değerler A.Ş.,MEKSA YATIRIM MENKUL DEĞERLER A.Ş.,MSA|Meksa Yatırım Menkul Değerler|Meksa Yatirim Menkul Degerler|MEKSA YATIRIM MENKUL DEĞERLER A.Ş.
+MSGYO.IS,MSGYO.IS,Mistral Gayrimenkul Yatırım Ortaklığı A.Ş.,MİSTRAL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,MSGYO|Mistral Gayrimenkul Yatırım Ortaklığı|Mistral Gayrimenkul Yatirim Ortakligi|MİSTRAL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+MSY.IS,MSY.IS,Misyon Yatırım Bankası A.Ş.,MİSYON YATIRIM BANKASI A.Ş.,MSY|Misyon Yatırım Bankası|Misyon Yatirim Bankasi|MİSYON YATIRIM BANKASI A.Ş.
+MSYBN.IS,MSYBN.IS,Misyon Yatırım Bankası A.Ş.,MİSYON YATIRIM BANKASI A.Ş.,MSYBN|Misyon Yatırım Bankası|Misyon Yatirim Bankasi|MİSYON YATIRIM BANKASI A.Ş.
+MTRKS.IS,MTRKS.IS,Matriks Finansal Teknolojiler A.Ş.,MATRİKS FİNANSAL TEKNOLOJİLER A.Ş.,MTRKS|Matriks Finansal Teknolojiler|MATRİKS FİNANSAL TEKNOLOJİLER A.Ş.
+MTRYO.IS,MTRYO.IS,Metro Yatırım Ortaklığı A.Ş.,METRO YATIRIM ORTAKLIĞI A.Ş.,MTRYO|Metro Yatırım Ortaklığı|Metro Yatirim Ortakligi|METRO YATIRIM ORTAKLIĞI A.Ş.
+MZHLD.IS,MZHLD.IS,Mazhar Zorlu Holding A.Ş.,MAZHAR ZORLU HOLDİNG A.Ş.,MZHLD|Mazhar Zorlu Holding|MAZHAR ZORLU HOLDİNG A.Ş.
+NATEN.IS,NATEN.IS,Naturel Yenilenebilir Enerji Ticaret A.Ş.,NATUREL YENİLENEBİLİR ENERJİ TİCARET A.Ş.,NATEN|Naturel Yenilenebilir Enerji Ticaret|NATUREL YENİLENEBİLİR ENERJİ TİCARET A.Ş.
+NETAS.IS,NETAS.IS,Netaş Telekomünikasyon A.Ş.,NETAŞ TELEKOMÜNİKASYON A.Ş.,NETAS|Netaş Telekomünikasyon|Netas Telekomunikasyon|NETAŞ TELEKOMÜNİKASYON A.Ş.
+NETCD.IS,NETCD.IS,Netcad Yazılım A.Ş.,NETCAD YAZILIM A.Ş.,NETCD|Netcad Yazılım|Netcad Yazilim|NETCAD YAZILIM A.Ş.
+NETGL.IS,NETGL.IS,Net Global Endüstriyel Yatırımlar A.Ş.,NET GLOBAL ENDÜSTRİYEL YATIRIMLAR A.Ş.,NETGL|Net Global Endüstriyel Yatırımlar|Net Global Endustriyel Yatirimlar|NET GLOBAL ENDÜSTRİYEL YATIRIMLAR A.Ş.
+NIBAS.IS,NIBAS.IS,Niğbaş Niğde Beton Sanayi ve Ticaret A.Ş.,NİĞBAŞ NİĞDE BETON SANAYİ VE TİCARET A.Ş.,NIBAS|Niğbaş Niğde Beton|Nigbas Nigde Beton|NİĞBAŞ NİĞDE BETON SANAYİ VE TİCARET A.Ş.
+NRBNK.IS,NRBNK.IS,Nurol Yatırım Bankası A.Ş.,NUROL YATIRIM BANKASI A.Ş.,NRBNK|Nurol Yatırım Bankası|Nurol Yatirim Bankasi|NUROL YATIRIM BANKASI A.Ş.
+NTGAZ.IS,NTGAZ.IS,Naturelgaz Sanayi ve Ticaret A.Ş.,NATURELGAZ SANAYİ VE TİCARET A.Ş.,NTGAZ|Naturelgaz|NATURELGAZ SANAYİ VE TİCARET A.Ş.
+NTHOL.IS,NTHOL.IS,Net Holding A.Ş.,NET HOLDİNG A.Ş.,NTHOL|Net Holding|NET HOLDİNG A.Ş.
+NUGYO.IS,NUGYO.IS,Nurol Gayrimenkul Yatırım Ortaklığı A.Ş.,NUROL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,NUGYO|Nurol Gayrimenkul Yatırım Ortaklığı|Nurol Gayrimenkul Yatirim Ortakligi|NUROL GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+NUHCM.IS,NUHCM.IS,Nuh Çimento Sanayi A.Ş.,NUH ÇİMENTO SANAYİ A.Ş.,NUHCM|Nuh Çimento Sanayi|Nuh Cimento Sanayi|NUH ÇİMENTO SANAYİ A.Ş.
+NURVK.IS,NURVK.IS,Nurol Varlık Kiralama A.Ş.,NUROL VARLIK KİRALAMA A.Ş.,NURVK|Nurol Varlık Kiralama|Nurol Varlik Kiralama|NUROL VARLIK KİRALAMA A.Ş.
+NYB.IS,NYB.IS,Nurol Yatırım Bankası A.Ş.,NUROL YATIRIM BANKASI A.Ş.,NYB|Nurol Yatırım Bankası|Nurol Yatirim Bankasi|NUROL YATIRIM BANKASI A.Ş.
+OBAMS.IS,OBAMS.IS,Oba Makarnacılık Sanayi ve Ticaret A.Ş.,OBA MAKARNACILIK SANAYİ VE TİCARET A.Ş.,OBAMS|Oba Makarnacılık|Oba Makarnacilik|OBA MAKARNACILIK SANAYİ VE TİCARET A.Ş.
+OBASE.IS,OBASE.IS,Obase Bilgisayar ve Danışmanlık Hizmetleri Ticaret A.Ş.,OBASE BİLGİSAYAR VE DANIŞMANLIK HİZMETLERİ TİCARET A.Ş.,OBASE|Obase Bilgisayar ve Danışmanlık Hizmetleri Ticaret|Obase Bilgisayar ve Danismanlik Hizmetleri Ticaret|OBASE BİLGİSAYAR VE DANIŞMANLIK HİZMETLERİ TİCARET A.Ş.
+ODAS.IS,ODAS.IS,Odaş Elektrik Üretim Sanayi Ticaret A.Ş.,ODAŞ ELEKTRİK ÜRETİM SANAYİ TİCARET A.Ş.,ODAS|Odaş Elektrik Üretim Sanayi Ticaret|Odas Elektrik Uretim Sanayi Ticaret|ODAŞ ELEKTRİK ÜRETİM SANAYİ TİCARET A.Ş.
+ODINE.IS,ODINE.IS,Odine Solutions Teknoloji Ticaret ve Sanayi A.Ş.,ODİNE SOLUTİONS TEKNOLOJİ TİCARET VE SANAYİ A.Ş.,ODINE|Odine Solutions Teknoloji Ticaret ve Sanayi|ODİNE SOLUTİONS TEKNOLOJİ TİCARET VE SANAYİ A.Ş.
+OFSYM.IS,OFSYM.IS,Ofis Yem Gıda Sanayi Ticaret A.Ş.,OFİS YEM GIDA SANAYİ TİCARET A.Ş.,OFSYM|Ofis Yem Gıda Sanayi Ticaret|Ofis Yem Gida Sanayi Ticaret|OFİS YEM GIDA SANAYİ TİCARET A.Ş.
+OMD.IS,OMD.IS,Osmanlı Yatırım Menkul Değerler A.Ş.,OSMANLI YATIRIM MENKUL DEĞERLER A.Ş.,OMD|Osmanlı Yatırım Menkul Değerler|Osmanli Yatirim Menkul Degerler|OSMANLI YATIRIM MENKUL DEĞERLER A.Ş.
+ONCSM.IS,ONCSM.IS,Oncosem Onkolojik Sistemler Sanayi ve Ticaret A.Ş.,ONCOSEM ONKOLOJİK SİSTEMLER SANAYİ VE TİCARET A.Ş.,ONCSM|Oncosem Onkolojik Sistemler|ONCOSEM ONKOLOJİK SİSTEMLER SANAYİ VE TİCARET A.Ş.
+ONRYT.IS,ONRYT.IS,Onur Yüksek Teknoloji A.Ş.,ONUR YÜKSEK TEKNOLOJİ A.Ş.,ONRYT|Onur Yüksek Teknoloji|Onur Yuksek Teknoloji|ONUR YÜKSEK TEKNOLOJİ A.Ş.
+OPET.IS,OPET.IS,Opet Petrolcülük A.Ş.,OPET PETROLCÜLÜK A.Ş.,OPET|Opet Petrolcülük|Opet Petrolculuk|OPET PETROLCÜLÜK A.Ş.
+ORCAY.IS,ORCAY.IS,Orçay Ortaköy Çay Sanayi ve Ticaret A.Ş.,ORÇAY ORTAKÖY ÇAY SANAYİ VE TİCARET A.Ş.,ORCAY|Orçay Ortaköy Çay|Orcay Ortakoy Cay|ORÇAY ORTAKÖY ÇAY SANAYİ VE TİCARET A.Ş.
+ORFIN.IS,ORFIN.IS,Orfin Finansman A.Ş.,ORFİN FİNANSMAN A.Ş.,ORFIN|Orfin Finansman|ORFİN FİNANSMAN A.Ş.
+ORGE.IS,ORGE.IS,Orge Enerji Elektrik Taahhüt A.Ş.,ORGE ENERJİ ELEKTRİK TAAHHÜT A.Ş.,ORGE|Orge Enerji Elektrik Taahhüt|Orge Enerji Elektrik Taahhut|ORGE ENERJİ ELEKTRİK TAAHHÜT A.Ş.
+ORMA.IS,ORMA.IS,Orma Orman Mahsülleri İntegre Sanayi ve Ticaret A.Ş.,ORMA ORMAN MAHSÜLLERİ İNTEGRE SANAYİ VE TİCARET A.Ş.,ORMA|Orma Orman Mahsülleri İntegre|Orma Orman Mahsulleri Integre|ORMA ORMAN MAHSÜLLERİ İNTEGRE SANAYİ VE TİCARET A.Ş.
+ORZAX.IS,ORZAX.IS,Orzaks İlaç ve Kimya Sanayi Ticaret A.Ş.,ORZAKS İLAÇ VE KİMYA SANAYİ TİCARET A.Ş.,ORZAX|Orzaks İlaç ve Kimya Sanayi Ticaret|Orzaks Ilac ve Kimya Sanayi Ticaret|ORZAKS İLAÇ VE KİMYA SANAYİ TİCARET A.Ş.
+OSMEN.IS,OSMEN.IS,Osmanlı Yatırım Menkul Değerler A.Ş.,OSMANLI YATIRIM MENKUL DEĞERLER A.Ş.,OSMEN|Osmanlı Yatırım Menkul Değerler|Osmanli Yatirim Menkul Degerler|OSMANLI YATIRIM MENKUL DEĞERLER A.Ş.
+OSTIM.IS,OSTIM.IS,Ostim Endüstriyel Yatırımlar ve İşletme A.Ş.,OSTİM ENDÜSTRİYEL YATIRIMLAR VE İŞLETME A.Ş.,OSTIM|Ostim Endüstriyel Yatırımlar ve İşletme|Ostim Endustriyel Yatirimlar ve Isletme|OSTİM ENDÜSTRİYEL YATIRIMLAR VE İŞLETME A.Ş.
+OSVKS.IS,OSVKS.IS,Osmanlı Varlık Kiralama A.Ş.,OSMANLI VARLIK KİRALAMA A.Ş.,OSVKS|Osmanlı Varlık Kiralama|Osmanli Varlik Kiralama|OSMANLI VARLIK KİRALAMA A.Ş.
+OTKAR.IS,OTKAR.IS,Otokar Otomotiv ve Savunma Sanayi A.Ş.,OTOKAR OTOMOTİV VE SAVUNMA SANAYİ A.Ş.,OTKAR|Otokar Otomotiv ve Savunma Sanayi|OTOKAR OTOMOTİV VE SAVUNMA SANAYİ A.Ş.
+OTOSR.IS,OTOSR.IS,Otosor Otomotiv A.Ş.,OTOSOR OTOMOTİV A.Ş.,OTOSR|Otosor Otomotiv|OTOSOR OTOMOTİV A.Ş.
+OTTO.IS,OTTO.IS,Otto Holding A.Ş.,OTTO HOLDİNG A.Ş.,OTTO|Otto Holding|OTTO HOLDİNG A.Ş.
+OYA.IS,OYA.IS,Oyak Yatırım Menkul Değerler A.Ş.,OYAK YATIRIM MENKUL DEĞERLER A.Ş.,OYA|Oyak Yatırım Menkul Değerler|Oyak Yatirim Menkul Degerler|OYAK YATIRIM MENKUL DEĞERLER A.Ş.
+OYAKC.IS,OYAKC.IS,Oyak Çimento Fabrikaları A.Ş.,OYAK ÇİMENTO FABRİKALARI A.Ş.,OYAKC|Oyak Çimento Fabrikaları|Oyak Cimento Fabrikalari|OYAK ÇİMENTO FABRİKALARI A.Ş.
+OYAYO.IS,OYAYO.IS,Oyak Yatırım Ortaklığı A.Ş.,OYAK YATIRIM ORTAKLIĞI A.Ş.,OYAYO|Oyak Yatırım Ortaklığı|Oyak Yatirim Ortakligi|OYAK YATIRIM ORTAKLIĞI A.Ş.
+OYLUM.IS,OYLUM.IS,Oylum Sınai Yatırımlar A.Ş.,OYLUM SINAİ YATIRIMLAR A.Ş.,OYLUM|Oylum Sınai Yatırımlar|Oylum Sinai Yatirimlar|OYLUM SINAİ YATIRIMLAR A.Ş.
+OYYAT.IS,OYYAT.IS,Oyak Yatırım Menkul Değerler A.Ş.,OYAK YATIRIM MENKUL DEĞERLER A.Ş.,OYYAT|Oyak Yatırım Menkul Değerler|Oyak Yatirim Menkul Degerler|OYAK YATIRIM MENKUL DEĞERLER A.Ş.
+OZATD.IS,OZATD.IS,Özata Denizcilik Sanayi ve Ticaret A.Ş.,ÖZATA DENİZCİLİK SANAYİ VE TİCARET A.Ş.,OZATD|Özata Denizcilik|Ozata Denizcilik|ÖZATA DENİZCİLİK SANAYİ VE TİCARET A.Ş.
+OZGYO.IS,OZGYO.IS,Özderici Gayrimenkul Yatırım Ortaklığı A.Ş.,ÖZDERİCİ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,OZGYO|Özderici Gayrimenkul Yatırım Ortaklığı|Ozderici Gayrimenkul Yatirim Ortakligi|ÖZDERİCİ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+OZKGY.IS,OZKGY.IS,Özak Gayrimenkul Yatırım Ortaklığı A.Ş.,ÖZAK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,OZKGY|Özak Gayrimenkul Yatırım Ortaklığı|Ozak Gayrimenkul Yatirim Ortakligi|ÖZAK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+OZRDN.IS,OZRDN.IS,Özerden Ambalaj Sanayi A.Ş.,ÖZERDEN AMBALAJ SANAYİ A.Ş.,OZRDN|Özerden Ambalaj Sanayi|Ozerden Ambalaj Sanayi|ÖZERDEN AMBALAJ SANAYİ A.Ş.
+OZSUB.IS,OZSUB.IS,Özsu Balık Üretim A.Ş.,ÖZSU BALIK ÜRETİM A.Ş.,OZSUB|Özsu Balık Üretim|Ozsu Balik Uretim|ÖZSU BALIK ÜRETİM A.Ş.
+OZYSR.IS,OZYSR.IS,Özyaşar Tel ve Galvanizleme Sanayi A.Ş.,ÖZYAŞAR TEL VE GALVANİZLEME SANAYİ A.Ş.,OZYSR|Özyaşar Tel ve Galvanizleme Sanayi|Ozyasar Tel ve Galvanizleme Sanayi|ÖZYAŞAR TEL VE GALVANİZLEME SANAYİ A.Ş.
+PAGYO.IS,PAGYO.IS,Panora Gayrimenkul Yatırım Ortaklığı A.Ş.,PANORA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,PAGYO|Panora Gayrimenkul Yatırım Ortaklığı|Panora Gayrimenkul Yatirim Ortakligi|PANORA GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+PAHOL.IS,PAHOL.IS,Pasifik Holding A.Ş.,PASİFİK HOLDİNG A.Ş.,PAHOL|Pasifik Holding|PASİFİK HOLDİNG A.Ş.
+PAMEL.IS,PAMEL.IS,Pamel Yenilenebilir Elektrik Üretim A.Ş.,PAMEL YENİLENEBİLİR ELEKTRİK ÜRETİM A.Ş.,PAMEL|Pamel Yenilenebilir Elektrik Üretim|Pamel Yenilenebilir Elektrik Uretim|PAMEL YENİLENEBİLİR ELEKTRİK ÜRETİM A.Ş.
+PAPIL.IS,PAPIL.IS,Papilon Savunma Teknoloji ve Ticaret A.Ş.,PAPİLON SAVUNMA TEKNOLOJİ VE TİCARET A.Ş.,PAPIL|Papilon Savunma Teknoloji ve Ticaret|PAPİLON SAVUNMA TEKNOLOJİ VE TİCARET A.Ş.
+PARSN.IS,PARSN.IS,Parsan Makina Parçaları Sanayii A.Ş.,PARSAN MAKİNA PARÇALARI SANAYİİ A.Ş.,PARSN|Parsan Makina Parçaları Sanayii|Parsan Makina Parcalari Sanayii|PARSAN MAKİNA PARÇALARI SANAYİİ A.Ş.
+PASEU.IS,PASEU.IS,Pasifik Eurasia Lojistik Dış Ticaret A.Ş.,PASİFİK EURASİA LOJİSTİK DIŞ TİCARET A.Ş.,PASEU|Pasifik Eurasia Lojistik Dış Ticaret|Pasifik Eurasia Lojistik Dis Ticaret|PASİFİK EURASİA LOJİSTİK DIŞ TİCARET A.Ş.
+PATEK.IS,PATEK.IS,Pasifik Teknoloji A.Ş.,PASİFİK TEKNOLOJİ A.Ş.,PATEK|Pasifik Teknoloji|PASİFİK TEKNOLOJİ A.Ş.
+PBT.IS,PBT.IS,Pasha Yatırım Bankası A.Ş.,PASHA YATIRIM BANKASI A.Ş.,PBT|Pasha Yatırım Bankası|Pasha Yatirim Bankasi|PASHA YATIRIM BANKASI A.Ş.
+PBTR.IS,PBTR.IS,Pasha Yatırım Bankası A.Ş.,PASHA YATIRIM BANKASI A.Ş.,PBTR|Pasha Yatırım Bankası|Pasha Yatirim Bankasi|PASHA YATIRIM BANKASI A.Ş.
+PCILT.IS,PCILT.IS,PC İletişim ve Medya Hizmetleri Sanayi Ticaret A.Ş.,PC İLETİŞİM VE MEDYA HİZMETLERİ SANAYİ TİCARET A.Ş.,PCILT|PC İletişim ve Medya Hizmetleri Sanayi Ticaret|PC Iletisim ve Medya Hizmetleri Sanayi Ticaret|PC İLETİŞİM VE MEDYA HİZMETLERİ SANAYİ TİCARET A.Ş.
+PEKGY.IS,PEKGY.IS,Peker Gayrimenkul Yatırım Ortaklığı A.Ş.,PEKER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,PEKGY|Peker Gayrimenkul Yatırım Ortaklığı|Peker Gayrimenkul Yatirim Ortakligi|PEKER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+PENGD.IS,PENGD.IS,Penguen Gıda Sanayi A.Ş.,PENGUEN GIDA SANAYİ A.Ş.,PENGD|Penguen Gıda Sanayi|Penguen Gida Sanayi|PENGUEN GIDA SANAYİ A.Ş.
+PENTA.IS,PENTA.IS,Penta Teknoloji Ürünleri Dağıtım Ticaret A.Ş.,PENTA TEKNOLOJİ ÜRÜNLERİ DAĞITIM TİCARET A.Ş.,PENTA|Penta Teknoloji Ürünleri Dağıtım Ticaret|Penta Teknoloji Urunleri Dagitim Ticaret|PENTA TEKNOLOJİ ÜRÜNLERİ DAĞITIM TİCARET A.Ş.
+PETKM.IS,PETKM.IS,Petkim Petrokimya Holding A.Ş.,PETKİM PETROKİMYA HOLDİNG A.Ş.,PETKM|Petkim Petrokimya Holding|PETKİM PETROKİMYA HOLDİNG A.Ş.
+PETUN.IS,PETUN.IS,Pınar Entegre Et ve Un Sanayii A.Ş.,PINAR ENTEGRE ET VE UN SANAYİİ A.Ş.,PETUN|Pınar Entegre Et ve Un Sanayii|Pinar Entegre Et ve Un Sanayii|PINAR ENTEGRE ET VE UN SANAYİİ A.Ş.
+PGSUS.IS,PGSUS.IS,Pegasus Hava Taşımacılığı A.Ş.,PEGASUS HAVA TAŞIMACILIĞI A.Ş.,PGSUS|Pegasus Hava Taşımacılığı|Pegasus Hava Tasimaciligi|PEGASUS HAVA TAŞIMACILIĞI A.Ş.
+PINSU.IS,PINSU.IS,Pınar Su ve İçecek Sanayi ve Ticaret A.Ş.,PINAR SU VE İÇECEK SANAYİ VE TİCARET A.Ş.,PINSU|Pınar Su ve İçecek|Pinar Su ve Icecek|PINAR SU VE İÇECEK SANAYİ VE TİCARET A.Ş.
+PKART.IS,PKART.IS,Plastikkart Akıllı Kart İletişim Sistemleri Sanayi ve Ticaret A.Ş.,PLASTİKKART AKILLI KART İLETİŞİM SİSTEMLERİ SANAYİ VE TİCARET A.Ş.,PKART|Plastikkart Akıllı Kart İletişim Sistemleri|Plastikkart Akilli Kart Iletisim Sistemleri|PLASTİKKART AKILLI KART İLETİŞİM SİSTEMLERİ SANAYİ VE TİCARET A.Ş.
+PKENT.IS,PKENT.IS,Petrokent Turizm A.Ş.,PETROKENT TURİZM A.Ş.,PKENT|Petrokent Turizm|PETROKENT TURİZM A.Ş.
+PLTUR.IS,PLTUR.IS,Platform Turizm Taşımacılık Gıda İnşaat Temizlik Hizmetleri Sanayi ve Ticaret A.Ş.,PLATFORM TURİZM TAŞIMACILIK GIDA İNŞAAT TEMİZLİK HİZMETLERİ SANAYİ VE TİCARET A.Ş.,PLTUR|Platform Turizm Taşımacılık Gıda İnşaat Temizlik Hizmetleri|Platform Turizm Tasimacilik Gida Insaat Temizlik Hizmetleri|PLATFORM TURİZM TAŞIMACILIK GIDA İNŞAAT TEMİZLİK HİZMETLERİ SANAYİ VE TİCARET A.Ş.
+PNLSN.IS,PNLSN.IS,Panelsan Çatı Cephe Sistemleri Sanayi ve Ticaret A.Ş.,PANELSAN ÇATI CEPHE SİSTEMLERİ SANAYİ VE TİCARET A.Ş.,PNLSN|Panelsan Çatı Cephe Sistemleri|Panelsan Cati Cephe Sistemleri|PANELSAN ÇATI CEPHE SİSTEMLERİ SANAYİ VE TİCARET A.Ş.
+PNSUT.IS,PNSUT.IS,Pınar Süt Mamülleri Sanayii A.Ş.,PINAR SÜT MAMÜLLERİ SANAYİİ A.Ş.,PNSUT|Pınar Süt Mamülleri Sanayii|Pinar Sut Mamulleri Sanayii|PINAR SÜT MAMÜLLERİ SANAYİİ A.Ş.
+POLHO.IS,POLHO.IS,Polisan Holding A.Ş.,POLİSAN HOLDİNG A.Ş.,POLHO|Polisan Holding|POLİSAN HOLDİNG A.Ş.
+POLTK.IS,POLTK.IS,Politeknik Metal Sanayi ve Ticaret A.Ş.,POLİTEKNİK METAL SANAYİ VE TİCARET A.Ş.,POLTK|Politeknik Metal|POLİTEKNİK METAL SANAYİ VE TİCARET A.Ş.
+PRDGS.IS,PRDGS.IS,Pardus Girişim Sermayesi Yatırım Ortaklığı A.Ş.,PARDUS GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,PRDGS|Pardus Girişim Sermayesi Yatırım Ortaklığı|Pardus Girisim Sermayesi Yatirim Ortakligi|PARDUS GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+PRFFK.IS,PRFFK.IS,Parafinans Faktoring A.Ş.,PARAFİNANS FAKTORİNG A.Ş.,PRFFK|Parafinans Faktoring|PARAFİNANS FAKTORİNG A.Ş.
+PRKAB.IS,PRKAB.IS,Türk Prysmian Kablo ve Sistemleri A.Ş.,TÜRK PRYSMİAN KABLO VE SİSTEMLERİ A.Ş.,PRKAB|Türk Prysmian Kablo ve Sistemleri|Turk Prysmian Kablo ve Sistemleri|TÜRK PRYSMİAN KABLO VE SİSTEMLERİ A.Ş.
+PRKME.IS,PRKME.IS,Park Elektrik Üretim Madencilik Sanayi ve Ticaret A.Ş.,PARK ELEKTRİK ÜRETİM MADENCİLİK SANAYİ VE TİCARET A.Ş.,PRKME|Park Elektrik Üretim Madencilik|Park Elektrik Uretim Madencilik|PARK ELEKTRİK ÜRETİM MADENCİLİK SANAYİ VE TİCARET A.Ş.
+PRZMA.IS,PRZMA.IS,Prizma Pres Matbaacılık Yayıncılık Sanayi ve Ticaret A.Ş.,PRİZMA PRES MATBAACILIK YAYINCILIK SANAYİ VE TİCARET A.Ş.,PRZMA|Prizma Pres Matbaacılık Yayıncılık|Prizma Pres Matbaacilik Yayincilik|PRİZMA PRES MATBAACILIK YAYINCILIK SANAYİ VE TİCARET A.Ş.
+PSDTC.IS,PSDTC.IS,Pergamon Status Dış Ticaret A.Ş.,PERGAMON STATUS DIŞ TİCARET A.Ş.,PSDTC|Pergamon Status Dış Ticaret|Pergamon Status Dis Ticaret|PERGAMON STATUS DIŞ TİCARET A.Ş.
+PSGYO.IS,PSGYO.IS,Pasifik Gayrimenkul Yatırım Ortaklığı A.Ş.,PASİFİK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,PSGYO|Pasifik Gayrimenkul Yatırım Ortaklığı|Pasifik Gayrimenkul Yatirim Ortakligi|PASİFİK GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+QNBFF.IS,QNBFF.IS,QNB Faktoring A.Ş.,QNB FAKTORİNG A.Ş.,QNBFF|QNB Faktoring|QNB FAKTORİNG A.Ş.
+QNBFK.IS,QNBFK.IS,QNB Finansal Kiralama A.Ş.,QNB FİNANSAL KİRALAMA A.Ş.,QNBFK|QNB Finansal Kiralama|QNB FİNANSAL KİRALAMA A.Ş.
+QNBTR.IS,QNBTR.IS,QNB Bank A.Ş.,QNB BANK A.Ş.,QNBTR|QNB Bank|QNB BANK A.Ş.
+QNBVK.IS,QNBVK.IS,QNB Varlık Kiralama A.Ş.,QNB VARLIK KİRALAMA A.Ş.,QNBVK|QNB Varlık Kiralama|QNB Varlik Kiralama|QNB VARLIK KİRALAMA A.Ş.
+QUAGR.IS,QUAGR.IS,Qua Granıte Hayal Yapı ve Ürünleri Sanayi Ticaret A.Ş.,QUA GRANITE HAYAL YAPI VE ÜRÜNLERİ SANAYİ TİCARET A.Ş.,QUAGR|Qua Granıte Hayal Yapı ve Ürünleri Sanayi Ticaret|Qua Granite Hayal Yapi ve Urunleri Sanayi Ticaret|QUA GRANITE HAYAL YAPI VE ÜRÜNLERİ SANAYİ TİCARET A.Ş.
+QUFIN.IS,QUFIN.IS,Quıck Finansman A.Ş.,QUICK FİNANSMAN A.Ş.,QUFIN|Quıck Finansman|Quick Finansman|QUICK FİNANSMAN A.Ş.
+QUICK.IS,QUICK.IS,Quick Sigorta A.Ş.,QUİCK SİGORTA A.Ş.,QUICK|Quick Sigorta|QUİCK SİGORTA A.Ş.
+QYATB.IS,QYATB.IS,Q Yatırım Bankası A.Ş.,Q YATIRIM BANKASI A.Ş.,QYATB|Q Yatırım Bankası|Q Yatirim Bankasi|Q YATIRIM BANKASI A.Ş.
+QYHOL.IS,QYHOL.IS,Q Yatırım Holding A.Ş.,Q YATIRIM HOLDİNG A.Ş.,QYHOL|Q Yatırım Holding|Q Yatirim Holding|Q YATIRIM HOLDİNG A.Ş.
+RALYH.IS,RALYH.IS,Ral Yatırım Holding A.Ş.,RAL YATIRIM HOLDİNG A.Ş.,RALYH|Ral Yatırım Holding|Ral Yatirim Holding|RAL YATIRIM HOLDİNG A.Ş.
+RAYSG.IS,RAYSG.IS,Ray Sigorta A.Ş.,RAY SİGORTA A.Ş.,RAYSG|Ray Sigorta|RAY SİGORTA A.Ş.
+REEDR.IS,REEDR.IS,Reeder Teknoloji Sanayi ve Ticaret A.Ş.,REEDER TEKNOLOJİ SANAYİ VE TİCARET A.Ş.,REEDR|Reeder Teknoloji|REEDER TEKNOLOJİ SANAYİ VE TİCARET A.Ş.
+RGYAS.IS,RGYAS.IS,Rönesans Gayrimenkul Yatırım A.Ş.,RÖNESANS GAYRİMENKUL YATIRIM A.Ş.,RGYAS|Rönesans Gayrimenkul Yatırım|Ronesans Gayrimenkul Yatirim|RÖNESANS GAYRİMENKUL YATIRIM A.Ş.
+RNPOL.IS,RNPOL.IS,Rainbow Polikarbonat Sanayi Ticaret A.Ş.,RAİNBOW POLİKARBONAT SANAYİ TİCARET A.Ş.,RNPOL|Rainbow Polikarbonat Sanayi Ticaret|RAİNBOW POLİKARBONAT SANAYİ TİCARET A.Ş.
+RODRG.IS,RODRG.IS,Rodrigo Tekstil Sanayi ve Ticaret A.Ş.,RODRİGO TEKSTİL SANAYİ VE TİCARET A.Ş.,RODRG|Rodrigo Tekstil|RODRİGO TEKSTİL SANAYİ VE TİCARET A.Ş.
+RTALB.IS,RTALB.IS,Rta Laboratuvarları Biyolojik Ürünler İlaç ve Makine Sanayi Ticaret A.Ş.,RTA LABORATUVARLARI BİYOLOJİK ÜRÜNLER İLAÇ VE MAKİNE SANAYİ TİCARET A.Ş.,RTALB|Rta Laboratuvarları Biyolojik Ürünler İlaç ve Makine Sanayi Ticaret|Rta Laboratuvarlari Biyolojik Urunler Ilac ve Makine Sanayi Ticaret|RTA LABORATUVARLARI BİYOLOJİK ÜRÜNLER İLAÇ VE MAKİNE SANAYİ TİCARET A.Ş.
+RUBNS.IS,RUBNS.IS,Rubenis Tekstil Sanayi Ticaret A.Ş.,RUBENİS TEKSTİL SANAYİ TİCARET A.Ş.,RUBNS|Rubenis Tekstil Sanayi Ticaret|RUBENİS TEKSTİL SANAYİ TİCARET A.Ş.
+RUZYE.IS,RUZYE.IS,Ruzy Madencilik ve Enerji Yatırımları Sanayi ve Ticaret A.Ş.,RUZY MADENCİLİK VE ENERJİ YATIRIMLARI SANAYİ VE TİCARET A.Ş.,RUZYE|Ruzy Madencilik ve Enerji Yatırımları|Ruzy Madencilik ve Enerji Yatirimlari|RUZY MADENCİLİK VE ENERJİ YATIRIMLARI SANAYİ VE TİCARET A.Ş.
+RYGYO.IS,RYGYO.IS,Reysaş Gayrimenkul Yatırım Ortaklığı A.Ş.,REYSAŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,RYGYO|Reysaş Gayrimenkul Yatırım Ortaklığı|Reysas Gayrimenkul Yatirim Ortakligi|REYSAŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+RYSAS.IS,RYSAS.IS,Reysaş Taşımacılık ve Lojistik Ticaret A.Ş.,REYSAŞ TAŞIMACILIK VE LOJİSTİK TİCARET A.Ş.,RYSAS|Reysaş Taşımacılık ve Lojistik Ticaret|Reysas Tasimacilik ve Lojistik Ticaret|REYSAŞ TAŞIMACILIK VE LOJİSTİK TİCARET A.Ş.
+SAFKR.IS,SAFKR.IS,Safkar Ege Soğutmacılık Klima Soğuk Hava Tesisleri İhracat İthalat Sanayi ve Ticaret A.Ş.,SAFKAR EGE SOĞUTMACILIK KLİMA SOĞUK HAVA TESİSLERİ İHRACAT İTHALAT SANAYİ VE TİCARET A.Ş.,SAFKR|Safkar Ege Soğutmacılık Klima Soğuk Hava Tesisleri İhracat İthalat|Safkar Ege Sogutmacilik Klima Soguk Hava Tesisleri Ihracat Ithalat|SAFKAR EGE SOĞUTMACILIK KLİMA SOĞUK HAVA TESİSLERİ İHRACAT İTHALAT SANAYİ VE TİCARET A.Ş.
+SAHOL.IS,SAHOL.IS,Hacı Ömer Sabancı Holding A.Ş.,HACI ÖMER SABANCI HOLDİNG A.Ş.,SAHOL|Hacı Ömer Sabancı Holding|Haci Omer Sabanci Holding|HACI ÖMER SABANCI HOLDİNG A.Ş.
+SAMAT.IS,SAMAT.IS,Saray Matbaacılık Kağıtçılık Kırtasiyecilik Ticaret ve Sanayi A.Ş.,SARAY MATBAACILIK KAĞITÇILIK KIRTASİYECİLİK TİCARET VE SANAYİ A.Ş.,SAMAT|Saray Matbaacılık Kağıtçılık Kırtasiyecilik Ticaret ve Sanayi|Saray Matbaacilik Kagitcilik Kirtasiyecilik Ticaret ve Sanayi|SARAY MATBAACILIK KAĞITÇILIK KIRTASİYECİLİK TİCARET VE SANAYİ A.Ş.
+SANEL.IS,SANEL.IS,San-El Mühendislik Elektrik Taahhüt Sanayi ve Ticaret A.Ş.,SAN-EL MÜHENDİSLİK ELEKTRİK TAAHHÜT SANAYİ VE TİCARET A.Ş.,SANEL|San-El Mühendislik Elektrik Taahhüt|San-El Muhendislik Elektrik Taahhut|SAN-EL MÜHENDİSLİK ELEKTRİK TAAHHÜT SANAYİ VE TİCARET A.Ş.
+SANFM.IS,SANFM.IS,Sanifoam Endüstri ve Tüketim Ürünleri Sanayi Ticaret A.Ş.,SANİFOAM ENDÜSTRİ VE TÜKETİM ÜRÜNLERİ SANAYİ TİCARET A.Ş.,SANFM|Sanifoam Endüstri ve Tüketim Ürünleri Sanayi Ticaret|Sanifoam Endustri ve Tuketim Urunleri Sanayi Ticaret|SANİFOAM ENDÜSTRİ VE TÜKETİM ÜRÜNLERİ SANAYİ TİCARET A.Ş.
+SANKO.IS,SANKO.IS,Sanko Pazarlama İthalat İhracat A.Ş.,SANKO PAZARLAMA İTHALAT İHRACAT A.Ş.,SANKO|Sanko Pazarlama İthalat İhracat|Sanko Pazarlama Ithalat Ihracat|SANKO PAZARLAMA İTHALAT İHRACAT A.Ş.
+SARAE.IS,SARAE.IS,Şa-Ra Enerji İnşaat Ticaret ve Sanayi A.Ş.,ŞA-RA ENERJİ İNŞAAT TİCARET VE SANAYİ A.Ş.,SARAE|Şa-Ra Enerji İnşaat Ticaret ve Sanayi|Sa-Ra Enerji Insaat Ticaret ve Sanayi|ŞA-RA ENERJİ İNŞAAT TİCARET VE SANAYİ A.Ş.
+SARKY.IS,SARKY.IS,Sarkuysan Elektrolitik Bakır Sanayi ve Ticaret A.Ş.,SARKUYSAN ELEKTROLİTİK BAKIR SANAYİ VE TİCARET A.Ş.,SARKY|Sarkuysan Elektrolitik Bakır|Sarkuysan Elektrolitik Bakir|SARKUYSAN ELEKTROLİTİK BAKIR SANAYİ VE TİCARET A.Ş.
+SARTN.IS,SARTN.IS,Sarten Ambalaj Sanayi ve Ticaret A.Ş.,SARTEN AMBALAJ SANAYİ VE TİCARET A.Ş.,SARTN|Sarten Ambalaj|SARTEN AMBALAJ SANAYİ VE TİCARET A.Ş.
+SASA.IS,SASA.IS,Sasa Polyester Sanayi A.Ş.,SASA POLYESTER SANAYİ A.Ş.,SASA|Sasa Polyester Sanayi|SASA POLYESTER SANAYİ A.Ş.
+SAYAS.IS,SAYAS.IS,Say Yenilenebilir Enerji Ekipmanları Sanayi ve Ticaret A.Ş.,SAY YENİLENEBİLİR ENERJİ EKİPMANLARI SANAYİ VE TİCARET A.Ş.,SAYAS|Say Yenilenebilir Enerji Ekipmanları|Say Yenilenebilir Enerji Ekipmanlari|SAY YENİLENEBİLİR ENERJİ EKİPMANLARI SANAYİ VE TİCARET A.Ş.
+SDTTR.IS,SDTTR.IS,SDT Uzay ve Savunma Teknolojileri A.Ş.,SDT UZAY VE SAVUNMA TEKNOLOJİLERİ A.Ş.,SDTTR|SDT Uzay ve Savunma Teknolojileri|SDT UZAY VE SAVUNMA TEKNOLOJİLERİ A.Ş.
+SEGMN.IS,SEGMN.IS,Seğmen Kardeşler Gıda Üretim ve Ambalaj Sanayi A.Ş.,SEĞMEN KARDEŞLER GIDA ÜRETİM VE AMBALAJ SANAYİ A.Ş.,SEGMN|Seğmen Kardeşler Gıda Üretim ve Ambalaj Sanayi|Segmen Kardesler Gida Uretim ve Ambalaj Sanayi|SEĞMEN KARDEŞLER GIDA ÜRETİM VE AMBALAJ SANAYİ A.Ş.
+SEGYO.IS,SEGYO.IS,Şeker Gayrimenkul Yatırım Ortaklığı A.Ş.,ŞEKER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,SEGYO|Şeker Gayrimenkul Yatırım Ortaklığı|Seker Gayrimenkul Yatirim Ortakligi|ŞEKER GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+SEK.IS,SEK.IS,Şekerbank T.A.Ş.,ŞEKERBANK T.A.Ş.,SEK|Şekerbank|Sekerbank|ŞEKERBANK T.A.Ş.
+SEKFK.IS,SEKFK.IS,Şeker Finansal Kiralama A.Ş.,ŞEKER FİNANSAL KİRALAMA A.Ş.,SEKFK|Şeker Finansal Kiralama|Seker Finansal Kiralama|ŞEKER FİNANSAL KİRALAMA A.Ş.
+SEKUR.IS,SEKUR.IS,Sekuro Plastik Ambalaj Sanayi A.Ş.,SEKURO PLASTİK AMBALAJ SANAYİ A.Ş.,SEKUR|Sekuro Plastik Ambalaj Sanayi|SEKURO PLASTİK AMBALAJ SANAYİ A.Ş.
+SELEC.IS,SELEC.IS,Selçuk Ecza Deposu Ticaret ve Sanayi A.Ş.,SELÇUK ECZA DEPOSU TİCARET VE SANAYİ A.Ş.,SELEC|Selçuk Ecza Deposu Ticaret ve Sanayi|Selcuk Ecza Deposu Ticaret ve Sanayi|SELÇUK ECZA DEPOSU TİCARET VE SANAYİ A.Ş.
+SELVA.IS,SELVA.IS,Selva Gıda Sanayi A.Ş.,SELVA GIDA SANAYİ A.Ş.,SELVA|Selva Gıda Sanayi|Selva Gida Sanayi|SELVA GIDA SANAYİ A.Ş.
+SERNT.IS,SERNT.IS,Seranit Granit Seramik Sanayi ve Ticaret A.Ş.,SERANİT GRANİT SERAMİK SANAYİ VE TİCARET A.Ş.,SERNT|Seranit Granit Seramik|SERANİT GRANİT SERAMİK SANAYİ VE TİCARET A.Ş.
+SEYKM.IS,SEYKM.IS,Seyitler Kimya Sanayi A.Ş.,SEYİTLER KİMYA SANAYİ A.Ş.,SEYKM|Seyitler Kimya Sanayi|SEYİTLER KİMYA SANAYİ A.Ş.
+SILVR.IS,SILVR.IS,Silverline Endüstri ve Ticaret A.Ş.,SİLVERLİNE ENDÜSTRİ VE TİCARET A.Ş.,SILVR|Silverline Endüstri ve Ticaret|Silverline Endustri ve Ticaret|SİLVERLİNE ENDÜSTRİ VE TİCARET A.Ş.
+SISE.IS,SISE.IS,Türkiye Şişe ve Cam Fabrikaları A.Ş.,TÜRKİYE ŞİŞE VE CAM FABRİKALARI A.Ş.,SISE|Türkiye Şişe ve Cam Fabrikaları|Turkiye Sise ve Cam Fabrikalari|TÜRKİYE ŞİŞE VE CAM FABRİKALARI A.Ş.
+SKBNK.IS,SKBNK.IS,Şekerbank T.A.Ş.,ŞEKERBANK T.A.Ş.,SKBNK|Şekerbank|Sekerbank|ŞEKERBANK T.A.Ş.
+SKTAS.IS,SKTAS.IS,Söktaş Tekstil Sanayi ve Ticaret A.Ş.,SÖKTAŞ TEKSTİL SANAYİ VE TİCARET A.Ş.,SKTAS|Söktaş Tekstil|Soktas Tekstil|SÖKTAŞ TEKSTİL SANAYİ VE TİCARET A.Ş.
+SKY.IS,SKY.IS,Şeker Yatırım Menkul Değerler A.Ş.,ŞEKER YATIRIM MENKUL DEĞERLER A.Ş.,SKY|Şeker Yatırım Menkul Değerler|Seker Yatirim Menkul Degerler|ŞEKER YATIRIM MENKUL DEĞERLER A.Ş.
+SKYLP.IS,SKYLP.IS,Skyalp Finansal Teknolojiler ve Danışmanlık A.Ş.,SKYALP FİNANSAL TEKNOLOJİLER VE DANIŞMANLIK A.Ş.,SKYLP|Skyalp Finansal Teknolojiler ve Danışmanlık|Skyalp Finansal Teknolojiler ve Danismanlik|SKYALP FİNANSAL TEKNOLOJİLER VE DANIŞMANLIK A.Ş.
+SKYMD.IS,SKYMD.IS,Şeker Yatırım Menkul Değerler A.Ş.,ŞEKER YATIRIM MENKUL DEĞERLER A.Ş.,SKYMD|Şeker Yatırım Menkul Değerler|Seker Yatirim Menkul Degerler|ŞEKER YATIRIM MENKUL DEĞERLER A.Ş.
+SMART.IS,SMART.IS,Smartiks Yazılım A.Ş.,SMARTİKS YAZILIM A.Ş.,SMART|Smartiks Yazılım|Smartiks Yazilim|SMARTİKS YAZILIM A.Ş.
+SMRFA.IS,SMRFA.IS,Sümer Faktoring A.Ş.,SÜMER FAKTORİNG A.Ş.,SMRFA|Sümer Faktoring|Sumer Faktoring|SÜMER FAKTORİNG A.Ş.
+SMRTG.IS,SMRTG.IS,Smart Güneş Enerjisi Teknolojileri Araştırma Geliştirme Üretim Sanayi ve Ticaret A.Ş.,SMART GÜNEŞ ENERJİSİ TEKNOLOJİLERİ ARAŞTIRMA GELİŞTİRME ÜRETİM SANAYİ VE TİCARET A.Ş.,SMRTG|Smart Güneş Enerjisi Teknolojileri Araştırma Geliştirme Üretim|Smart Gunes Enerjisi Teknolojileri Arastirma Gelistirme Uretim|SMART GÜNEŞ ENERJİSİ TEKNOLOJİLERİ ARAŞTIRMA GELİŞTİRME ÜRETİM SANAYİ VE TİCARET A.Ş.
+SMRVA.IS,SMRVA.IS,Sümer Varlık Yönetim A.Ş.,SÜMER VARLIK YÖNETİM A.Ş.,SMRVA|Sümer Varlık Yönetim|Sumer Varlik Yonetim|SÜMER VARLIK YÖNETİM A.Ş.
+SNGYO.IS,SNGYO.IS,Sinpaş Gayrimenkul Yatırım Ortaklığı A.Ş.,SİNPAŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,SNGYO|Sinpaş Gayrimenkul Yatırım Ortaklığı|Sinpas Gayrimenkul Yatirim Ortakligi|SİNPAŞ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+SNICA.IS,SNICA.IS,Sanica Isı Sanayi A.Ş.,SANİCA ISI SANAYİ A.Ş.,SNICA|Sanica Isı Sanayi|Sanica Isi Sanayi|SANİCA ISI SANAYİ A.Ş.
+SNPAM.IS,SNPAM.IS,Sönmez Pamuklu Sanayii A.Ş.,SÖNMEZ PAMUKLU SANAYİİ A.Ş.,SNPAM|Sönmez Pamuklu Sanayii|Sonmez Pamuklu Sanayii|SÖNMEZ PAMUKLU SANAYİİ A.Ş.
+SODSN.IS,SODSN.IS,Sodaş Sodyum Sanayii A.Ş.,SODAŞ SODYUM SANAYİİ A.Ş.,SODSN|Sodaş Sodyum Sanayii|Sodas Sodyum Sanayii|SODAŞ SODYUM SANAYİİ A.Ş.
+SOHOE.IS,SOHOE.IS,Soho Giyim ve Enerji A.Ş.,SOHO GİYİM VE ENERJİ A.Ş.,SOHOE|Soho Giyim ve Enerji|SOHO GİYİM VE ENERJİ A.Ş.
+SOKE.IS,SOKE.IS,Söke Değirmencilik Sanayi ve Ticaret A.Ş.,SÖKE DEĞİRMENCİLİK SANAYİ VE TİCARET A.Ş.,SOKE|Söke Değirmencilik|Soke Degirmencilik|SÖKE DEĞİRMENCİLİK SANAYİ VE TİCARET A.Ş.
+SOKM.IS,SOKM.IS,Şok Marketler Ticaret A.Ş.,ŞOK MARKETLER TİCARET A.Ş.,SOKM|Şok Marketler Ticaret|Sok Marketler Ticaret|ŞOK MARKETLER TİCARET A.Ş.
+SONME.IS,SONME.IS,Sönmez Filament Sentetik İplik ve Elyaf Sanayi A.Ş.,SÖNMEZ FİLAMENT SENTETİK İPLİK VE ELYAF SANAYİ A.Ş.,SONME|Sönmez Filament Sentetik İplik ve Elyaf Sanayi|Sonmez Filament Sentetik Iplik ve Elyaf Sanayi|SÖNMEZ FİLAMENT SENTETİK İPLİK VE ELYAF SANAYİ A.Ş.
+SRVGY.IS,SRVGY.IS,Servet Gayrimenkul Yatırım Ortaklığı A.Ş.,SERVET GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,SRVGY|Servet Gayrimenkul Yatırım Ortaklığı|Servet Gayrimenkul Yatirim Ortakligi|SERVET GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+SSAAT.IS,SSAAT.IS,Saat ve Saat Sanayi ve Ticaret A.Ş.,SAAT VE SAAT SANAYİ VE TİCARET A.Ş.,SSAAT|Saat ve Saat|SAAT VE SAAT SANAYİ VE TİCARET A.Ş.
+SUMAS.IS,SUMAS.IS,Sumaş Suni Tahta ve Mobilya Sanayii A.Ş.,SUMAŞ SUNİ TAHTA VE MOBİLYA SANAYİİ A.Ş.,SUMAS|Sumaş Suni Tahta ve Mobilya Sanayii|Sumas Suni Tahta ve Mobilya Sanayii|SUMAŞ SUNİ TAHTA VE MOBİLYA SANAYİİ A.Ş.
+SUNTK.IS,SUNTK.IS,Sun Tekstil Sanayi ve Ticaret A.Ş.,SUN TEKSTİL SANAYİ VE TİCARET A.Ş.,SUNTK|Sun Tekstil|SUN TEKSTİL SANAYİ VE TİCARET A.Ş.
+SURGY.IS,SURGY.IS,Sur Tatil Evleri Gayrimenkul Yatırım Ortaklığı A.Ş.,SUR TATİL EVLERİ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,SURGY|Sur Tatil Evleri Gayrimenkul Yatırım Ortaklığı|Sur Tatil Evleri Gayrimenkul Yatirim Ortakligi|SUR TATİL EVLERİ GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+SUWEN.IS,SUWEN.IS,Suwen Tekstil Sanayi Pazarlama A.Ş.,SUWEN TEKSTİL SANAYİ PAZARLAMA A.Ş.,SUWEN|Suwen Tekstil Sanayi Pazarlama|SUWEN TEKSTİL SANAYİ PAZARLAMA A.Ş.
+SVGYO.IS,SVGYO.IS,Savur Gayrimenkul Yatırım Ortaklığı A.Ş.,SAVUR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,SVGYO|Savur Gayrimenkul Yatırım Ortaklığı|Savur Gayrimenkul Yatirim Ortakligi|SAVUR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+TABGD.IS,TABGD.IS,Tab Gıda Sanayi ve Ticaret A.Ş.,TAB GIDA SANAYİ VE TİCARET A.Ş.,TABGD|Tab Gıda|Tab Gida|TAB GIDA SANAYİ VE TİCARET A.Ş.
+TAC.IS,TAC.IS,Tacirler Yatırım Menkul Değerler A.Ş.,TACİRLER YATIRIM MENKUL DEĞERLER A.Ş.,TAC|Tacirler Yatırım Menkul Değerler|Tacirler Yatirim Menkul Degerler|TACİRLER YATIRIM MENKUL DEĞERLER A.Ş.
+TAE.IS,TAE.IS,Tera Yatırım Bankası A.Ş.,TERA YATIRIM BANKASI A.Ş.,TAE|Tera Yatırım Bankası|Tera Yatirim Bankasi|TERA YATIRIM BANKASI A.Ş.
+TAMFA.IS,TAMFA.IS,Tam Finans Faktoring A.Ş.,TAM FİNANS FAKTORİNG A.Ş.,TAMFA|Tam Finans Faktoring|TAM FİNANS FAKTORİNG A.Ş.
+TARFN.IS,TARFN.IS,Tarfin Tarım A.Ş.,TARFİN TARIM A.Ş.,TARFN|Tarfin Tarım|Tarfin Tarim|TARFİN TARIM A.Ş.
+TARKM.IS,TARKM.IS,Tarkim Bitki Koruma Sanayi ve Ticaret A.Ş.,TARKİM BİTKİ KORUMA SANAYİ VE TİCARET A.Ş.,TARKM|Tarkim Bitki Koruma|TARKİM BİTKİ KORUMA SANAYİ VE TİCARET A.Ş.
+TATEN.IS,TATEN.IS,Tatlıpınar Enerji Üretim A.Ş.,TATLIPINAR ENERJİ ÜRETİM A.Ş.,TATEN|Tatlıpınar Enerji Üretim|Tatlipinar Enerji Uretim|TATLIPINAR ENERJİ ÜRETİM A.Ş.
+TATGD.IS,TATGD.IS,Tat Gıda Sanayi A.Ş.,TAT GIDA SANAYİ A.Ş.,TATGD|Tat Gıda Sanayi|Tat Gida Sanayi|TAT GIDA SANAYİ A.Ş.
+TAVHL.IS,TAVHL.IS,Tav Havalimanları Holding A.Ş.,TAV HAVALİMANLARI HOLDİNG A.Ş.,TAVHL|Tav Havalimanları Holding|Tav Havalimanlari Holding|TAV HAVALİMANLARI HOLDİNG A.Ş.
+TBORG.IS,TBORG.IS,Türk Tuborg Bira ve Malt Sanayii A.Ş.,TÜRK TUBORG BİRA VE MALT SANAYİİ A.Ş.,TBORG|Türk Tuborg Bira ve Malt Sanayii|Turk Tuborg Bira ve Malt Sanayii|TÜRK TUBORG BİRA VE MALT SANAYİİ A.Ş.
+TCELL.IS,TCELL.IS,Turkcell İletişim Hizmetleri A.Ş.,TURKCELL İLETİŞİM HİZMETLERİ A.Ş.,TCELL|Turkcell İletişim Hizmetleri|Turkcell Iletisim Hizmetleri|TURKCELL İLETİŞİM HİZMETLERİ A.Ş.
+TCKRC.IS,TCKRC.IS,Kıraç Galvaniz Telekominikasyon Metal Makine İnşaat Elektrik Sanayi ve Ticaret A.Ş.,KIRAÇ GALVANİZ TELEKOMİNİKASYON METAL MAKİNE İNŞAAT ELEKTRİK SANAYİ VE TİCARET A.Ş.,TCKRC|Kıraç Galvaniz Telekominikasyon Metal Makine İnşaat Elektrik|Kirac Galvaniz Telekominikasyon Metal Makine Insaat Elektrik|KIRAÇ GALVANİZ TELEKOMİNİKASYON METAL MAKİNE İNŞAAT ELEKTRİK SANAYİ VE TİCARET A.Ş.
+TCRYT.IS,TCRYT.IS,Tacirler Yatırım Menkul Değerler A.Ş.,TACİRLER YATIRIM MENKUL DEĞERLER A.Ş.,TCRYT|Tacirler Yatırım Menkul Değerler|Tacirler Yatirim Menkul Degerler|TACİRLER YATIRIM MENKUL DEĞERLER A.Ş.
+TDGYO.IS,TDGYO.IS,Trend Gayrimenkul Yatırım Ortaklığı A.Ş.,TREND GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,TDGYO|Trend Gayrimenkul Yatırım Ortaklığı|Trend Gayrimenkul Yatirim Ortakligi|TREND GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+TEBFA.IS,TEBFA.IS,Teb Faktoring A.Ş.,TEB FAKTORİNG A.Ş.,TEBFA|Teb Faktoring|TEB FAKTORİNG A.Ş.
+TEHOL.IS,TEHOL.IS,Tera Yatırım Teknoloji Holding A.Ş.,TERA YATIRIM TEKNOLOJİ HOLDİNG A.Ş.,TEHOL|Tera Yatırım Teknoloji Holding|Tera Yatirim Teknoloji Holding|TERA YATIRIM TEKNOLOJİ HOLDİNG A.Ş.
+TEKTU.IS,TEKTU.IS,Tek-Art İnşaat Ticaret Turizm Sanayi ve Yatırımlar A.Ş.,TEK-ART İNŞAAT TİCARET TURİZM SANAYİ VE YATIRIMLAR A.Ş.,TEKTU|Tek-Art İnşaat Ticaret Turizm Sanayi ve Yatırımlar|Tek-Art Insaat Ticaret Turizm Sanayi ve Yatirimlar|TEK-ART İNŞAAT TİCARET TURİZM SANAYİ VE YATIRIMLAR A.Ş.
+TERA.IS,TERA.IS,Tera Yatırım Menkul Değerler A.Ş.,TERA YATIRIM MENKUL DEĞERLER A.Ş.,TERA|Tera Yatırım Menkul Değerler|Tera Yatirim Menkul Degerler|TERA YATIRIM MENKUL DEĞERLER A.Ş.
+TEVKS.IS,TEVKS.IS,Tera Varlık Kiralama A.Ş.,TERA VARLIK KİRALAMA A.Ş.,TEVKS|Tera Varlık Kiralama|Tera Varlik Kiralama|TERA VARLIK KİRALAMA A.Ş.
+TEZOL.IS,TEZOL.IS,Europap Tezol Kağıt Sanayi ve Ticaret A.Ş.,EUROPAP TEZOL KAĞIT SANAYİ VE TİCARET A.Ş.,TEZOL|Europap Tezol Kağıt|Europap Tezol Kagit|EUROPAP TEZOL KAĞIT SANAYİ VE TİCARET A.Ş.
+TFNVK.IS,TFNVK.IS,TF Varlık Kiralama A.Ş.,TF VARLIK KİRALAMA A.Ş.,TFNVK|TF Varlık Kiralama|TF Varlik Kiralama|TF VARLIK KİRALAMA A.Ş.
+TGB.IS,TGB.IS,Türkiye Garanti Bankası A.Ş.,TÜRKİYE GARANTİ BANKASI A.Ş.,TGB|Türkiye Garanti Bankası|Turkiye Garanti Bankasi|TÜRKİYE GARANTİ BANKASI A.Ş.
+TGSAS.IS,TGSAS.IS,TGS Dış Ticaret A.Ş.,TGS DIŞ TİCARET A.Ş.,TGSAS|TGS Dış Ticaret|TGS Dis Ticaret|TGS DIŞ TİCARET A.Ş.
+THL.IS,THL.IS,Türkiye Halk Bankası A.Ş.,TÜRKİYE HALK BANKASI A.Ş.,THL|Türkiye Halk Bankası|Turkiye Halk Bankasi|TÜRKİYE HALK BANKASI A.Ş.
+THR.IS,THR.IS,Türkiye İhracat Kredi Bankası A.Ş.,TÜRKİYE İHRACAT KREDİ BANKASI A.Ş.,THR|Türkiye İhracat Kredi Bankası|Turkiye Ihracat Kredi Bankasi|TÜRKİYE İHRACAT KREDİ BANKASI A.Ş.
+THYAO.IS,THYAO.IS,Türk Hava Yolları A.O.,TÜRK HAVA YOLLARI A.O.,THYAO|Türk Hava Yolları|Turk Hava Yollari|TÜRK HAVA YOLLARI A.O.
+TIB.IS,TIB.IS,Türkiye İş Bankası A.Ş.,TÜRKİYE İŞ BANKASI A.Ş.,TIB|Türkiye İş Bankası|Turkiye Is Bankasi|TÜRKİYE İŞ BANKASI A.Ş.
+TKFEN.IS,TKFEN.IS,Tekfen Holding A.Ş.,TEKFEN HOLDİNG A.Ş.,TKFEN|Tekfen Holding|TEKFEN HOLDİNG A.Ş.
+TKNKA.IS,TKNKA.IS,Teknika Plast Teknik Kalıp Plastik Sanayi ve Ticaret A.Ş.,TEKNİKA PLAST TEKNİK KALIP PLASTİK SANAYİ VE TİCARET A.Ş.,TKNKA|Teknika Plast Teknik Kalıp Plastik|Teknika Plast Teknik Kalip Plastik|TEKNİKA PLAST TEKNİK KALIP PLASTİK SANAYİ VE TİCARET A.Ş.
+TKNSA.IS,TKNSA.IS,Teknosa İç ve Dış Ticaret A.Ş.,TEKNOSA İÇ VE DIŞ TİCARET A.Ş.,TKNSA|Teknosa İç ve Dış Ticaret|Teknosa Ic ve Dis Ticaret|TEKNOSA İÇ VE DIŞ TİCARET A.Ş.
+TLMAN.IS,TLMAN.IS,Trabzon Liman İşletmeciliği A.Ş.,TRABZON LİMAN İŞLETMECİLİĞİ A.Ş.,TLMAN|Trabzon Liman İşletmeciliği|Trabzon Liman Isletmeciligi|TRABZON LİMAN İŞLETMECİLİĞİ A.Ş.
+TMPOL.IS,TMPOL.IS,Temapol Polimer Plastik ve İnşaat Sanayi Ticaret A.Ş.,TEMAPOL POLİMER PLASTİK VE İNŞAAT SANAYİ TİCARET A.Ş.,TMPOL|Temapol Polimer Plastik ve İnşaat Sanayi Ticaret|Temapol Polimer Plastik ve Insaat Sanayi Ticaret|TEMAPOL POLİMER PLASTİK VE İNŞAAT SANAYİ TİCARET A.Ş.
+TMSN.IS,TMSN.IS,Tümosan Motor ve Traktör Sanayi A.Ş.,TÜMOSAN MOTOR VE TRAKTÖR SANAYİ A.Ş.,TMSN|Tümosan Motor ve Traktör Sanayi|Tumosan Motor ve Traktor Sanayi|TÜMOSAN MOTOR VE TRAKTÖR SANAYİ A.Ş.
+TNZTP.IS,TNZTP.IS,Tapdi Oksijen Özel Sağlık ve Eğitim Hizmetleri Sanayi Ticaret A.Ş.,TAPDİ OKSİJEN ÖZEL SAĞLIK VE EĞİTİM HİZMETLERİ SANAYİ TİCARET A.Ş.,TNZTP|Tapdi Oksijen Özel Sağlık ve Eğitim Hizmetleri Sanayi Ticaret|Tapdi Oksijen Ozel Saglik ve Egitim Hizmetleri Sanayi Ticaret|TAPDİ OKSİJEN ÖZEL SAĞLIK VE EĞİTİM HİZMETLERİ SANAYİ TİCARET A.Ş.
+TOASO.IS,TOASO.IS,Tofaş Türk Otomobil Fabrikası A.Ş.,TOFAŞ TÜRK OTOMOBİL FABRİKASI A.Ş.,TOASO|Tofaş Türk Otomobil Fabrikası|Tofas Turk Otomobil Fabrikasi|TOFAŞ TÜRK OTOMOBİL FABRİKASI A.Ş.
+TRA.IS,TRA.IS,Tera Yatırım Menkul Değerler A.Ş.,TERA YATIRIM MENKUL DEĞERLER A.Ş.,TRA|Tera Yatırım Menkul Değerler|Tera Yatirim Menkul Degerler|TERA YATIRIM MENKUL DEĞERLER A.Ş.
+TRALT.IS,TRALT.IS,Türk Altın İşletmeleri A.Ş.,TÜRK ALTIN İŞLETMELERİ A.Ş.,TRALT|Türk Altın İşletmeleri|Turk Altin Isletmeleri|TÜRK ALTIN İŞLETMELERİ A.Ş.
+TRBNK.IS,TRBNK.IS,Tera Yatırım Bankası A.Ş.,TERA YATIRIM BANKASI A.Ş.,TRBNK|Tera Yatırım Bankası|Tera Yatirim Bankasi|TERA YATIRIM BANKASI A.Ş.
+TRCAS.IS,TRCAS.IS,Turcas Holding A.Ş.,TURCAS HOLDİNG A.Ş.,TRCAS|Turcas Holding|TURCAS HOLDİNG A.Ş.
+TRENJ.IS,TRENJ.IS,TR Doğal Enerji Kaynakları Araştırma ve Üretim A.Ş.,TR DOĞAL ENERJİ KAYNAKLARI ARAŞTIRMA VE ÜRETİM A.Ş.,TRENJ|TR Doğal Enerji Kaynakları Araştırma ve Üretim|TR Dogal Enerji Kaynaklari Arastirma ve Uretim|TR DOĞAL ENERJİ KAYNAKLARI ARAŞTIRMA VE ÜRETİM A.Ş.
+TRFFA.IS,TRFFA.IS,Tera Finans Faktoring A.Ş.,TERA FİNANS FAKTORİNG A.Ş.,TRFFA|Tera Finans Faktoring|TERA FİNANS FAKTORİNG A.Ş.
+TRGYO.IS,TRGYO.IS,Torunlar Gayrimenkul Yatırım Ortaklığı A.Ş.,TORUNLAR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,TRGYO|Torunlar Gayrimenkul Yatırım Ortaklığı|Torunlar Gayrimenkul Yatirim Ortakligi|TORUNLAR GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+TRHOL.IS,TRHOL.IS,Tera Finansal Yatırımlar Holding A.Ş.,TERA FİNANSAL YATIRIMLAR HOLDİNG A.Ş.,TRHOL|Tera Finansal Yatırımlar Holding|Tera Finansal Yatirimlar Holding|TERA FİNANSAL YATIRIMLAR HOLDİNG A.Ş.
+TRILC.IS,TRILC.IS,Turk İlaç ve Serum Sanayi A.Ş.,TURK İLAÇ VE SERUM SANAYİ A.Ş.,TRILC|Turk İlaç ve Serum Sanayi|Turk Ilac ve Serum Sanayi|TURK İLAÇ VE SERUM SANAYİ A.Ş.
+TRKFN.IS,TRKFN.IS,Turk Finansman A.Ş.,TURK FİNANSMAN A.Ş.,TRKFN|Turk Finansman|TURK FİNANSMAN A.Ş.
+TRKNT.IS,TRKNT.IS,Turknet İletişim Hizmetleri A.Ş.,TURKNET İLETİŞİM HİZMETLERİ A.Ş.,TRKNT|Turknet İletişim Hizmetleri|Turknet Iletisim Hizmetleri|TURKNET İLETİŞİM HİZMETLERİ A.Ş.
+TRMEN.IS,TRMEN.IS,Trıve Yatırım Menkul Değerler A.Ş.,TRIVE YATIRIM MENKUL DEĞERLER A.Ş.,TRMEN|Trıve Yatırım Menkul Değerler|Trive Yatirim Menkul Degerler|TRIVE YATIRIM MENKUL DEĞERLER A.Ş.
+TRMET.IS,TRMET.IS,TR Anadolu Metal Madencilik İşletmeleri A.Ş.,TR ANADOLU METAL MADENCİLİK İŞLETMELERİ A.Ş.,TRMET|TR Anadolu Metal Madencilik İşletmeleri|TR Anadolu Metal Madencilik Isletmeleri|TR ANADOLU METAL MADENCİLİK İŞLETMELERİ A.Ş.
+TRYKI.IS,TRYKI.IS,Tiryaki Agro Gıda Sanayi ve Ticaret A.Ş.,TİRYAKİ AGRO GIDA SANAYİ VE TİCARET A.Ş.,TRYKI|Tiryaki Agro Gıda|Tiryaki Agro Gida|TİRYAKİ AGRO GIDA SANAYİ VE TİCARET A.Ş.
+TSGYO.IS,TSGYO.IS,Tskb Gayrimenkul Yatırım Ortaklığı A.Ş.,TSKB GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,TSGYO|Tskb Gayrimenkul Yatırım Ortaklığı|Tskb Gayrimenkul Yatirim Ortakligi|TSKB GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+TSK.IS,TSK.IS,Türkiye Sınai Kalkınma Bankası A.Ş.,TÜRKİYE SINAİ KALKINMA BANKASI A.Ş.,TSK|Türkiye Sınai Kalkınma Bankası|Turkiye Sinai Kalkinma Bankasi|TÜRKİYE SINAİ KALKINMA BANKASI A.Ş.
+TSKB.IS,TSKB.IS,Türkiye Sınai Kalkınma Bankası A.Ş.,TÜRKİYE SINAİ KALKINMA BANKASI A.Ş.,TSKB|Türkiye Sınai Kalkınma Bankası|Turkiye Sinai Kalkinma Bankasi|TÜRKİYE SINAİ KALKINMA BANKASI A.Ş.
+TSPOR.IS,TSPOR.IS,Trabzonspor Sportif Yatırım ve Futbol İşletmeciliği Ticaret A.Ş.,TRABZONSPOR SPORTİF YATIRIM VE FUTBOL İŞLETMECİLİĞİ TİCARET A.Ş.,TSPOR|Trabzonspor Sportif Yatırım ve Futbol İşletmeciliği Ticaret|Trabzonspor Sportif Yatirim ve Futbol Isletmeciligi Ticaret|TRABZONSPOR SPORTİF YATIRIM VE FUTBOL İŞLETMECİLİĞİ TİCARET A.Ş.
+TTKOM.IS,TTKOM.IS,Türk Telekomünikasyon A.Ş.,TÜRK TELEKOMÜNİKASYON A.Ş.,TTKOM|Türk Telekomünikasyon|Turk Telekomunikasyon|TÜRK TELEKOMÜNİKASYON A.Ş.
+TTRAK.IS,TTRAK.IS,Türk Traktör ve Ziraat Makineleri A.Ş.,TÜRK TRAKTÖR VE ZİRAAT MAKİNELERİ A.Ş.,TTRAK|Türk Traktör ve Ziraat Makineleri|Turk Traktor ve Ziraat Makineleri|TÜRK TRAKTÖR VE ZİRAAT MAKİNELERİ A.Ş.
+TUCLK.IS,TUCLK.IS,Tuğçelik Alüminyum ve Metal Mamülleri Sanayi ve Ticaret A.Ş.,TUĞÇELİK ALÜMİNYUM VE METAL MAMÜLLERİ SANAYİ VE TİCARET A.Ş.,TUCLK|Tuğçelik Alüminyum ve Metal Mamülleri|Tugcelik Aluminyum ve Metal Mamulleri|TUĞÇELİK ALÜMİNYUM VE METAL MAMÜLLERİ SANAYİ VE TİCARET A.Ş.
+TUKAS.IS,TUKAS.IS,Tukaş Gıda Sanayi ve Ticaret A.Ş.,TUKAŞ GIDA SANAYİ VE TİCARET A.Ş.,TUKAS|Tukaş Gıda|Tukas Gida|TUKAŞ GIDA SANAYİ VE TİCARET A.Ş.
+TUPRS.IS,TUPRS.IS,Tüpraş-Türkiye Petrol Rafinerileri A.Ş.,TÜPRAŞ-TÜRKİYE PETROL RAFİNERİLERİ A.Ş.,TUPRS|Tüpraş-Türkiye Petrol Rafinerileri|Tupras-Turkiye Petrol Rafinerileri|TÜPRAŞ-TÜRKİYE PETROL RAFİNERİLERİ A.Ş.
+TUREX.IS,TUREX.IS,Tureks Turizm Taşımacılık A.Ş.,TUREKS TURİZM TAŞIMACILIK A.Ş.,TUREX|Tureks Turizm Taşımacılık|Tureks Turizm Tasimacilik|TUREKS TURİZM TAŞIMACILIK A.Ş.
+TURGG.IS,TURGG.IS,Türker Proje Gayrimenkul ve Yatırım Geliştirme A.Ş.,TÜRKER PROJE GAYRİMENKUL VE YATIRIM GELİŞTİRME A.Ş.,TURGG|Türker Proje Gayrimenkul ve Yatırım Geliştirme|Turker Proje Gayrimenkul ve Yatirim Gelistirme|TÜRKER PROJE GAYRİMENKUL VE YATIRIM GELİŞTİRME A.Ş.
+TURSG.IS,TURSG.IS,Türkiye Sigorta A.Ş.,TÜRKİYE SİGORTA A.Ş.,TURSG|Türkiye Sigorta|Turkiye Sigorta|TÜRKİYE SİGORTA A.Ş.
+TV8TV.IS,TV8TV.IS,TV8 TV Yayıncılık A.Ş.,TV8 TV YAYINCILIK A.Ş.,TV8TV|TV8 TV Yayıncılık|TV8 TV Yayincilik|TV8 TV YAYINCILIK A.Ş.
+TVB.IS,TVB.IS,Türkiye Vakıflar Bankası T.A.O.,TÜRKİYE VAKIFLAR BANKASI T.A.O.,TVB|Türkiye Vakıflar Bankası|Turkiye Vakiflar Bankasi|TÜRKİYE VAKIFLAR BANKASI T.A.O.
+TVM.IS,TVM.IS,Trıve Yatırım Menkul Değerler A.Ş.,TRIVE YATIRIM MENKUL DEĞERLER A.Ş.,TVM|Trıve Yatırım Menkul Değerler|Trive Yatirim Menkul Degerler|TRIVE YATIRIM MENKUL DEĞERLER A.Ş.
+UCAYM.IS,UCAYM.IS,Üçay Mühendislik Enerji ve İklimlendirme Teknolojileri A.Ş.,ÜÇAY MÜHENDİSLİK ENERJİ VE İKLİMLENDİRME TEKNOLOJİLERİ A.Ş.,UCAYM|Üçay Mühendislik Enerji ve İklimlendirme Teknolojileri|Ucay Muhendislik Enerji ve Iklimlendirme Teknolojileri|ÜÇAY MÜHENDİSLİK ENERJİ VE İKLİMLENDİRME TEKNOLOJİLERİ A.Ş.
+UFUK.IS,UFUK.IS,Ufuk Yatırım Yönetim ve Gayrimenkul A.Ş.,UFUK YATIRIM YÖNETİM VE GAYRİMENKUL A.Ş.,UFUK|Ufuk Yatırım Yönetim ve Gayrimenkul|Ufuk Yatirim Yonetim ve Gayrimenkul|UFUK YATIRIM YÖNETİM VE GAYRİMENKUL A.Ş.
+ULAS.IS,ULAS.IS,Ulaşlar Turizm Enerji Tarım Gıda ve İnşaat Yatırımları A.Ş.,ULAŞLAR TURİZM ENERJİ TARIM GIDA VE İNŞAAT YATIRIMLARI A.Ş.,ULAS|Ulaşlar Turizm Enerji Tarım Gıda ve İnşaat Yatırımları|Ulaslar Turizm Enerji Tarim Gida ve Insaat Yatirimlari|ULAŞLAR TURİZM ENERJİ TARIM GIDA VE İNŞAAT YATIRIMLARI A.Ş.
+ULKER.IS,ULKER.IS,Ülker Bisküvi Sanayi A.Ş.,ÜLKER BİSKÜVİ SANAYİ A.Ş.,ULKER|Ülker Bisküvi Sanayi|Ulker Biskuvi Sanayi|ÜLKER BİSKÜVİ SANAYİ A.Ş.
+ULUFA.IS,ULUFA.IS,Ulusal Faktoring A.Ş.,ULUSAL FAKTORİNG A.Ş.,ULUFA|Ulusal Faktoring|ULUSAL FAKTORİNG A.Ş.
+ULUSE.IS,ULUSE.IS,Ulusoy Elektrik İmalat Taahhüt ve Ticaret A.Ş.,ULUSOY ELEKTRİK İMALAT TAAHHÜT VE TİCARET A.Ş.,ULUSE|Ulusoy Elektrik İmalat Taahhüt ve Ticaret|Ulusoy Elektrik Imalat Taahhut ve Ticaret|ULUSOY ELEKTRİK İMALAT TAAHHÜT VE TİCARET A.Ş.
+ULUUN.IS,ULUUN.IS,Ulusoy Un Sanayi ve Ticaret A.Ş.,ULUSOY UN SANAYİ VE TİCARET A.Ş.,ULUUN|Ulusoy Un|ULUSOY UN SANAYİ VE TİCARET A.Ş.
+UMPAS.IS,UMPAS.IS,Umpaş Holding A.Ş.,UMPAŞ HOLDİNG A.Ş.,UMPAS|Umpaş Holding|Umpas Holding|UMPAŞ HOLDİNG A.Ş.
+UNLU.IS,UNLU.IS,Ünlü Yatırım Holding A.Ş.,ÜNLÜ YATIRIM HOLDİNG A.Ş.,UNLU|Ünlü Yatırım Holding|Unlu Yatirim Holding|ÜNLÜ YATIRIM HOLDİNG A.Ş.
+USAK.IS,USAK.IS,Uşak Seramik Sanayi A.Ş.,UŞAK SERAMİK SANAYİ A.Ş.,USAK|Uşak Seramik Sanayi|Usak Seramik Sanayi|UŞAK SERAMİK SANAYİ A.Ş.
+USHOL.IS,USHOL.IS,Us Yatırım Holding A.Ş.,US YATIRIM HOLDİNG A.Ş.,USHOL|Us Yatırım Holding|Us Yatirim Holding|US YATIRIM HOLDİNG A.Ş.
+VAKBN.IS,VAKBN.IS,Türkiye Vakıflar Bankası T.A.O.,TÜRKİYE VAKIFLAR BANKASI T.A.O.,VAKBN|Türkiye Vakıflar Bankası|Turkiye Vakiflar Bankasi|TÜRKİYE VAKIFLAR BANKASI T.A.O.
+VAKFA.IS,VAKFA.IS,Vakıf Faktoring A.Ş.,VAKIF FAKTORİNG A.Ş.,VAKFA|Vakıf Faktoring|Vakif Faktoring|VAKIF FAKTORİNG A.Ş.
+VAKFN.IS,VAKFN.IS,Vakıf Finansal Kiralama A.Ş.,VAKIF FİNANSAL KİRALAMA A.Ş.,VAKFN|Vakıf Finansal Kiralama|Vakif Finansal Kiralama|VAKIF FİNANSAL KİRALAMA A.Ş.
+VAKKO.IS,VAKKO.IS,Vakko Tekstil ve Hazır Giyim Sanayi İşletmeleri A.Ş.,VAKKO TEKSTİL VE HAZIR GİYİM SANAYİ İŞLETMELERİ A.Ş.,VAKKO|Vakko Tekstil ve Hazır Giyim Sanayi İşletmeleri|Vakko Tekstil ve Hazir Giyim Sanayi Isletmeleri|VAKKO TEKSTİL VE HAZIR GİYİM SANAYİ İŞLETMELERİ A.Ş.
+VAKVK.IS,VAKVK.IS,Vakıf Varlık Kiralama A.Ş.,VAKIF VARLIK KİRALAMA A.Ş.,VAKVK|Vakıf Varlık Kiralama|Vakif Varlik Kiralama|VAKIF VARLIK KİRALAMA A.Ş.
+VANGD.IS,VANGD.IS,Vanet Gıda Sanayi İç ve Dış Ticaret A.Ş.,VANET GIDA SANAYİ İÇ VE DIŞ TİCARET A.Ş.,VANGD|Vanet Gıda Sanayi İç ve Dış Ticaret|Vanet Gida Sanayi Ic ve Dis Ticaret|VANET GIDA SANAYİ İÇ VE DIŞ TİCARET A.Ş.
+VBTYZ.IS,VBTYZ.IS,VBT Yazılım A.Ş.,VBT YAZILIM A.Ş.,VBTYZ|VBT Yazılım|VBT Yazilim|VBT YAZILIM A.Ş.
+VDFAS.IS,VDFAS.IS,Volkswagen Doğuş Finansman A.Ş.,VOLKSWAGEN DOĞUŞ FİNANSMAN A.Ş.,VDFAS|Volkswagen Doğuş Finansman|Volkswagen Dogus Finansman|VOLKSWAGEN DOĞUŞ FİNANSMAN A.Ş.
+VDFLO.IS,VDFLO.IS,VDF Filo Kiralama A.Ş.,VDF FİLO KİRALAMA A.Ş.,VDFLO|VDF Filo Kiralama|VDF FİLO KİRALAMA A.Ş.
+VERTU.IS,VERTU.IS,Verusaturk Girişim Sermayesi Yatırım Ortaklığı A.Ş.,VERUSATURK GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.,VERTU|Verusaturk Girişim Sermayesi Yatırım Ortaklığı|Verusaturk Girisim Sermayesi Yatirim Ortakligi|VERUSATURK GİRİŞİM SERMAYESİ YATIRIM ORTAKLIĞI A.Ş.
+VERUS.IS,VERUS.IS,Verusa Holding A.Ş.,VERUSA HOLDİNG A.Ş.,VERUS|Verusa Holding|VERUSA HOLDİNG A.Ş.
+VESBE.IS,VESBE.IS,Vestel Beyaz Eşya Sanayi ve Ticaret A.Ş.,VESTEL BEYAZ EŞYA SANAYİ VE TİCARET A.Ş.,VESBE|Vestel Beyaz Eşya|Vestel Beyaz Esya|VESTEL BEYAZ EŞYA SANAYİ VE TİCARET A.Ş.
+VESTL.IS,VESTL.IS,Vestel Elektronik Sanayi ve Ticaret A.Ş.,VESTEL ELEKTRONİK SANAYİ VE TİCARET A.Ş.,VESTL|Vestel Elektronik|VESTEL ELEKTRONİK SANAYİ VE TİCARET A.Ş.
+VEYAS.IS,VEYAS.IS,Türker Vangölü Enerji Yatırım A.Ş.,TÜRKER VANGÖLÜ ENERJİ YATIRIM A.Ş.,VEYAS|Türker Vangölü Enerji Yatırım|Turker Vangolu Enerji Yatirim|TÜRKER VANGÖLÜ ENERJİ YATIRIM A.Ş.
+VKFYO.IS,VKFYO.IS,Vakıf Menkul Kıymet Yatırım Ortaklığı A.Ş.,VAKIF MENKUL KIYMET YATIRIM ORTAKLIĞI A.Ş.,VKFYO|Vakıf Menkul Kıymet Yatırım Ortaklığı|Vakif Menkul Kiymet Yatirim Ortakligi|VAKIF MENKUL KIYMET YATIRIM ORTAKLIĞI A.Ş.
+VKGYO.IS,VKGYO.IS,Vakıf Gayrimenkul Yatırım Ortaklığı A.Ş.,VAKIF GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,VKGYO|Vakıf Gayrimenkul Yatırım Ortaklığı|Vakif Gayrimenkul Yatirim Ortakligi|VAKIF GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+VKING.IS,VKING.IS,Viking Kağıt ve Selüloz A.Ş.,VİKİNG KAĞIT VE SELÜLOZ A.Ş.,VKING|Viking Kağıt ve Selüloz|Viking Kagit ve Seluloz|VİKİNG KAĞIT VE SELÜLOZ A.Ş.
+VRGYO.IS,VRGYO.IS,Vera Konsept Gayrimenkul Yatırım Ortaklığı A.Ş.,VERA KONSEPT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,VRGYO|Vera Konsept Gayrimenkul Yatırım Ortaklığı|Vera Konsept Gayrimenkul Yatirim Ortakligi|VERA KONSEPT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+VSNMD.IS,VSNMD.IS,Vişne Madencilik Üretim Sanayi ve Ticaret A.Ş.,VİŞNE MADENCİLİK ÜRETİM SANAYİ VE TİCARET A.Ş.,VSNMD|Vişne Madencilik Üretim|Visne Madencilik Uretim|VİŞNE MADENCİLİK ÜRETİM SANAYİ VE TİCARET A.Ş.
+YAPRK.IS,YAPRK.IS,Yaprak Süt ve Besi Çiftlikleri Sanayi ve Ticaret A.Ş.,YAPRAK SÜT VE BESİ ÇİFTLİKLERİ SANAYİ VE TİCARET A.Ş.,YAPRK|Yaprak Süt ve Besi Çiftlikleri|Yaprak Sut ve Besi Ciftlikleri|YAPRAK SÜT VE BESİ ÇİFTLİKLERİ SANAYİ VE TİCARET A.Ş.
+YATAS.IS,YATAS.IS,Yataş Yatak ve Yorgan Sanayi Ticaret A.Ş.,YATAŞ YATAK VE YORGAN SANAYİ TİCARET A.Ş.,YATAS|Yataş Yatak ve Yorgan Sanayi Ticaret|Yatas Yatak ve Yorgan Sanayi Ticaret|YATAŞ YATAK VE YORGAN SANAYİ TİCARET A.Ş.
+YATVK.IS,YATVK.IS,Yatırım Varlık Kiralama A.Ş.,YATIRIM VARLIK KİRALAMA A.Ş.,YATVK|Yatırım Varlık Kiralama|Yatirim Varlik Kiralama|YATIRIM VARLIK KİRALAMA A.Ş.
+YAYLA.IS,YAYLA.IS,Yayla Enerji Üretim Turizm ve İnşaat Ticaret A.Ş.,YAYLA ENERJİ ÜRETİM TURİZM VE İNŞAAT TİCARET A.Ş.,YAYLA|Yayla Enerji Üretim Turizm ve İnşaat Ticaret|Yayla Enerji Uretim Turizm ve Insaat Ticaret|YAYLA ENERJİ ÜRETİM TURİZM VE İNŞAAT TİCARET A.Ş.
+YBQ.IS,YBQ.IS,Q Yatırım Bankası A.Ş.,Q YATIRIM BANKASI A.Ş.,YBQ|Q Yatırım Bankası|Q Yatirim Bankasi|Q YATIRIM BANKASI A.Ş.
+YBTAS.IS,YBTAS.IS,Yibitaş Yozgat İşçi Birliği İnşaat Malzemeleri Ticaret ve Sanayi A.Ş.,YİBİTAŞ YOZGAT İŞÇİ BİRLİĞİ İNŞAAT MALZEMELERİ TİCARET VE SANAYİ A.Ş.,YBTAS|Yibitaş Yozgat İşçi Birliği İnşaat Malzemeleri Ticaret ve Sanayi|Yibitas Yozgat Isci Birligi Insaat Malzemeleri Ticaret ve Sanayi|YİBİTAŞ YOZGAT İŞÇİ BİRLİĞİ İNŞAAT MALZEMELERİ TİCARET VE SANAYİ A.Ş.
+YEOTK.IS,YEOTK.IS,Yeo Teknoloji Enerji ve Endüstri A.Ş.,YEO TEKNOLOJİ ENERJİ VE ENDÜSTRİ A.Ş.,YEOTK|Yeo Teknoloji Enerji ve Endüstri|Yeo Teknoloji Enerji ve Endustri|YEO TEKNOLOJİ ENERJİ VE ENDÜSTRİ A.Ş.
+YESIL.IS,YESIL.IS,Yeşil Yatırım Holding A.Ş.,YEŞİL YATIRIM HOLDİNG A.Ş.,YESIL|Yeşil Yatırım Holding|Yesil Yatirim Holding|YEŞİL YATIRIM HOLDİNG A.Ş.
+YGGYO.IS,YGGYO.IS,Yeni Gimat Gayrimenkul Yatırım Ortaklığı A.Ş.,YENİ GİMAT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,YGGYO|Yeni Gimat Gayrimenkul Yatırım Ortaklığı|Yeni Gimat Gayrimenkul Yatirim Ortakligi|YENİ GİMAT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+YIGIT.IS,YIGIT.IS,Yiğit Akü Malzemeleri Nakliyat Turizm İnşaat Sanayi ve Ticaret A.Ş.,YİĞİT AKÜ MALZEMELERİ NAKLİYAT TURİZM İNŞAAT SANAYİ VE TİCARET A.Ş.,YIGIT|Yiğit Akü Malzemeleri Nakliyat Turizm İnşaat|Yigit Aku Malzemeleri Nakliyat Turizm Insaat|YİĞİT AKÜ MALZEMELERİ NAKLİYAT TURİZM İNŞAAT SANAYİ VE TİCARET A.Ş.
+YKB.IS,YKB.IS,Yapı ve Kredi Bankası A.Ş.,YAPI VE KREDİ BANKASI A.Ş.,YKB|Yapı ve Kredi Bankası|Yapi ve Kredi Bankasi|YAPI VE KREDİ BANKASI A.Ş.
+YKBNK.IS,YKBNK.IS,Yapı ve Kredi Bankası A.Ş.,YAPI VE KREDİ BANKASI A.Ş.,YKBNK|Yapı ve Kredi Bankası|Yapi ve Kredi Bankasi|YAPI VE KREDİ BANKASI A.Ş.
+YKFIN.IS,YKFIN.IS,Yapı Kredi Finansal Kiralama A.O.,YAPI KREDİ FİNANSAL KİRALAMA A.O.,YKFIN|Yapı Kredi Finansal Kiralama|Yapi Kredi Finansal Kiralama|YAPI KREDİ FİNANSAL KİRALAMA A.O.
+YKFKT.IS,YKFKT.IS,Yapı Kredi Faktoring A.Ş.,YAPI KREDİ FAKTORİNG A.Ş.,YKFKT|Yapı Kredi Faktoring|Yapi Kredi Faktoring|YAPI KREDİ FAKTORİNG A.Ş.
+YKR.IS,YKR.IS,Yapı Kredi Yatırım Menkul Değerler A.Ş.,YAPI KREDİ YATIRIM MENKUL DEĞERLER A.Ş.,YKR|Yapı Kredi Yatırım Menkul Değerler|Yapi Kredi Yatirim Menkul Degerler|YAPI KREDİ YATIRIM MENKUL DEĞERLER A.Ş.
+YKSLN.IS,YKSLN.IS,Yükselen Çelik A.Ş.,YÜKSELEN ÇELİK A.Ş.,YKSLN|Yükselen Çelik|Yukselen Celik|YÜKSELEN ÇELİK A.Ş.
+YKYAT.IS,YKYAT.IS,Yapı Kredi Yatırım Menkul Değerler A.Ş.,YAPI KREDİ YATIRIM MENKUL DEĞERLER A.Ş.,YKYAT|Yapı Kredi Yatırım Menkul Değerler|Yapi Kredi Yatirim Menkul Degerler|YAPI KREDİ YATIRIM MENKUL DEĞERLER A.Ş.
+YONGA.IS,YONGA.IS,Yonga Mobilya Sanayi ve Ticaret A.Ş.,YONGA MOBİLYA SANAYİ VE TİCARET A.Ş.,YONGA|Yonga Mobilya|YONGA MOBİLYA SANAYİ VE TİCARET A.Ş.
+YUNSA.IS,YUNSA.IS,Yünsa Yünlü Sanayi ve Ticaret A.Ş.,YÜNSA YÜNLÜ SANAYİ VE TİCARET A.Ş.,YUNSA|Yünsa Yünlü|Yunsa Yunlu|YÜNSA YÜNLÜ SANAYİ VE TİCARET A.Ş.
+YYA.IS,YYA.IS,Aytemiz Yatırım Bankası A.Ş.,AYTEMİZ YATIRIM BANKASI A.Ş.,YYA|Aytemiz Yatırım Bankası|Aytemiz Yatirim Bankasi|AYTEMİZ YATIRIM BANKASI A.Ş.
+YYAPI.IS,YYAPI.IS,Yeşil Yapı Endüstrisi A.Ş.,YEŞİL YAPI ENDÜSTRİSİ A.Ş.,YYAPI|Yeşil Yapı Endüstrisi|Yesil Yapi Endustrisi|YEŞİL YAPI ENDÜSTRİSİ A.Ş.
+YYLGD.IS,YYLGD.IS,Yayla Agro Gıda Sanayi ve Ticaret A.Ş.,YAYLA AGRO GIDA SANAYİ VE TİCARET A.Ş.,YYLGD|Yayla Agro Gıda|Yayla Agro Gida|YAYLA AGRO GIDA SANAYİ VE TİCARET A.Ş.
+ZEDUR.IS,ZEDUR.IS,Zedur Enerji Elektrik Üretim A.Ş.,ZEDUR ENERJİ ELEKTRİK ÜRETİM A.Ş.,ZEDUR|Zedur Enerji Elektrik Üretim|Zedur Enerji Elektrik Uretim|ZEDUR ENERJİ ELEKTRİK ÜRETİM A.Ş.
+ZERGY.IS,ZERGY.IS,Zeray Gayrimenkul Yatırım Ortaklığı A.Ş.,ZERAY GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ZERGY|Zeray Gayrimenkul Yatırım Ortaklığı|Zeray Gayrimenkul Yatirim Ortakligi|ZERAY GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ZGYO.IS,ZGYO.IS,Z Gayrimenkul Yatırım Ortaklığı A.Ş.,Z GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ZGYO|Z Gayrimenkul Yatırım Ortaklığı|Z Gayrimenkul Yatirim Ortakligi|Z GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.
+ZKBVK.IS,ZKBVK.IS,Ziraat Katılım Varlık Kiralama A.Ş.,ZİRAAT KATILIM VARLIK KİRALAMA A.Ş.,ZKBVK|Ziraat Katılım Varlık Kiralama|Ziraat Katilim Varlik Kiralama|ZİRAAT KATILIM VARLIK KİRALAMA A.Ş.
+ZKBVR.IS,ZKBVR.IS,ZKB Varlık Kiralama A.Ş.,ZKB VARLIK KİRALAMA A.Ş.,ZKBVR|ZKB Varlık Kiralama|ZKB Varlik Kiralama|ZKB VARLIK KİRALAMA A.Ş.
+ZOREN.IS,ZOREN.IS,Zorlu Enerji Elektrik Üretim A.Ş.,ZORLU ENERJİ ELEKTRİK ÜRETİM A.Ş.,ZOREN|Zorlu Enerji Elektrik Üretim|Zorlu Enerji Elektrik Uretim|ZORLU ENERJİ ELEKTRİK ÜRETİM A.Ş.
+ZRGYO.IS,ZRGYO.IS,Ziraat Gayrimenkul Yatırım Ortaklığı A.Ş.,ZİRAAT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.,ZRGYO|Ziraat Gayrimenkul Yatırım Ortaklığı|Ziraat Gayrimenkul Yatirim Ortakligi|ZİRAAT GAYRİMENKUL YATIRIM ORTAKLIĞI A.Ş.

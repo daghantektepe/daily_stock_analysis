@@ -174,6 +174,14 @@ python main.py --serve --schedule
 
 Web arayüzü: <http://127.0.0.1:8000>. Ağda başkalarına açacaksan `ADMIN_AUTH_ENABLED=true` yap.
 
+### 4.1 Web arayüzünde hisse arama
+
+Web arayüzünün arama kutusu yaklaşık 800 BIST hissesini tanır: `THYAO`, `Türk Hava`, `turk hava yollari` yazman yeterli; seçince `THYAO.IS` olarak eklenir. Liste KAP'tan üretilir; yeni halka arzlar için güncellemek istersen:
+
+```bash
+python scripts/fetch_kap_stock_list.py && python scripts/generate_index_from_csv.py --merge-markets TR
+```
+
 ## 5. Gizlilik: buluta ne gider?
 
 - Claude / Gemini / Codex / Grok kullanıldığında **hisse kodları, fiyat verisi, haberler, KAP bildirimleri ve (Portföy'e girdiysen) pozisyon bilgilerin** ilgili sağlayıcıya gider. Bunlar çoğunlukla zaten açık piyasa verisidir.

@@ -5,7 +5,8 @@ Generate Stock Index from CSV File
 
 Input:
   - Tushare format: data/stock_list_{a,hk,us}.csv
-  - Seed format: scripts/stock_index_seeds/stock_list_{jp,kr}.csv
+  - Seed format: scripts/stock_index_seeds/stock_list_{jp,kr,tr}.csv
+    (``stock_list_tr.csv`` is produced by ``scripts/fetch_kap_stock_list.py``)
   - AkShare format: logs/stock_basic_*.csv
 
 Output: apps/dsa-web/public/stocks.index.json
@@ -14,6 +15,8 @@ Usage:
     python3 scripts/generate_index_from_csv.py              # 默认使用 Tushare
     python3 scripts/generate_index_from_csv.py --source akshare
     python3 scripts/generate_index_from_csv.py --test       # 测试模式
+    python3 scripts/generate_index_from_csv.py --merge-markets TR
+        # 只用种子 CSV 重建指定市场，并合并进现有 stocks.index.json（无需 A/港/美 CSV）
 """
 
 import argparse
@@ -110,6 +113,7 @@ def load_tushare_data(data_dir: Path) -> List[Dict[str, Any]]:
         'US': data_dir / 'stock_list_us.csv',
         'JP': _csv_path('stock_list_jp.csv'),
         'KR': _csv_path('stock_list_kr.csv'),
+        'TR': _csv_path('stock_list_tr.csv'),
     }
 
     for market_name, csv_file in market_files.items():
@@ -315,8 +319,8 @@ def extract_symbol_from_ts_code(ts_code: str, market: str) -> Optional[str]:
     if not ts_code:
         return None
 
-    if market in {'US', 'JP', 'KR'}:
-        # 美股常见 class/share 后缀、日韩 Yahoo 后缀都是代码身份的一部分。
+    if market in {'US', 'JP', 'KR', 'TR'}:
+        # 美股常见 class/share 后缀、日韩/土耳其 Yahoo 后缀都是代码身份的一部分。
         return ts_code
 
     if '.' in ts_code:
@@ -427,7 +431,7 @@ def determine_market(ts_code: str) -> str:
         ts_code: Trading code (e.g., 000001.SZ, AAPL, BRK.B, 7203.T, 005930.KS)
 
     Returns:
-        Market code (CN, HK, US, BSE, JP, KR)
+        Market code (CN, HK, US, BSE, JP, KR, TR)
     """
     if '.' in ts_code:
         # 有后缀的情况
@@ -443,6 +447,8 @@ def determine_market(ts_code: str) -> str:
             return 'JP'
         elif suffix in ['KS', 'KQ']:
             return 'KR'
+        elif suffix == 'IS':
+            return 'TR'
         # 有后缀但不是中国市场后缀，检查是否为美股
         # 美股可能有点号后缀（如 BRK.B, GOOG.A, AAPL.U）
         prefix = ts_code.split('.')[0]
@@ -616,6 +622,53 @@ def compress_index(index: List[Dict[str, Any]]) -> List[List]:
     return compressed
 
 
+SEED_MARKET_FILES = {
+    'JP': 'stock_list_jp.csv',
+    'KR': 'stock_list_kr.csv',
+    'TR': 'stock_list_tr.csv',
+}
+
+
+def load_seed_market_rows(markets: List[str], seed_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Load parsed rows for the given seed-backed markets only."""
+    seed_dir = seed_dir or Path(__file__).parent / 'stock_index_seeds'
+    rows: List[Dict[str, Any]] = []
+    for market in markets:
+        csv_file = seed_dir / SEED_MARKET_FILES[market]
+        if not csv_file.exists():
+            raise FileNotFoundError(f"seed file not found: {csv_file}")
+        with open(csv_file, 'r', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                parsed = parse_stock_row(row, market)
+                if parsed and parsed['market'] == market:
+                    rows.append(parsed)
+    return rows
+
+
+def merge_compressed_index(
+    existing: List[List],
+    replacement: List[List],
+    markets: List[str],
+) -> List[List]:
+    """Replace every entry of ``markets`` in ``existing`` with ``replacement``.
+
+    Compressed rows keep the market at index 6. Entries of other markets keep
+    their original order; replacement rows are appended after them.
+    """
+    market_set = set(markets)
+    kept = [row for row in existing if len(row) > 6 and row[6] not in market_set]
+    return kept + list(replacement)
+
+
+def write_compressed_index(output_path: Path, compressed: List[List]) -> None:
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write('[\n')
+        for i, item in enumerate(compressed):
+            json.dump(item, f, ensure_ascii=False, separators=(',', ':'))
+            f.write(',\n' if i < len(compressed) - 1 else '\n')
+        f.write(']\n')
+
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='从 CSV 生成股票自动补全索引')
@@ -630,7 +683,30 @@ def main():
         action='store_true',
         help='测试模式：只验证不写入文件'
     )
+    parser.add_argument(
+        '--merge-markets',
+        default='',
+        help='逗号分隔的种子市场（JP,KR,TR）：仅重建这些市场并合并进现有索引',
+    )
     args = parser.parse_args()
+
+    if args.merge_markets:
+        if not require_pypinyin():
+            return 1
+        markets = [m.strip().upper() for m in args.merge_markets.split(',') if m.strip()]
+        unknown = [m for m in markets if m not in SEED_MARKET_FILES]
+        if unknown:
+            print(f"[Error] 不支持的种子市场：{', '.join(unknown)}")
+            return 1
+        output_path = Path(__file__).parent.parent / "apps" / "dsa-web" / "public" / "stocks.index.json"
+        existing = json.loads(output_path.read_text(encoding='utf-8')) if output_path.exists() else []
+        replacement = compress_index(build_stock_index(load_seed_market_rows(markets)))
+        merged = merge_compressed_index(existing, replacement, markets)
+        print(f"合并市场 {','.join(markets)}：新增/替换 {len(replacement)} 条，总计 {len(merged)} 条")
+        if not args.test:
+            write_compressed_index(output_path, merged)
+            print(f"已写入：{output_path}")
+        return 0
 
     print("=" * 60)
     print("股票索引生成工具（从 CSV）")

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Web 股票自动补全新增约 800 个 Borsa Istanbul 代码：`scripts/fetch_kap_stock_list.py` 从 KAP 上市公司列表生成 TR 种子（土耳其语大小写规范化名称与 ASCII 别名），`generate_index_from_csv.py --merge-markets TR` 仅重建指定种子市场并合并进现有索引；建议列表新增 `BIST` 市场标签
 - [修复] 报告与 Prompt 中缺失的量比/换手率等字段不再渲染为 `None` / `None%`，统一显示 `N/A`；非中文报告页脚使用半角冒号
 - [改进] 分析 Prompt 的价格单位按市场显示（港元/美元/日元/韩元/新台币/土耳其里拉，A 股仍为元），财报区块新增财报币种与报价币种行，避免离岸市场金额币种混淆；Borsa Istanbul 股票名称优先使用 KAP 官方公司名称（fail-open）
 - [修复] 报告语言为 `ko` / `tr` 时生成完整报告不再因数据源显示名缺少对应语言而 `KeyError` 导致本地报告保存失败（回退英文名）；`tr` 报告的 DecisionSignal 摘要使用土耳其语标签，行情快照成交量/成交额改用土耳其语计数单位（bin / mn / mr）而非“万股/亿元”

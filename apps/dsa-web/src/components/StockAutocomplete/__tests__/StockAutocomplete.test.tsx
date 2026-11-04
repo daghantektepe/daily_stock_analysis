@@ -100,6 +100,16 @@ const krSuggestion = {
   score: 60,
 };
 
+const trSuggestion = {
+  canonicalCode: "THYAO.IS",
+  displayCode: "THYAO.IS",
+  nameZh: "Türk Hava Yolları A.O.",
+  market: "TR" as const,
+  matchType: "exact" as const,
+  matchField: "code" as const,
+  score: 100,
+};
+
 const jpSuggestion = {
   canonicalCode: "7203.T",
   displayCode: "7203.T",
@@ -611,7 +621,7 @@ describe('StockAutocomplete', () => {
       autocompleteHookImpl = () => ({
         query: '',
         setQuery: vi.fn(),
-        suggestions: [krSuggestion, jpSuggestion],
+        suggestions: [krSuggestion, jpSuggestion, trSuggestion],
         isOpen: true,
         highlightedIndex: 0,
         setHighlightedIndex: vi.fn(),
@@ -639,6 +649,8 @@ describe('StockAutocomplete', () => {
 
       expect(screen.getByText('韩股')).toBeInTheDocument();
       expect(screen.getByText('日股')).toBeInTheDocument();
+      expect(screen.getByText('BIST')).toBeInTheDocument();
+      expect(screen.getByText('THYAO.IS')).toBeInTheDocument();
       expect(screen.getByText('000660.KS')).toBeInTheDocument();
       expect(screen.getByText('7203.T')).toBeInTheDocument();
     });

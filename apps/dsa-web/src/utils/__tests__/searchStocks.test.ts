@@ -486,3 +486,26 @@ describe('searchStocks', () => {
     });
   });
 });
+
+describe('searchStocks with Borsa Istanbul entries', () => {
+  const bistIndex: StockIndexItem[] = [
+    {
+      canonicalCode: 'THYAO.IS',
+      displayCode: 'THYAO.IS',
+      nameZh: 'Türk Hava Yolları A.O.',
+      pinyinFull: 'Türk Hava Yolları A.O.',
+      pinyinAbbr: 'Türk Hava Yolları A.O.',
+      aliases: ['THYAO', 'Türk Hava Yolları', 'Turk Hava Yollari', 'TÜRK HAVA YOLLARI A.O.'],
+      market: 'TR',
+      assetType: 'stock',
+      active: true,
+      popularity: 100,
+    },
+  ];
+
+  test.each(['THYAO', 'thyao', 'THYAO.IS', 'Türk Hava', 'turk hava yollari'])('finds THYAO.IS for %s', (query) => {
+    const results = searchStocks(query, bistIndex);
+    expect(results[0]?.canonicalCode).toBe('THYAO.IS');
+    expect(results[0]?.market).toBe('TR');
+  });
+});

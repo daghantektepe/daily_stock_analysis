@@ -141,6 +141,7 @@ PY
 - 交易日历注册 `tr: XIST / Europe/Istanbul`。连续交易 10:00–18:00；BIST 收盘集合竞价在日历收盘（18:00）之后进行，因此 `_CLOSING_AUCTION_WINDOW_MINUTES["tr"]=0`，18:00 后直接进入 `postmarket`。土耳其法定节假日（如 10 月 29 日共和国日）由 `exchange-calendars` 识别为非交易日。
 - 报告中的财务金额以 TRY 计价时标注为「土耳其里拉」，避免落入 A 股默认「元」。
 - Portfolio 新建 `tr` 账户时默认币种为 `TRY`；`tr` 属于 partial valuation 市场（实时报价 best-effort、汇率与成本口径部分支持）。
+- 股票索引与 Web 自动补全：`scripts/fetch_kap_stock_list.py` 从 KAP 上市公司列表生成 `scripts/stock_index_seeds/stock_list_tr.csv`（约 800 个 BIST 代码，土耳其语大小写规范化名称、代码 / 简称 / 无土耳其字符 ASCII 别名），`python scripts/generate_index_from_csv.py --merge-markets TR` 仅重建 TR 条目并合并进 `stocks.index.json`，无需 A/港/美 CSV。自动补全按 `.IS` 代码、裸代码别名（如 `THYAO`）、土耳其语名称或 ASCII 名称（如 `turk hava yollari`）搜索，选中后始终提交 `.IS` 代码；后端股票名称优先使用 KAP 官方公司名称。裸代码仍不会被自动改写为 `.IS`。
 - KAP 公司公告：`KapDisclosureFetcher`（`data_provider/kap_fetcher.py`）读取 KAP（Kamuyu Aydınlatma Platformu）网站使用的公开 JSON 端点（`/tr/api/company/items/IGS/A` 公司列表、`/tr/api/disclosure/members/byCriteria` 公告查询），无需 key。仅保留公司自身发布的「Özel Durum Açıklaması」(ODA) 与「Finansal Rapor」(FR)，跳过 MKK/Takasbank 等结算类 `DKB` 通知；默认回看 14 天、最多 8 条，按发布时间倒序，并附 `https://www.kap.org.tr/tr/Bildirim/<index>` 原文链接。公告作为不可信背景证据追加到传统分析与 Agent 分析的 `news_context`，同时以 `dimension=announcements`、`provider=KAP` 写入新闻情报表，供报告页资讯区展示。
 - KAP 链路 **fail-open**：网络错误、限流、返回结构变化或未知代码一律返回空结果，不中断主分析；公司列表缓存 24 小时、公告缓存 15 分钟，连续 3 次失败后熔断约 5 分钟。KAP 官方 API（MKK）需要 key 与 IP 白名单，本实现使用的是网站端点，结构可能无预告变化。当前不新增开关，回滚方式为 revert 对应代码。
 - 新闻检索：`.IS` 代码在 `SearchService` 中按 foreign 股票处理，使用英文检索维度，不再套用中文 A 股检索词。Intelligence 内置 `tr` 市场 RSS 模板：Anadolu Ajansı Ekonomi、Dünya Gazetesi、Bloomberg HT。
@@ -149,7 +150,6 @@ PY
 
 - 不承诺实时行情；Yahoo Finance 的 BIST 数据可能延迟或字段缺失。
 - 不提供 BIST 大盘复盘（`MARKET_REVIEW_REGION` 不接受 `tr`）、Market Light 告警、市场宽度或板块排行。
-- 未内置 BIST 股票索引/种子，Web 自动补全不覆盖土耳其股票；请手动输入完整 `.IS` 代码。
 - KAP 只提供公告标题、类别与链接，不解析公告正文或附件（如财报 PDF）。
 
 回滚方式：移除 `market_symbol_utils` 中的 `tr` 规则与 `base_pattern` 扩展、`XIST` 交易日历注册、YFinance/DataFetcherManager 路由扩展、`market_context` 土耳其语义、TRY 币种标注、服务层/API 市场枚举及前端市场类型放行，并删除本文档中的能力声明。
