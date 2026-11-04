@@ -130,8 +130,9 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             {"label": "Codex CLI (experimental)", "value": "codex_cli"},
             {"label": "Claude Code CLI (experimental)", "value": "claude_code_cli"},
             {"label": "OpenCode CLI (experimental)", "value": "opencode_cli"},
+            {"label": "Gemini CLI (experimental)", "value": "gemini_cli"},
         ],
-        "validation": {"enum": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli"]},
+        "validation": {"enum": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli", "gemini_cli"]},
         "display_order": 0,
         "help_key": "settings.ai_model.GENERATION_BACKEND",
         "examples": [
@@ -139,6 +140,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             "GENERATION_BACKEND=codex_cli",
             "GENERATION_BACKEND=claude_code_cli",
             "GENERATION_BACKEND=opencode_cli",
+            "GENERATION_BACKEND=gemini_cli",
         ],
         "docs": [
             {
@@ -176,22 +178,26 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "GENERATION_FALLBACK_BACKEND": {
         "title": "Fallback Generation Method",
-        "description": "Backend-level fallback method. Empty disables backend fallback; litellm can be used as fallback for local CLI generation backends.",
+        "description": "Ordered, comma-separated backend-level fallback chain tried after the primary generation method fails (e.g. gemini_cli,codex_cli,litellm). Empty disables backend fallback; entries equal to the primary are ignored.",
         "category": "ai_model",
         "data_type": "string",
-        "ui_control": "select",
+        "ui_control": "text",
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
         "default_value": "litellm",
-        "options": [
-            {"label": "Disabled", "value": ""},
-            {"label": "Default model settings", "value": "litellm"},
-        ],
-        "validation": {"enum": ["", "litellm"]},
+        "options": [],
+        "validation": {
+            "allowed_values": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli", "gemini_cli"],
+            "delimiter": ",",
+        },
         "display_order": 0,
         "help_key": "settings.ai_model.GENERATION_FALLBACK_BACKEND",
-        "examples": ["GENERATION_FALLBACK_BACKEND=litellm", "GENERATION_FALLBACK_BACKEND="],
+        "examples": [
+            "GENERATION_FALLBACK_BACKEND=litellm",
+            "GENERATION_FALLBACK_BACKEND=gemini_cli,codex_cli,litellm",
+            "GENERATION_FALLBACK_BACKEND=",
+        ],
         "docs": [
             {
                 "label": "LLM 配置指南",

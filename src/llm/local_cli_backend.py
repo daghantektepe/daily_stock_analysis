@@ -29,6 +29,7 @@ from urllib.parse import parse_qsl, urlsplit
 from src.llm.backend_registry import (
     CLAUDE_CODE_CLI_BACKEND_ID,
     CODEX_CLI_BACKEND_ID,
+    GEMINI_CLI_BACKEND_ID,
     OPENCODE_CLI_BACKEND_ID,
 )
 from src.llm.generation_backend import (
@@ -427,6 +428,14 @@ _CLAUDE_CODE_STATIC_INSTRUCTION = (
     "use MCP, or ask for interactive approval."
 )
 _PROMPT_FILE_PLACEHOLDER = "{prompt_file}"
+_GEMINI_CLI_STATIC_INSTRUCTION = (
+    "Generate the requested DSA analysis output from the input above. "
+    "Follow the output format required by that input. Return only the final response "
+    "content. Do not call tools, read files, browse the web, use MCP, or ask for approval."
+)
+# Gemini CLI loads only the MCP servers named here; this name is intentionally
+# never configured, so no user MCP server is started for DSA generation.
+_GEMINI_CLI_NO_MCP_SERVER = "dsa-no-mcp"
 _OPENCODE_STATIC_INSTRUCTION = (
     "Generate the requested DSA output from the attached prompt file. "
     "Follow the output format required by that prompt. Return only the final response "
@@ -590,10 +599,45 @@ OPENCODE_CLI_PRESET = LocalCliPreset(
     prompt_transport="file",
 )
 
+GEMINI_CLI_PRESET = LocalCliPreset(
+    preset_id=GEMINI_CLI_BACKEND_ID,
+    executable="gemini",
+    argv=(
+        # The per-call temporary cwd is untrusted by default, which would make
+        # Gemini CLI silently downgrade --approval-mode; trust it explicitly so
+        # read-only "plan" mode actually applies.
+        "--skip-trust",
+        "--approval-mode",
+        "plan",
+        "--extensions",
+        "none",
+        "--allowed-mcp-server-names",
+        _GEMINI_CLI_NO_MCP_SERVER,
+        "--output-format",
+        "json",
+        "-p",
+        _GEMINI_CLI_STATIC_INSTRUCTION,
+    ),
+    display_name="Gemini CLI",
+    extractor=lambda result: _extract_gemini_cli_json(result),
+    contract_args=(
+        "--skip-trust",
+        "--approval-mode",
+        "plan",
+        "--extensions",
+        "none",
+        "--allowed-mcp-server-names",
+        "--output-format",
+        "json",
+        "-p",
+    ),
+)
+
 SAFE_LOCAL_CLI_PRESETS = {
     CODEX_CLI_BACKEND_ID: CODEX_CLI_PRESET,
     CLAUDE_CODE_CLI_BACKEND_ID: CLAUDE_CODE_CLI_PRESET,
     OPENCODE_CLI_BACKEND_ID: OPENCODE_CLI_PRESET,
+    GEMINI_CLI_BACKEND_ID: GEMINI_CLI_PRESET,
 }
 
 
@@ -1854,6 +1898,54 @@ def _extract_claude_code_json(result: LocalCliExecutionResult, *, schema_mode: b
     return text
 
 
+def _extract_gemini_cli_json(result: LocalCliExecutionResult) -> str:
+    """Extract ``response`` from Gemini CLI ``--output-format json`` output.
+
+    Success: ``{"session_id": ..., "response": "...", "stats": {...}}``.
+    Failure: ``{"session_id": ..., "error": {"type", "message", "code"}}``.
+    """
+    raw = (result.stdout or "").strip()
+    if not raw:
+        raise LocalCliExtractionError(
+            GenerationErrorCode.EMPTY_OUTPUT,
+            "empty_output",
+        )
+    try:
+        envelope = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise LocalCliExtractionError(
+            GenerationErrorCode.INVALID_JSON,
+            "invalid_json",
+            details={"error": redact_diagnostic_text(str(exc), limit=200)},
+        ) from exc
+    if not isinstance(envelope, dict):
+        raise LocalCliExtractionError(
+            GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
+            "schema_validation_failed",
+            details={"expected": "object_envelope"},
+        )
+    error = envelope.get("error")
+    if error:
+        message = str(error.get("message") if isinstance(error, dict) else error).lower()
+        if "auth" in message or "login" in message:
+            code, reason = GenerationErrorCode.LOGIN_REQUIRED, "login_required"
+        else:
+            code, reason = GenerationErrorCode.UNKNOWN_BACKEND_ERROR, "cli_result_error"
+        raise LocalCliExtractionError(
+            code,
+            reason,
+            retryable=False,
+            details={"error_type": str(error.get("type") if isinstance(error, dict) else "unknown")},
+        )
+    text = str(envelope.get("response") or "").strip()
+    if not text:
+        raise LocalCliExtractionError(
+            GenerationErrorCode.EMPTY_OUTPUT,
+            "empty_result",
+        )
+    return text
+
+
 def _extract_opencode_json_events(result: LocalCliExecutionResult) -> str:
     raw = (result.stdout or "").strip()
     if not raw:
@@ -2711,7 +2803,12 @@ class LocalCliGenerationBackend(GenerationBackend):
         ):
             code = GenerationErrorCode.UNKNOWN_BACKEND_ERROR
             reason = "cli_result_error"
-        elif "login" in combined or "authentication" in combined or "not authenticated" in combined:
+        elif (
+            "login" in combined
+            or "authentication" in combined
+            or "not authenticated" in combined
+            or "auth method" in combined
+        ):
             code = GenerationErrorCode.LOGIN_REQUIRED
             reason = "login_required"
         elif "approval" in combined or "approve" in combined or "permission" in combined:

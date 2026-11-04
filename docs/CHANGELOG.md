@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增本地 CLI 生成后端 `GENERATION_BACKEND=gemini_cli`（experimental）：以只读 `plan` 模式、禁用扩展与 MCP、JSON 输出调用本机 Gemini CLI，可直接使用 Gemini 订阅登录
+- [新功能] `GENERATION_FALLBACK_BACKEND` 支持按顺序逗号分隔的 fallback 链（如 `gemini_cli,codex_cli,litellm`），主后端可回退失败后依次尝试；单值写法保持原行为，生成后端状态接口新增 `fallback_backend_ids` 并在 `backends` 中列出整条链
 - [新功能] 新增可选模拟交易（`PAPER_TRADING_ENABLED`，默认关闭）：个股分析新生成的 buy/add/reduce/sell DecisionSignal 按固定金额（`PAPER_TRADING_POSITION_SIZE`，股票报价币种）记入独立 `paper_trades` 账本，不写入 Portfolio、不下单；新增只读接口 `GET /api/v1/paper-trading/summary` 与 `/trades`，按币种汇总已实现/未实现盈亏与胜率
 - [新功能] Multi-Agent 新增多空辩论模式 `AGENT_ORCHESTRATOR_MODE=debate`（技术→情报→多头研究员→空头研究员→风控→决策）：多空研究员仅基于已收集证据倡导并互相反驳，论证经 pre-fetched data 传给风控与决策阶段，不作为方向投票计入分歧摘要或风险 override，失败时降级继续
 - [新功能] Borsa Istanbul 个股分析接入 KAP 公司公告：新增 fail-open 的 `KapDisclosureFetcher`，读取近 14 天公司特别公告与财报披露（跳过结算类通知），追加到传统与 Agent 分析的 `news_context` 并写入新闻情报（`provider=KAP`）；`.IS` 新闻检索改用英文维度；Intelligence 新增 `tr` 市场土耳其语 RSS 模板

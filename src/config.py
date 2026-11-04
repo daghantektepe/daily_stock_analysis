@@ -47,6 +47,8 @@ from src.llm.backend_registry import (
     SUPPORTED_AGENT_GENERATION_BACKENDS,
     SUPPORTED_AGENT_UI_BACKENDS,
     SUPPORTED_GENERATION_BACKENDS,
+    SUPPORTED_GENERATION_FALLBACK_BACKENDS,
+    parse_generation_fallback_chain,
 )
 from src.llm.local_cli_backend import (
     DEFAULT_GENERATION_BACKEND_MAX_CONCURRENCY,
@@ -3125,14 +3127,20 @@ class Config:
                 ),
                 field="GENERATION_BACKEND",
             ))
-        if generation_fallback_backend and generation_fallback_backend == generation_backend:
-            generation_fallback_backend = ""
-        if generation_fallback_backend and generation_fallback_backend != LITELLM_BACKEND_ID:
+        unsupported_fallbacks = [
+            backend_id
+            for backend_id in parse_generation_fallback_chain(generation_fallback_backend)
+            if backend_id != generation_backend
+            and backend_id not in SUPPORTED_GENERATION_FALLBACK_BACKENDS
+        ]
+        if unsupported_fallbacks:
             issues.append(ConfigIssue(
                 severity="error",
                 message=(
-                    "GENERATION_FALLBACK_BACKEND 当前支持 litellm、与 primary 相同的 no-op 值，或空字符串。"
-                    f"已配置的值为：{generation_fallback_backend}。"
+                    "GENERATION_FALLBACK_BACKEND 支持按顺序逗号分隔的 "
+                    f"{'、'.join(sorted(SUPPORTED_GENERATION_FALLBACK_BACKENDS))}，"
+                    "与 primary 相同的值会被忽略，空字符串表示禁用。"
+                    f"不支持的值：{', '.join(unsupported_fallbacks)}。"
                 ),
                 field="GENERATION_FALLBACK_BACKEND",
             ))

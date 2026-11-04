@@ -428,6 +428,7 @@ const fieldOptionLabelMap: Record<string, Record<string, string>> = {
     codex_cli: 'Codex CLI（实验）',
     claude_code_cli: 'Claude Code CLI（实验）',
     opencode_cli: 'OpenCode CLI（实验）',
+    gemini_cli: 'Gemini CLI（实验）',
   },
   GENERATION_FALLBACK_BACKEND: {
     '': '禁用',
@@ -514,6 +515,7 @@ const fieldOptionLabelMapEn: Record<string, Record<string, string>> = {
     codex_cli: 'Codex CLI (experimental)',
     claude_code_cli: 'Claude Code CLI (experimental)',
     opencode_cli: 'OpenCode CLI (experimental)',
+    gemini_cli: 'Gemini CLI (experimental)',
   },
   GENERATION_FALLBACK_BACKEND: {
     '': 'Disabled',

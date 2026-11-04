@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from src.llm.generation_backend import GenerationError, GenerationErrorCode
 
@@ -12,12 +12,14 @@ LITELLM_BACKEND_ID = "litellm"
 CODEX_CLI_BACKEND_ID = "codex_cli"
 CLAUDE_CODE_CLI_BACKEND_ID = "claude_code_cli"
 OPENCODE_CLI_BACKEND_ID = "opencode_cli"
+GEMINI_CLI_BACKEND_ID = "gemini_cli"
 AUTO_AGENT_BACKEND_ID = "auto"
 
 LOCAL_CLI_GENERATION_BACKEND_IDS = frozenset({
     CODEX_CLI_BACKEND_ID,
     CLAUDE_CODE_CLI_BACKEND_ID,
     OPENCODE_CLI_BACKEND_ID,
+    GEMINI_CLI_BACKEND_ID,
 })
 AGENT_CAPABLE_BACKEND_IDS = frozenset({LITELLM_BACKEND_ID})
 # Phase 4 local CLI backends are generation-only today. Keep this derived so a
@@ -28,7 +30,13 @@ SUPPORTED_GENERATION_BACKENDS = frozenset({
     LITELLM_BACKEND_ID,
     *LOCAL_CLI_GENERATION_BACKEND_IDS,
 })
-SUPPORTED_GENERATION_FALLBACK_BACKENDS = frozenset({LITELLM_BACKEND_ID})
+# Fallback accepts an ordered, comma-separated chain such as
+# ``gemini_cli,codex_cli,litellm``: each entry is tried in order after the
+# primary backend fails with a fallbackable error.
+SUPPORTED_GENERATION_FALLBACK_BACKENDS = frozenset({
+    LITELLM_BACKEND_ID,
+    *LOCAL_CLI_GENERATION_BACKEND_IDS,
+})
 SUPPORTED_AGENT_GENERATION_BACKENDS = frozenset({
     AUTO_AGENT_BACKEND_ID,
     *AGENT_CAPABLE_BACKEND_IDS,
@@ -96,25 +104,41 @@ def resolve_generation_backend_id(config: Any) -> str:
     return backend_id
 
 
-def resolve_generation_fallback_backend_id(config: Any) -> Optional[str]:
-    """Return the backend-level fallback target, or None for self/no-op."""
+def parse_generation_fallback_chain(raw_value: Any) -> Tuple[str, ...]:
+    """Split a raw ``GENERATION_FALLBACK_BACKEND`` value into ordered backend ids.
+
+    ``None`` (unset) keeps the historical default of ``litellm``; an explicit
+    empty string disables backend-level fallback.
+    """
+    if raw_value is None:
+        return (LITELLM_BACKEND_ID,)
+    items = []
+    for item in str(raw_value).split(","):
+        normalized = item.strip().lower()
+        if normalized and normalized not in items:
+            items.append(normalized)
+    return tuple(items)
+
+
+def resolve_generation_fallback_backend_ids(config: Any) -> Tuple[str, ...]:
+    """Return the ordered fallback chain, skipping the primary and duplicates."""
     primary = resolve_generation_backend_id(config)
-    raw_fallback = _read_backend_config_value(
-        config,
-        "generation_fallback_backend",
-        None,
-    )
-    if raw_fallback is None:
-        fallback = LITELLM_BACKEND_ID
-    else:
-        fallback = str(raw_fallback).strip().lower()
-        if not fallback:
-            return None
-    if fallback == primary:
-        return None
-    if fallback != LITELLM_BACKEND_ID:
-        raise _unsupported_backend_error(fallback, field="GENERATION_FALLBACK_BACKEND")
-    return fallback
+    chain = []
+    for backend_id in parse_generation_fallback_chain(
+        _read_backend_config_value(config, "generation_fallback_backend", None)
+    ):
+        if backend_id == primary:
+            continue
+        if backend_id not in SUPPORTED_GENERATION_FALLBACK_BACKENDS:
+            raise _unsupported_backend_error(backend_id, field="GENERATION_FALLBACK_BACKEND")
+        chain.append(backend_id)
+    return tuple(chain)
+
+
+def resolve_generation_fallback_backend_id(config: Any) -> Optional[str]:
+    """Return the first backend-level fallback target, or None for self/no-op."""
+    chain = resolve_generation_fallback_backend_ids(config)
+    return chain[0] if chain else None
 
 
 def resolve_agent_generation_backend_id(config: Any) -> str:

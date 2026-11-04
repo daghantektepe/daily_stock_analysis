@@ -203,21 +203,28 @@ class TestGenerationBackendFieldsRegistered(unittest.TestCase):
         for key, help_key in expected.items():
             field = get_field_definition(key)
             self.assertEqual(field["category"], "ai_model")
-            self.assertEqual(field["ui_control"], "select")
             self.assertEqual(field["default_value"], "litellm")
             if key == "GENERATION_BACKEND":
+                self.assertEqual(field["ui_control"], "select")
                 self.assertEqual(
                     field["validation"],
-                    {"enum": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli"]},
+                    {"enum": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli", "gemini_cli"]},
                 )
                 self.assertIn({"label": "Default model settings", "value": "litellm"}, field["options"])
                 self.assertIn({"label": "Codex CLI (experimental)", "value": "codex_cli"}, field["options"])
                 self.assertIn({"label": "Claude Code CLI (experimental)", "value": "claude_code_cli"}, field["options"])
                 self.assertIn({"label": "OpenCode CLI (experimental)", "value": "opencode_cli"}, field["options"])
+                self.assertIn({"label": "Gemini CLI (experimental)", "value": "gemini_cli"}, field["options"])
             else:
-                self.assertEqual(field["validation"], {"enum": ["", "litellm"]})
-                self.assertIn({"label": "Disabled", "value": ""}, field["options"])
-                self.assertIn({"label": "Default model settings", "value": "litellm"}, field["options"])
+                # Ordered comma-separated chain, validated item by item.
+                self.assertEqual(field["ui_control"], "text")
+                self.assertEqual(
+                    field["validation"],
+                    {
+                        "allowed_values": ["litellm", "codex_cli", "claude_code_cli", "opencode_cli", "gemini_cli"],
+                        "delimiter": ",",
+                    },
+                )
             self.assertEqual(field["help_key"], help_key)
             self.assertNotEqual(field["display_order"], 9000)
 

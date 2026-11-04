@@ -56,6 +56,7 @@ from src.llm.backend_registry import (
     LITELLM_BACKEND_ID,
     resolve_generation_backend_id,
     resolve_generation_fallback_backend_id,
+    resolve_generation_fallback_backend_ids,
 )
 from src.llm.backend_factory import create_generation_backend
 from src.llm.generation_backend import (
@@ -2616,13 +2617,21 @@ class GeminiAnalyzer:
         if not backend_error.fallbackable:
             return False
         try:
-            _backend_id, fallback_backend_id = self._resolve_generation_backend_config()
+            self._resolve_generation_backend_config()
+            fallback_chain = resolve_generation_fallback_backend_ids(self._get_runtime_config())
         except GenerationError:
             return False
-        return (
-            fallback_backend_id == LITELLM_BACKEND_ID
-            and self._litellm_runtime_available()
-        )
+        for fallback_backend_id in fallback_chain:
+            if fallback_backend_id == LITELLM_BACKEND_ID:
+                if self._litellm_runtime_available():
+                    return True
+                continue
+            if fallback_backend_id in LOCAL_CLI_GENERATION_BACKEND_IDS:
+                backend = self._get_generation_backend(fallback_backend_id)
+                get_config_error = getattr(backend, "get_config_error", None)
+                if not callable(get_config_error) or get_config_error() is None:
+                    return True
+        return False
 
     def _resolve_generation_backend_config(self) -> Tuple[str, Optional[str]]:
         """Resolve and validate generation backend ids."""
@@ -3039,11 +3048,70 @@ class GeminiAnalyzer:
                 audit_context=audit_context,
             )
         except GenerationError as exc:
-            if not exc.fallbackable or not fallback_backend_id:
+            fallback_chain = self._resolve_generation_fallback_chain()
+            if not exc.fallbackable or not fallback_chain:
                 raise
+            result = self._generate_with_fallback_chain(
+                exc,
+                fallback_chain,
+                prompt,
+                generation_config,
+                system_prompt=system_prompt,
+                stream=stream,
+                stream_progress_callback=stream_progress_callback,
+                response_validator=response_validator,
+                audit_context=audit_context,
+            )
+        return result.text, result.model, result.usage
+
+    def _resolve_generation_fallback_chain(self) -> Tuple[str, ...]:
+        try:
+            return resolve_generation_fallback_backend_ids(self._get_runtime_config())
+        except GenerationError:
+            return ()
+
+    def _generate_with_fallback_chain(
+        self,
+        primary_error: GenerationError,
+        fallback_chain: Tuple[str, ...],
+        prompt: str,
+        generation_config: dict,
+        **generate_kwargs: Any,
+    ) -> Any:
+        """Try each fallback backend in order until one succeeds.
+
+        Each entry is attempted only after the previous one failed with a
+        fallbackable error. The raised error keeps the historical
+        ``primary_error`` / ``fallback_error`` shape (describing the last
+        attempt) and adds ``attempted_fallbacks`` for chains longer than one.
+        """
+
+        def _summary(error: GenerationError) -> Dict[str, Any]:
+            return {
+                "error_code": error.error_code.value,
+                "backend": error.backend,
+                "provider": error.provider,
+                "stage": error.stage,
+                "details": error.details,
+            }
+
+        primary_summary = _summary(primary_error)
+        attempted: List[Dict[str, Any]] = []
+        last_index = len(fallback_chain) - 1
+        for index, fallback_backend_id in enumerate(fallback_chain):
+            is_last = index == last_index
             try:
                 fallback_backend = self._get_generation_backend(fallback_backend_id)
             except GenerationError as fallback_exc:
+                attempted.append({"backend": fallback_backend_id, **_summary(fallback_exc)})
+                if fallback_exc.fallbackable and not is_last:
+                    continue
+                details: Dict[str, Any] = {
+                    "primary_error": primary_summary,
+                    "fallback_error": fallback_exc.details,
+                }
+                if len(fallback_chain) > 1:
+                    details["attempted_fallbacks"] = attempted
                 raise GenerationError(
                     error_code=fallback_exc.error_code,
                     stage="fallback",
@@ -3051,30 +3119,32 @@ class GeminiAnalyzer:
                     fallbackable=False,
                     backend=fallback_backend_id,
                     provider=fallback_exc.provider,
-                    details={
-                        "primary_error": {
-                            "error_code": exc.error_code.value,
-                            "backend": exc.backend,
-                            "provider": exc.provider,
-                            "stage": exc.stage,
-                            "details": exc.details,
-                        },
-                        "fallback_error": fallback_exc.details,
-                    },
+                    details=details,
                 ) from fallback_exc
             try:
-                result = fallback_backend.generate(
-                    prompt,
-                    generation_config,
-                    system_prompt=system_prompt,
-                    stream=stream,
-                    stream_progress_callback=stream_progress_callback,
-                    response_validator=response_validator,
-                    audit_context=audit_context,
-                )
+                if index:
+                    logger.warning(
+                        "[generation] fallback %s failed; trying next fallback backend %s",
+                        fallback_chain[index - 1],
+                        fallback_backend_id,
+                    )
+                return fallback_backend.generate(prompt, generation_config, **generate_kwargs)
             except _AllModelsFailedError:
-                raise
+                if is_last:
+                    raise
+                attempted.append({"backend": fallback_backend_id, "error_code": "all_models_failed"})
+                continue
             except GenerationError as fallback_exc:
+                attempted.append({"backend": fallback_backend_id, **_summary(fallback_exc)})
+                if fallback_exc.fallbackable and not is_last:
+                    continue
+                details = {
+                    "reason": "fallback_backend_failed",
+                    "primary_error": primary_summary,
+                    "fallback_error": _summary(fallback_exc),
+                }
+                if len(fallback_chain) > 1:
+                    details["attempted_fallbacks"] = attempted
                 raise GenerationError(
                     error_code=fallback_exc.error_code,
                     stage="fallback",
@@ -3082,25 +3152,19 @@ class GeminiAnalyzer:
                     fallbackable=False,
                     backend=fallback_backend_id,
                     provider=fallback_exc.provider,
-                    details={
-                        "reason": "fallback_backend_failed",
-                        "primary_error": {
-                            "error_code": exc.error_code.value,
-                            "backend": exc.backend,
-                            "provider": exc.provider,
-                            "stage": exc.stage,
-                            "details": exc.details,
-                        },
-                        "fallback_error": {
-                            "error_code": fallback_exc.error_code.value,
-                            "backend": fallback_exc.backend,
-                            "provider": fallback_exc.provider,
-                            "stage": fallback_exc.stage,
-                            "details": fallback_exc.details,
-                        },
-                    },
+                    details=details,
                 ) from fallback_exc
             except Exception as fallback_exc:
+                attempted.append({"backend": fallback_backend_id, "error_code": "unknown_backend_error"})
+                if not is_last:
+                    continue
+                details = {
+                    "reason": "fallback_backend_failed",
+                    "primary_error": primary_summary,
+                    "fallback_error": str(fallback_exc),
+                }
+                if len(fallback_chain) > 1:
+                    details["attempted_fallbacks"] = attempted
                 raise GenerationError(
                     error_code=GenerationErrorCode.UNKNOWN_BACKEND_ERROR,
                     stage="fallback",
@@ -3108,19 +3172,9 @@ class GeminiAnalyzer:
                     fallbackable=False,
                     backend=fallback_backend_id,
                     provider=fallback_backend_id,
-                    details={
-                        "reason": "fallback_backend_failed",
-                        "primary_error": {
-                            "error_code": exc.error_code.value,
-                            "backend": exc.backend,
-                            "provider": exc.provider,
-                            "stage": exc.stage,
-                            "details": exc.details,
-                        },
-                        "fallback_error": str(fallback_exc),
-                    },
+                    details=details,
                 ) from fallback_exc
-        return result.text, result.model, result.usage
+        raise primary_error  # pragma: no cover - empty chains are rejected by the caller
 
     def _call_litellm_impl(
         self,

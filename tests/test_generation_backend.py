@@ -258,6 +258,7 @@ def test_unknown_generation_backend_raises_structured_config_error() -> None:
     assert error.details["supported_backends"] == [
         "claude_code_cli",
         "codex_cli",
+        "gemini_cli",
         "litellm",
         "opencode_cli",
     ]
@@ -290,16 +291,28 @@ def test_empty_generation_fallback_disables_backend_fallback() -> None:
     assert resolve_generation_fallback_backend_id(config) is None
 
 
-def test_codex_cli_is_not_listed_as_supported_generation_fallback() -> None:
+def test_local_cli_backends_are_supported_generation_fallbacks() -> None:
+    assert resolve_generation_fallback_backend_id(
+        _config(generation_backend="litellm", generation_fallback_backend="codex_cli")
+    ) == "codex_cli"
+
+
+def test_unknown_generation_fallback_raises_structured_config_error() -> None:
     with pytest.raises(GenerationError) as exc_info:
         resolve_generation_fallback_backend_id(
-            _config(generation_backend="litellm", generation_fallback_backend="codex_cli")
+            _config(generation_backend="claude_code_cli", generation_fallback_backend="gemini_cli,codex")
         )
 
     error = exc_info.value
     assert error.details["field"] == "GENERATION_FALLBACK_BACKEND"
-    assert error.details["requested_backend"] == "codex_cli"
-    assert error.details["supported_backends"] == ["litellm"]
+    assert error.details["requested_backend"] == "codex"
+    assert error.details["supported_backends"] == [
+        "claude_code_cli",
+        "codex_cli",
+        "gemini_cli",
+        "litellm",
+        "opencode_cli",
+    ]
 
 
 def test_unknown_agent_backend_raises_structured_config_error() -> None:
@@ -314,6 +327,7 @@ def test_unknown_agent_backend_raises_structured_config_error() -> None:
         "auto",
         "claude_code_cli",
         "codex_cli",
+        "gemini_cli",
         "litellm",
         "opencode_cli",
     ]

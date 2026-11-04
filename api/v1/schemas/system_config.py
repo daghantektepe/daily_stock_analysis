@@ -154,6 +154,10 @@ class GenerationBackendStatusResponse(BaseModel):
 
     primary_backend_id: str
     fallback_backend_id: Optional[str] = None
+    fallback_backend_ids: List[str] = Field(
+        default_factory=list,
+        description="Ordered fallback chain; fallback_backend_id is its first entry",
+    )
     primary: GenerationBackendStatus
     fallback: Optional[GenerationBackendStatus] = None
     backends: List[GenerationBackendStatus] = Field(default_factory=list)

@@ -31,7 +31,7 @@ from src.llm.backend_registry import (
     SUPPORTED_GENERATION_BACKENDS,
     normalize_backend_id,
     resolve_generation_backend_id,
-    resolve_generation_fallback_backend_id,
+    resolve_generation_fallback_backend_ids,
 )
 from src.llm.generation_backend import GenerationCapabilities, GenerationError, GenerationErrorCode
 from src.llm.hermes import (
@@ -207,6 +207,7 @@ class GenerationBackendStatusService:
             return {
                 "primary_backend_id": primary["backend_id"],
                 "fallback_backend_id": None,
+                "fallback_backend_ids": [],
                 "primary": primary,
                 "fallback": None,
                 "backends": [primary],
@@ -214,15 +215,16 @@ class GenerationBackendStatusService:
 
         fallback_error: Optional[GenerationError] = None
         try:
-            fallback_id = resolve_generation_fallback_backend_id(config)
+            fallback_ids = list(resolve_generation_fallback_backend_ids(config))
         except GenerationError as exc:
-            fallback_id = str(
+            fallback_ids = [str(
                 exc.details.get("requested_backend")
                 or exc.backend
                 or getattr(config, "generation_fallback_backend", "")
                 or "unknown"
-            )
+            )]
             fallback_error = exc
+        fallback_id = fallback_ids[0] if fallback_ids else None
 
         primary = self._build_status(
             backend_id=primary_id,
@@ -230,31 +232,30 @@ class GenerationBackendStatusService:
             fallback_target=fallback_id,
             health_status="not_tested",
         )
+        fallback_statuses = []
         if fallback_error is not None:
-            fallback = self._status_for_error(
-                backend_id=fallback_id,
+            fallback_statuses.append(self._status_for_error(
+                backend_id=fallback_ids[0],
                 is_primary=False,
                 fallback_target=None,
                 error=fallback_error,
-            )
-        elif fallback_id:
-            fallback = self._build_status(
-                backend_id=fallback_id,
-                is_primary=False,
-                fallback_target=None,
-                health_status="not_tested",
-            )
+            ))
         else:
-            fallback = None
-        backends = [primary]
-        if fallback is not None:
-            backends.append(fallback)
+            for index, backend_id in enumerate(fallback_ids):
+                fallback_statuses.append(self._build_status(
+                    backend_id=backend_id,
+                    is_primary=False,
+                    fallback_target=fallback_ids[index + 1] if index + 1 < len(fallback_ids) else None,
+                    health_status="not_tested",
+                ))
+        fallback = fallback_statuses[0] if fallback_statuses else None
         return {
             "primary_backend_id": primary_id,
             "fallback_backend_id": fallback_id,
+            "fallback_backend_ids": fallback_ids,
             "primary": primary,
             "fallback": fallback,
-            "backends": backends,
+            "backends": [primary, *fallback_statuses],
         }
 
     def smoke_test(

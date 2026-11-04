@@ -5,6 +5,7 @@ from src.llm.backend_registry import (
     AUTO_AGENT_BACKEND_ID,
     CLAUDE_CODE_CLI_BACKEND_ID,
     CODEX_CLI_BACKEND_ID,
+    GEMINI_CLI_BACKEND_ID,
     GENERATION_ONLY_BACKEND_IDS,
     LOCAL_CLI_GENERATION_BACKEND_IDS,
     LITELLM_BACKEND_ID,
@@ -16,6 +17,7 @@ from src.llm.backend_registry import (
     resolve_agent_generation_backend_id,
     resolve_generation_backend_id,
     resolve_generation_fallback_backend_id,
+    resolve_generation_fallback_backend_ids,
 )
 from src.llm.generation_backend import (
     GenerationBackend,
@@ -31,6 +33,7 @@ __all__ = [
     "AGENT_CAPABLE_BACKEND_IDS",
     "CLAUDE_CODE_CLI_BACKEND_ID",
     "CODEX_CLI_BACKEND_ID",
+    "GEMINI_CLI_BACKEND_ID",
     "GENERATION_ONLY_BACKEND_IDS",
     "GenerationBackend",
     "GenerationCapabilities",
@@ -48,4 +51,5 @@ __all__ = [
     "resolve_agent_generation_backend_id",
     "resolve_generation_backend_id",
     "resolve_generation_fallback_backend_id",
+    "resolve_generation_fallback_backend_ids",
 ]

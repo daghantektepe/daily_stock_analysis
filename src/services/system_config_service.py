@@ -72,6 +72,7 @@ from src.llm.backend_registry import (
     LOCAL_CLI_GENERATION_BACKEND_IDS,
     LITELLM_BACKEND_ID,
     normalize_backend_id,
+    parse_generation_fallback_chain,
 )
 from src.llm.generation_params import apply_litellm_generation_params
 from src.llm.local_cli_backend import resolve_local_cli_preset
@@ -2461,14 +2462,14 @@ class SystemConfigService:
             effective_map.get("GENERATION_BACKEND"),
             default=LITELLM_BACKEND_ID,
         )
-        fallback_backend = (
-            LITELLM_BACKEND_ID
+        fallback_chain = parse_generation_fallback_chain(
+            None
             if "GENERATION_FALLBACK_BACKEND" not in effective_map
-            else (effective_map.get("GENERATION_FALLBACK_BACKEND") or "").strip().lower()
+            else effective_map.get("GENERATION_FALLBACK_BACKEND") or ""
         )
         litellm_selected = (
             primary_backend == LITELLM_BACKEND_ID
-            or (fallback_backend == LITELLM_BACKEND_ID and primary_backend != LITELLM_BACKEND_ID)
+            or (LITELLM_BACKEND_ID in fallback_chain and primary_backend != LITELLM_BACKEND_ID)
         )
         if not litellm_selected:
             return []

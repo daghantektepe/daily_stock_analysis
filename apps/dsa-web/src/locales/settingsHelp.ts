@@ -39,7 +39,7 @@ const settingsHelpZhCN: SettingsHelpMap = {
     usage: '通常保持“默认模型配置”。只有在本机已安装并登录对应 CLI，且你信任它处理分析内容时，才选择本地 CLI 生成方式（实验）。',
     valueNotes: [
       '本地 CLI 生成方式是本机启动的命令行程序，不等于离线模型；背后的服务可能处理股票代码、新闻、持仓上下文、分析请求和报告草稿。',
-      'Docker、云服务器、CI 不天然拥有你本机的登录状态；DSA 不读取 Codex/Claude/OpenCode 登录凭据文件，但对应 CLI 自己可能使用它的登录状态。',
+      'Docker、云服务器、CI 不天然拥有你本机的登录状态；DSA 不读取 Codex/Claude/OpenCode/Gemini 登录凭据文件，但对应 CLI 自己可能使用它的登录状态。',
     ],
     impact: ['影响普通分析、大盘复盘和文本生成入口，不改变问股助手的工具执行规则。'],
     notes: [
@@ -52,11 +52,12 @@ const settingsHelpZhCN: SettingsHelpMap = {
   'settings.ai_model.GENERATION_FALLBACK_BACKEND': {
     title: '备用生成方式',
     showFieldKey: false,
-    summary: '决定本地 CLI 生成失败后，是直接报错，还是再尝试默认模型配置。',
-    usage: '选择“禁用”表示失败就报错；选择“默认模型配置”表示再尝试你已经配置好的普通模型。',
+    summary: '决定主生成方式失败后，按什么顺序尝试其他生成方式。',
+    usage: '填写按顺序逗号分隔的列表，例如 gemini_cli,codex_cli,litellm：主生成方式失败后依次尝试。留空表示失败就报错；litellm 即“默认模型配置”，表示再尝试你已经配置好的普通模型。',
     valueNotes: [
       '如果只是想设置主模型失败后的备用模型，请使用“备选模型”，不是这个字段。',
       '主生成方式本身就是默认模型配置时，这个字段不会额外生效。',
+      '与主生成方式相同的项和重复项会被忽略；遇到不可回退的错误会立即停止。',
     ],
     impact: ['不改变现有备用模型顺序，也不会影响渠道编辑器里的模型配置。'],
     notes: [
@@ -1278,7 +1279,7 @@ const settingsHelpEnUS: SettingsHelpMap = {
     usage: 'Usually keep Default model settings. Choose a local CLI backend only when the corresponding CLI is installed and logged in on this machine and you trust it to handle analysis content.',
     valueNotes: [
       'Local CLI backends are local command-line programs, not offline models. The service behind them may process stock symbols, news, position context, analysis requests, and report drafts.',
-      'Docker, cloud servers, and CI do not automatically have your local login state. DSA does not read Codex/Claude/OpenCode credential files, but the corresponding CLI itself may use its login state.',
+      'Docker, cloud servers, and CI do not automatically have your local login state. DSA does not read Codex/Claude/OpenCode/Gemini credential files, but the corresponding CLI itself may use its login state.',
     ],
     impact: ['Affects regular analysis, market review, and text generation entry points. It does not change how the ask-stock assistant runs tools.'],
     notes: [
@@ -1291,11 +1292,12 @@ const settingsHelpEnUS: SettingsHelpMap = {
   'settings.ai_model.GENERATION_FALLBACK_BACKEND': {
     title: 'Fallback Generation Method',
     showFieldKey: false,
-    summary: 'Chooses whether a failed local CLI generation should stop with an error or try Default model settings next.',
-    usage: 'Disabled means the local failure is returned immediately. Default model settings means the system tries your configured regular model next.',
+    summary: 'Chooses which generation methods are tried, in order, after the primary method fails.',
+    usage: 'Enter an ordered comma-separated list such as gemini_cli,codex_cli,litellm; each is tried in order after the primary fails. Leave empty to return the failure immediately; litellm means Default model settings and tries your configured regular model.',
     valueNotes: [
       'Use fallback models for model-to-model fallback; this field only handles local CLI backends versus Default model settings.',
       'When the primary generation method is already Default model settings, this field has no extra effect.',
+      'Entries equal to the primary and duplicates are ignored; a non-fallbackable error stops the chain.',
     ],
     impact: ['Affects local CLI failure handling for stock analysis, market review, and free-form text generation.'],
     notes: [
