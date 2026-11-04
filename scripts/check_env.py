@@ -17,6 +17,7 @@ A股自选股智能分析系统 - 环境验证测试
     python scripts/check_env.py --llm        # 仅测试 LLM
     python scripts/check_env.py --fetch      # 仅测试数据获取
     python scripts/check_env.py --notify     # 仅测试通知
+    python scripts/check_env.py --backends   # 对主生成后端及 fallback 链逐个做真实 JSON 冒烟测试
 
 """
 import os
@@ -341,6 +342,44 @@ def check_llm():
         return False
 
 
+def check_generation_backends() -> int:
+    """Run a real JSON smoke request against the primary backend and every fallback.
+
+    Useful after logging in to local CLIs (claude / gemini / codex): it shows which
+    entries of ``GENERATION_BACKEND`` + ``GENERATION_FALLBACK_BACKEND`` actually work
+    on this machine. Returns the number of failed backends.
+    """
+    print_header("生成后端链冒烟测试 (GENERATION_BACKEND + GENERATION_FALLBACK_BACKEND)")
+
+    from src.services.system_config_service import SystemConfigService
+
+    service = SystemConfigService()
+    status = service.get_generation_backend_status()
+    chain = [status.get("primary_backend_id")] + list(status.get("fallback_backend_ids") or [])
+    chain = [backend_id for backend_id in chain if backend_id]
+    print(f"  链路顺序: {' -> '.join(chain) or '(空)'}")
+
+    failures = 0
+    for backend_id in chain:
+        print_section(backend_id)
+        try:
+            result = service.test_generation_backend(backend_id=backend_id, mode="json")
+        except Exception as exc:  # noqa: BLE001 - diagnostics script
+            failures += 1
+            print(f"  ❌ 无法测试: {exc}")
+            continue
+        backend_status = result.get("status") or {}
+        if result.get("success"):
+            print(f"  ✅ 通过 ({backend_status.get('backend_type', '')})")
+        else:
+            failures += 1
+            code = backend_status.get("last_error_code") or "unknown"
+            print(f"  ❌ 失败 [{code}]: {result.get('message')}")
+    print_section("结果")
+    print(f"  {len(chain) - failures}/{len(chain)} 个生成后端可用")
+    return failures
+
+
 def check_notification():
     """测试通知推送"""
     print_header("5. 通知推送测试")
@@ -477,9 +516,17 @@ def main():
     parser.add_argument('--config', action='store_true', help='查看配置')
     parser.add_argument('--stock', type=str, help='查询指定股票数据，如 --stock 600519')
     parser.add_argument('--all', action='store_true', help='运行所有测试（包括 LLM）')
+    parser.add_argument(
+        '--backends',
+        action='store_true',
+        help='对主生成后端与 fallback 链逐个发起真实 JSON 冒烟测试（会消耗少量额度）',
+    )
     
     args = parser.parse_args()
     
+    if args.backends:
+        return 1 if check_generation_backends() else 0
+
     # 如果没有指定任何参数，运行基础测试
     if not any([args.db, args.llm, args.fetch, args.notify, args.config, args.stock, args.all]):
         run_all_tests()

@@ -3710,7 +3710,7 @@ class GeminiAnalyzer:
                 result = self._parse_response(response_text, code, name)
                 result.raw_response = response_text
                 result.search_performed = bool(news_context)
-                result.market_snapshot = self._build_market_snapshot(context)
+                result.market_snapshot = self._build_market_snapshot(context, report_language=report_language)
                 result.model_used = model_used
                 result.report_language = report_language
                 normalize_chip_structure_availability(result, context.get("chip"))
@@ -4304,10 +4304,20 @@ class GeminiAnalyzer:
         
         return prompt
     
-    def _format_volume(self, volume: Optional[float]) -> str:
+    @staticmethod
+    def _format_compact_tr(value: float, unit: str) -> str:
+        """Turkish compact number (bin / mn / mr) for user-facing snapshots."""
+        for threshold, suffix in ((1e9, "mr"), (1e6, "mn"), (1e3, "bin")):
+            if abs(value) >= threshold:
+                return f"{value / threshold:.2f} {suffix} {unit}".strip()
+        return f"{value:.0f} {unit}".strip()
+
+    def _format_volume(self, volume: Optional[float], language: Optional[str] = None) -> str:
         """格式化成交量显示"""
         if volume is None:
             return 'N/A'
+        if normalize_report_language(language) == "tr":
+            return self._format_compact_tr(float(volume), "adet")
         if volume >= 1e8:
             return f"{volume / 1e8:.2f} 亿股"
         elif volume >= 1e4:
@@ -4315,10 +4325,13 @@ class GeminiAnalyzer:
         else:
             return f"{volume:.0f} 股"
     
-    def _format_amount(self, amount: Optional[float]) -> str:
+    def _format_amount(self, amount: Optional[float], language: Optional[str] = None) -> str:
         """格式化成交额显示"""
         if amount is None:
             return 'N/A'
+        if normalize_report_language(language) == "tr":
+            # Currency is market-specific (TRY for .IS); keep it out of the compact form.
+            return self._format_compact_tr(float(amount), "")
         if amount >= 1e8:
             return f"{amount / 1e8:.2f} 亿元"
         elif amount >= 1e4:
@@ -4344,7 +4357,11 @@ class GeminiAnalyzer:
         except (TypeError, ValueError):
             return 'N/A'
 
-    def _build_market_snapshot(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_market_snapshot(
+        self,
+        context: Dict[str, Any],
+        report_language: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """构建当日行情快照（展示用）"""
         today = context.get('today', {}) or {}
         realtime = context.get('realtime', {}) or {}
@@ -4378,8 +4395,8 @@ class GeminiAnalyzer:
             "pct_chg": self._format_percent(today.get('pct_chg')),
             "change_amount": self._format_price(change_amount),
             "amplitude": self._format_percent(amplitude),
-            "volume": self._format_volume(today.get('volume')),
-            "amount": self._format_amount(today.get('amount')),
+            "volume": self._format_volume(today.get('volume'), report_language),
+            "amount": self._format_amount(today.get('amount'), report_language),
         }
 
         if realtime:

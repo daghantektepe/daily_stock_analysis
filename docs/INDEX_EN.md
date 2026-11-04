@@ -25,6 +25,7 @@ This is the entry point for project documentation. The README covers the project
 | [README (EN)](README_EN.md) | Project overview, key features, quick start, sample output |
 | [Full Guide (EN)](full-guide_EN.md) | Environment setup, run modes, configuration, deployment paths, and common issues |
 | [FAQ (EN)](FAQ_EN.md) | Common configuration, model, notification, deployment, and runtime issues |
+| [Turkey personal setup guide](turkey-personal-setup.md) (Turkish-only) | Run BIST analysis locally with Claude / Gemini / Codex CLI subscriptions, Turkish reports, privacy boundaries, first-run checklist |
 | [Data-source stability diagrams](data-source-stability.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | Existing-source routing, fallback chains, and recommended configuration profiles |
 | [Changelog](CHANGELOG.md) | Release notes, capability changes, and migration notes |
 

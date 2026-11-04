@@ -197,3 +197,41 @@ def test_market_structure_prompt_uses_english_scaffolding_for_turkish() -> None:
     tr_section = format_market_structure_prompt_section(context, report_language="tr")
     en_section = format_market_structure_prompt_section(context, report_language="en")
     assert tr_section == en_section
+
+
+def test_source_display_name_falls_back_to_english_for_turkish() -> None:
+    from src.notification import NotificationService
+
+    service = NotificationService.__new__(NotificationService)
+    assert service._get_source_display_name("tencent", "tr") == "Tencent Finance"
+    assert service._get_source_display_name("tencent", "ko") == "Tencent Finance"
+    assert service._get_source_display_name("tencent", "zh") == "腾讯财经"
+    assert service._get_source_display_name("yfinance", "tr") == "yfinance"
+
+
+def test_decision_signal_excerpt_uses_turkish_labels() -> None:
+    from src.services.decision_signal_summary import format_decision_signal_excerpt
+
+    text = format_decision_signal_excerpt({"action_label": "İzle", "horizon": "3d", "reason": "Destek bekleniyor"}, "tr")
+    assert "Aksiyon: İzle" in text
+    assert "Vade: 3d" in text
+    assert "动作" not in text
+
+
+def test_turkish_snapshot_volume_avoids_chinese_units() -> None:
+    from src.analyzer import GeminiAnalyzer
+
+    analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
+    assert analyzer._format_volume(78315200, "tr") == "78.32 mn adet"
+    assert analyzer._format_volume(950, "tr") == "950 adet"
+    assert analyzer._format_amount(2_280_000_000, "tr") == "2.28 mr"
+    # Existing zh/en output is unchanged.
+    assert analyzer._format_volume(78315200) == "7831.52 万股"
+    assert analyzer._format_volume(78315200, "zh") == "7831.52 万股"
+
+    snapshot = analyzer._build_market_snapshot(
+        {"date": "2026-11-04", "today": {"close": 291.25, "volume": 78315200, "amount": None}},
+        report_language="tr",
+    )
+    assert snapshot["volume"] == "78.32 mn adet"
+    assert "万" not in snapshot["volume"]

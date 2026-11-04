@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] 报告语言为 `ko` / `tr` 时生成完整报告不再因数据源显示名缺少对应语言而 `KeyError` 导致本地报告保存失败（回退英文名）；`tr` 报告的 DecisionSignal 摘要使用土耳其语标签，行情快照成交量/成交额改用土耳其语计数单位（bin / mn / mr）而非“万股/亿元”
+- [文档] 新增土耳其语个人部署指南 `docs/turkey-personal-setup.md`：本机使用 Claude / Gemini 订阅 CLI 与 Codex CLI 的生成链、可选 Gemini API / Grok / Ollama、隐私边界与 BIST 首次运行检查清单
+- [改进] `scripts/check_env.py --backends` 对主生成后端与 fallback 链逐个发起真实 JSON 冒烟测试并汇总可用性
 - [新功能] 新增本地 CLI 生成后端 `GENERATION_BACKEND=gemini_cli`（experimental）：以只读 `plan` 模式、禁用扩展与 MCP、JSON 输出调用本机 Gemini CLI，可直接使用 Gemini 订阅登录
 - [新功能] `GENERATION_FALLBACK_BACKEND` 支持按顺序逗号分隔的 fallback 链（如 `gemini_cli,codex_cli,litellm`），主后端可回退失败后依次尝试；单值写法保持原行为，生成后端状态接口新增 `fallback_backend_ids` 并在 `backends` 中列出整条链
 - [新功能] 新增可选模拟交易（`PAPER_TRADING_ENABLED`，默认关闭）：个股分析新生成的 buy/add/reduce/sell DecisionSignal 按固定金额（`PAPER_TRADING_POSITION_SIZE`，股票报价币种）记入独立 `paper_trades` 账本，不写入 Portfolio、不下单；新增只读接口 `GET /api/v1/paper-trading/summary` 与 `/trades`，按币种汇总已实现/未实现盈亏与胜率
