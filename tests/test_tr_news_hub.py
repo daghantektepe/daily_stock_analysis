@@ -280,6 +280,16 @@ def test_verification_levels() -> None:
     ) == LEVEL_CONFIRMED
 
 
+def test_event_tags_from_free_text() -> None:
+    from data_provider.tr_news_hub import event_tags
+
+    assert event_tags("Payların Geri Alınmasına İlişkin Bildirim") == ["buyback"]
+    assert event_tags("Pay Bazında Devre Kesici Uygulaması devreye girmiştir") == ["circuit_breaker"]
+    assert event_tags("VBTS kapsamında brüt takas tedbiri uygulanacak") == ["regulatory"]
+    # A product name is not a market measure.
+    assert "regulatory" not in event_tags("Radar ve İHA Karşı Tedbir sistemleri için ihracat sözleşmesi")
+
+
 def test_event_merge_groups_one_earnings_release_but_not_contracts() -> None:
     stories = cluster_stories([
         _item("THY'nin kârı yakıt baskısına rağmen beklentileri aştı", "Bloomberght", 9),

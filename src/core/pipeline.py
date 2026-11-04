@@ -2793,14 +2793,18 @@ class StockAnalysisPipeline:
             return ""
         try:
             from data_provider.kap_fetcher import (
+                DEFAULT_DETAIL_ITEMS,
                 DEFAULT_LOOKBACK_DAYS,
                 format_kap_disclosure_context,
                 get_kap_fetcher,
             )
 
-            disclosures = get_kap_fetcher().get_recent_disclosures(code, days=DEFAULT_LOOKBACK_DAYS)
+            fetcher = get_kap_fetcher()
+            disclosures = fetcher.get_recent_disclosures(code, days=DEFAULT_LOOKBACK_DAYS)
             if not disclosures:
                 return ""
+            # Body text (amounts, counterparty) for the newest filings; fail-open per item.
+            fetcher.attach_details(disclosures, limit=DEFAULT_DETAIL_ITEMS)
             context = format_kap_disclosure_context(
                 disclosures,
                 stock_code=code,
@@ -2818,7 +2822,13 @@ class StockAnalysisPipeline:
                 results=[
                     SearchResult(
                         title=item["title"],
-                        snippet=f"{item['class_label']} · {item['publisher']}",
+                        snippet=" · ".join(
+                            part for part in (
+                                item["class_label"],
+                                item["publisher"],
+                                str(item.get("details") or "")[:300],
+                            ) if part
+                        ),
                         url=item["url"],
                         source="KAP",
                         published_date=item["published_date"],

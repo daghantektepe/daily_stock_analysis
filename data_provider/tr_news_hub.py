@@ -217,16 +217,19 @@ _EVENT_RULES: Tuple[Tuple[str, re.Pattern], ...] = tuple((tag, _marker_re(marker
     ("dividend", ("temettu", "kar payi", "kar dagit", "nakit kar")),
     ("bonus_issue", ("bedelsiz",)),
     ("rights_issue", ("bedelli", "tahsisli")),
-    ("buyback", ("geri alim", "geri alis", "pay geri")),
+    ("buyback", ("geri alim", "geri alis", "geri alin", "pay geri")),
     ("ownership", (
         "pay satis", "hisse satis", "blok satis", "ortaklik yapisi", "halka arz", "pay alim", "hisse alim",
-        "satin al", "birlesme", "devral", "devret", "istirak", "donusum basvuru", "pay devri", "hisse devri",
+        "satin al", "birlesme", "devral", "devret", "istirak", "donusum basvuru", "donusum duyuru", "pay devri",
+        "hisse devri", "varlik satis",
     )),
     ("contract", (
         "sozlesme", "is iliskisi", "ihale", "siparis", r"anlasma(?!z)", "mutabakat", "teslimat", "is birligi",
     )),
     ("regulatory", (
-        r"spk(?![a-z])", "tedbir", "vbts", "brut takas", "kredili islem", "aciga satis", "sorusturma",
+        # Market measures only: "tedbiri", "tedbir kararı" (not "İHA karşı tedbir" products).
+        r"spk(?![a-z])", "tedbiri", "tedbir karar", "tedbir kapsam", "tedbir uygul", "vbts", "brut takas",
+        "kredili islem", "aciga satis", "sorusturma",
         "idari para cezasi", "manipulasyon", "islem yasag", "rekabet kurulu", "kayyum", "kayyim",
     )),
     ("rating", ("kredi notu", "notunu", "not artir", "not indir", "fitch", "moody", r"s&p", r"jcr(?![a-z])",
@@ -234,6 +237,7 @@ _EVENT_RULES: Tuple[Tuple[str, re.Pattern], ...] = tuple((tag, _marker_re(marker
     ("target_price", (
         "hedef fiyat", "al tavsiye", "tut tavsiye", "sat tavsiye", "endeks ustu", "model portfoy", "tavsiyesi",
     )),
+    ("circuit_breaker", ("devre kesici",)),
     ("broker_flow", (
         r"bofa(?![a-z])", "bank of america", "araci kurum", r"akd(?![a-z])", "para giris", "para cikis",
         "yabanci payi", "yabanci yatirimci", "yuklu alim", "yuklu satis", "net alim", "net satis",
@@ -360,6 +364,12 @@ _LEGAL_SUFFIX_RE = re.compile(
 )
 _GENERIC_TAIL_RE = re.compile(r"\s+(?:SANAY[İI]\s+VE\s+T[İI]CARET|SAN\.?\s+VE\s+T[İI]C\.?)$", re.IGNORECASE)
 _LEADING_GENERIC = frozenset({"turkiye", "t.c."})
+
+
+def event_tags(text: str) -> List[str]:
+    """Event tags (earnings, dividend, buyback, contract, ...) found in free Turkish text."""
+    folded = fold(text)
+    return [tag for tag, pattern in _EVENT_RULES if pattern.search(folded)]
 
 
 def short_company_name(name: str) -> str:
@@ -492,8 +502,7 @@ class NewsStory:
 
     @property
     def tags(self) -> List[str]:
-        text = " ".join(f"{fold(item.title)} {fold(item.summary)}" for item in self.items)
-        return [tag for tag, pattern in _EVENT_RULES if pattern.search(text)]
+        return event_tags(" ".join(f"{item.title} {item.summary}" for item in self.items))
 
     @property
     def primary_tag(self) -> Optional[str]:

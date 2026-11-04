@@ -117,9 +117,11 @@ TELEGRAM_CHAT_ID=
 PAPER_TRADING_ENABLED=true
 PAPER_TRADING_POSITION_SIZE=10000
 
-# --- Zamanlama: BIST kapanışı (18:00) ve kapanış seansından sonra; bilgisayarın saat dilimine göre ---
+# --- Zamanlama: bilgisayarın saat dilimine göre ---
+# 09:15 açılış öncesi: kapanıştan sonra ve sabah gelen KAP bildirimleri, gece haberleri
+# 18:30 kapanış sonrası: günün fiyatı, aracı kurum dağılımı ve akşam bildirimleri
 SCHEDULE_ENABLED=true
-SCHEDULE_TIME=18:30
+SCHEDULE_TIMES=09:15,18:30
 ```
 
 `GEMINI_API_KEY` boş bırakılırsa zincir yine çalışır: Claude → Gemini CLI → Codex → Ollama. Sadece çok-agent (debate) modu ve "hisseye sor" sohbeti kullanılamaz.
@@ -167,7 +169,7 @@ Rapor `reports/` klasörüne yazılır. Türkçe çıktının kalitesini burada 
 python scripts/check_env.py --notify
 ```
 
-5. Web arayüzü + zamanlanmış çalıştırma (bilgisayar açık kaldığı sürece her gün `SCHEDULE_TIME`'da çalışır):
+5. Web arayüzü + zamanlanmış çalıştırma (bilgisayar açık kaldığı sürece her gün `SCHEDULE_TIMES` saatlerinde çalışır; her çalıştırma hisse başına bir CLI isteği harcar):
 
 ```bash
 python main.py --serve --schedule
@@ -188,6 +190,10 @@ python scripts/fetch_kap_stock_list.py && python scripts/generate_index_from_csv
 `.IS` hisseleri için API anahtarı gerekmeden üç kaynak birleştirilir:
 
 1. **KAP bildirimleri**: şirketin kendi Özel Durum Açıklamaları ve finansal raporları (son 14 gün).
+   - En yeni 3 bildirimin metni de okunur: sözleşme tutarı, karşı taraf, geri alım büyüklüğü gibi bilgiler.
+   - Her bildirim olay türüyle etiketlenir: bilanço, temettü, geri alım, sözleşme, pay satışı, devre kesici...
+   - Borsa İstanbul'un hisse bazında devre kesici ve tedbir bildirimleri, anormal oynaklık uyarısı olarak eklenir.
+   - MKK'nın pay dönüşümü duyuruları da eklenir. Payların borsada satılabilir tipe dönüştürülmesi, çoğu zaman büyük bir ortağın satışından önceki adımdır.
 2. **Google News Türkiye araması**: hisse kodu ve şirket/marka adıyla (ör. `THYAO OR "Türk Hava Yolları"`). Onlarca yayını kapsar; Midas, Paratic, Bloomberg HT, Investing, Dünya, finans blogları dahil.
 3. **15 ekonomi masası RSS'i**: Bloomberg HT, AA, Dünya, Ekonomim, Paratic, BorsaGündem, Ekonomist, Investing.com Türkiye, Habertürk, Sözcü, Cumhuriyet, Yeni Şafak, Haber Global, CNN Türk ve TRT Haber. Makro başlıklar (TCMB, enflasyon, kur, CDS, BIST) da buradan gelir.
 
@@ -232,8 +238,22 @@ Midas uygulamasının sayfaları doğrudan çekilmez, çünkü kullanım koşull
 | KAP bildirimi yok | KAP geçici erişilemez | Analiz durmaz; birkaç dakika sonra tekrar dener (5 dk devre kesici) |
 | Abonelik limiti doldu | Claude Pro kullanım limiti | Zincir otomatik olarak Gemini → Codex → API'ye geçer; log'da `trying next fallback backend` görünür |
 
-## 7. Sonraki adımlar
+## 7. Gerçek parayla işlemden önce: ölç
+
+Bu sistem kazanç garantisi vermez. Bir sinyalin işe yarayıp yaramadığını ancak ölçerek öğrenirsin:
+
+1. **En az 4–6 hafta yalnızca sanal işlem** (`PAPER_TRADING_ENABLED=true`). Sonuçlar: `GET /api/v1/paper-trading/summary` (gerçekleşen/gerçekleşmeyen kâr-zarar, kazanma oranı).
+2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Gerekli fiyat geçmişi günlük çalıştırmalarla birikir. Hesaplama kendiliğinden yapılmaz, servis açıkken şu komutla tetiklenir:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/decision-signals/outcomes/run -H "Content-Type: application/json" -d '{"market": "tr"}'
+```
+
+   İsabet oranları: <http://127.0.0.1:8000/api/v1/decision-signals/outcomes/stats>
+3. **Kıyasla:** Sonuçları aynı dönemde BIST 100'ün getirisiyle ve dolar bazında karşılaştır. Yüksek enflasyonda TL bazlı nominal kâr yanıltıcı olabilir.
+4. **Gerçek paraya geçersen küçük başla.** Pozisyon büyüklüğünü ve zarar kes seviyesini önceden belirle. Tek bir habere ya da söylentiye dayanarak işlem yapma.
+
+## 8. Sonraki adımlar
 
 - 2–3 gün klasik modla çalıştırıp Türkçe raporları değerlendir; sorunlu ifadeleri not al (prompt iyileştirmesi için).
-- Sanal işlem sonuçlarını `GET /api/v1/paper-trading/summary` ile izle.
 - Gemini API anahtarı ekleyip debate modunu klasik modla karşılaştır.

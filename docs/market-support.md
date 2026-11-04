@@ -143,6 +143,8 @@ PY
 - Portfolio 新建 `tr` 账户时默认币种为 `TRY`；`tr` 属于 partial valuation 市场（实时报价 best-effort、汇率与成本口径部分支持）。
 - 股票索引与 Web 自动补全：`scripts/fetch_kap_stock_list.py` 从 KAP 上市公司列表生成 `scripts/stock_index_seeds/stock_list_tr.csv`（约 800 个 BIST 代码，土耳其语大小写规范化名称、代码 / 简称 / 无土耳其字符 ASCII 别名），`python scripts/generate_index_from_csv.py --merge-markets TR` 仅重建 TR 条目并合并进 `stocks.index.json`，无需 A/港/美 CSV。自动补全按 `.IS` 代码、裸代码别名（如 `THYAO`）、土耳其语名称或 ASCII 名称（如 `turk hava yollari`）搜索，选中后始终提交 `.IS` 代码；后端股票名称优先使用 KAP 官方公司名称。裸代码仍不会被自动改写为 `.IS`。
 - KAP 公司公告：`KapDisclosureFetcher`（`data_provider/kap_fetcher.py`）读取 KAP（Kamuyu Aydınlatma Platformu）网站使用的公开 JSON 端点（`/tr/api/company/items/IGS/A` 公司列表、`/tr/api/disclosure/members/byCriteria` 公告查询），无需 key。仅保留公司自身发布的「Özel Durum Açıklaması」(ODA) 与「Finansal Rapor」(FR)，跳过 MKK/Takasbank 等结算类 `DKB` 通知；默认回看 14 天、最多 8 条，按发布时间倒序，并附 `https://www.kap.org.tr/tr/Bildirim/<index>` 原文链接。公告作为不可信背景证据追加到传统分析与 Agent 分析的 `news_context`，同时以 `dimension=announcements`、`provider=KAP` 写入新闻情报表，供报告页资讯区展示。
+- KAP 公告正文与事件标签：对最近 3 条公司「Özel Durum Açıklaması」读取公告页面（`/tr/Bildirim/<index>`），从表单字段（如合同金额、交易对手、对公司经营的影响）或「Ek Açıklamalar」自由文本中提取土耳其语要点（含金额 / 比例的字段优先，去除标记字段、「Hayır」答复与套话，长说明保留开头及含金额 / 结果的句子，约 800 字以内），以 `Details:` 行附在公告下方；页面按公告编号缓存（公告发布后不变）。每条公告按主题 / 标题 / 正文打事件标签（earnings、dividend、buyback、ownership、contract、regulatory、circuit_breaker 等，与多源新闻共用规则；财报类 `FR` 固定为 earnings）。
+- 其他机构发布的 `DKB` 通知只保留两类且最多 3 条：Borsa Istanbul 的个股熔断（Pay Bazında Devre Kesici）/ VBTS 等交易措施，以及 MKK「转为可在交易所交易类型」的股份转换通知（大股东出售前常见步骤）；Takasbank 违约处理、通用 SPK 交易禁令名单等结算类通知继续跳过。
 - KAP 链路 **fail-open**：网络错误、限流、返回结构变化或未知代码一律返回空结果，不中断主分析；公司列表缓存 24 小时、公告缓存 15 分钟，连续 3 次失败后熔断约 5 分钟。KAP 官方 API（MKK）需要 key 与 IP 白名单，本实现使用的是网站端点，结构可能无预告变化。当前不新增开关，回滚方式为 revert 对应代码。
 - 新闻检索：`.IS` 代码在 `SearchService` 中按 foreign 股票处理，使用英文检索维度，不再套用中文 A 股检索词。Intelligence 内置 `tr` 市场 RSS 模板：Anadolu Ajansı Ekonomi、Dünya Gazetesi、Bloomberg HT。
 - 土耳其多源新闻交叉验证：`TrNewsHub`（`data_provider/tr_news_hub.py`）无需 key，按代码 / 公司名查询 Google News Türkiye 搜索 RSS（聚合数十家土耳其媒体并标注发布方），并读取 15 个公开经济频道 RSS（Bloomberg HT、AA、Dünya、Ekonomim、Paratic、BorsaGündem、Ekonomist、Investing.com Türkiye、Habertürk、Sözcü、Cumhuriyet、Yeni Şafak、Haber Global、CNN Türk、TRT Haber）。处理步骤：
@@ -157,7 +159,7 @@ PY
 - 不承诺实时行情；Yahoo Finance 的 BIST 数据可能延迟或字段缺失。
 - BIST 大盘复盘 v1：`MARKET_REVIEW_REGION=tr`（或与其他市场组合，如 `us,tr`）通过 Yahoo Finance 获取 BIST 100 `XU100.IS`、BIST 30 `XU030.IS`、银行指数 `XBANK.IS` 与美元/里拉 `TRY=X`，使用土耳其市场 profile / 策略蓝图（指数同向、银行股确认、里拉与 TCMB 利率路径、名义涨幅与里拉贬值区分）；交易日按 `XIST` 过滤。`both` 保持原有五市场含义（cn,hk,us,jp,kr），**不包含 `tr`**，需显式填写，避免既有用户被静默增加复盘与推送。
 - 不提供 BIST Market Light 告警、市场宽度、涨跌家数或板块排行。
-- KAP 只提供公告标题、类别与链接，不解析公告正文或附件（如财报 PDF）。
+- KAP 正文只解析最近 3 条公司公告的页面文字，不解析附件（如财报 PDF、投资者演示）；页面模板变化时该条公告仅保留标题。
 - 多源新闻只基于标题做规则化聚类与分级，不判断新闻真伪或利好利空；部分站点改版后 RSS 地址可能失效（该来源自动降级为空）。验证等级衡量的是「多少可信媒体报道了同一说法」，转载同一通讯社稿件不代表独立核实。
 
 回滚方式：移除 `market_symbol_utils` 中的 `tr` 规则与 `base_pattern` 扩展、`XIST` 交易日历注册、YFinance/DataFetcherManager 路由扩展、`market_context` 土耳其语义、TRY 币种标注、服务层/API 市场枚举及前端市场类型放行，并删除本文档中的能力声明。
