@@ -1296,7 +1296,7 @@ class Config:
 
     # --- Post-init validation ---------------------------------------------------
     _VALID_AGENT_ARCH = {"single", "multi"}
-    _VALID_ORCHESTRATOR_MODES = {"quick", "standard", "full", "specialist"}
+    _VALID_ORCHESTRATOR_MODES = {"quick", "standard", "full", "specialist", "debate"}
     _VALID_SKILL_ROUTING = {"auto", "manual"}
     _WEBUI_RUNTIME_ENV_FILE_PRIORITY_KEYS = frozenset(
         {

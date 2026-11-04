@@ -362,7 +362,7 @@ const fieldDescriptionMap: Record<string, string> = {
   AGENT_SKILLS: '逗号分隔的交易策略列表。留空时使用 metadata 里声明的主默认策略 skill（内置默认是 bull_trend）；也可填写 all 启用全部策略。',
   AGENT_SKILL_DIR: '存放 Agent 策略定义文件的目录路径，支持 YAML 与 SKILL.md bundle。',
   AGENT_ARCH: "选择 Agent 执行架构。single 为经典单 Agent；multi 为多 Agent 编排（实验性）。",
-  AGENT_ORCHESTRATOR_MODE: "Multi-Agent 编排深度。quick（技术→决策）、standard（技术→情报→决策）、full（含风控）、specialist（含策略专家评估）。",
+  AGENT_ORCHESTRATOR_MODE: "Multi-Agent 编排深度。quick（技术→决策）、standard（技术→情报→决策）、full（含风控）、specialist（含策略专家评估）、debate（技术→情报→多头研究员→空头研究员→风控→决策）。",
   AGENT_ORCHESTRATOR_TIMEOUT_S: "Agent 执行总超时预算（秒）。single-agent 用作整体 ReAct 循环预算，multi-agent 用作协作编排预算；0 表示不限制。",
   AGENT_RISK_OVERRIDE: "允许风控 Agent 在发现关键风险时否决买入信号。",
   AGENT_SKILL_AUTOWEIGHT: "基于样本充足的真实 Skill Outcome 保守调整策略权重。",
@@ -461,6 +461,7 @@ const fieldOptionLabelMap: Record<string, Record<string, string>> = {
     standard: '标准',
     full: '完整',
     specialist: '专家',
+    debate: '多空辩论',
   },
   AGENT_SKILL_ROUTING: {
     auto: '自动（按市场状态）',
@@ -546,6 +547,7 @@ const fieldOptionLabelMapEn: Record<string, Record<string, string>> = {
     standard: 'Standard',
     full: 'Full',
     specialist: 'Specialist',
+    debate: 'Debate',
   },
   AGENT_SKILL_ROUTING: {
     auto: 'Auto (regime-based)',

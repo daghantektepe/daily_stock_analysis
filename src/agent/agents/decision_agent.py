@@ -15,6 +15,7 @@ import logging
 from typing import List, Optional
 
 from src.agent.agents.base_agent import BaseAgent
+from src.agent.agents.debate_agents import format_debate_guidance
 from src.agent.protocols import AgentContext, AgentOpinion, normalize_decision_signal
 from src.report_language import normalize_report_language
 
@@ -238,6 +239,11 @@ should sum to 100; all-zero means no effective signal and must not be faked.
         if isinstance(disagreement_summary, dict) and disagreement_summary:
             parts.append("## Agent Disagreement Summary")
             parts.append(json.dumps(disagreement_summary, ensure_ascii=False, default=str))
+            parts.append("")
+
+        debate_guidance = format_debate_guidance(ctx)
+        if debate_guidance:
+            parts.append(debate_guidance)
             parts.append("")
 
         # Skill meta

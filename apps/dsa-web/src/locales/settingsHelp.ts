@@ -911,7 +911,7 @@ const settingsHelpZhCN: SettingsHelpMap = {
   'settings.agent.AGENT_ORCHESTRATOR_MODE': {
     title: '编排器模式',
     summary: '仅在 AGENT_ARCH=multi 时生效，控制 pipeline 包含哪些子 Agent。',
-    usage: 'quick：技术→决策；standard：技术→情报→决策；full：技术→情报→风险→决策；specialist：full + 每策略专项 Agent。',
+    usage: 'quick：技术→决策；standard：技术→情报→决策；full：技术→情报→风险→决策；specialist：full + 每策略专项 Agent；debate：技术→情报→多头研究员→空头研究员→风险→决策。',
     valueNotes: [
       '模式越完整，分析越深入，但耗时和 token 消耗也越大。',
       'specialist 模式会为每个策略启动独立 Agent。',
@@ -2098,7 +2098,7 @@ const settingsHelpEnUS: SettingsHelpMap = {
   'settings.agent.AGENT_ORCHESTRATOR_MODE': {
     title: 'Orchestrator Mode',
     summary: 'Only effective when AGENT_ARCH=multi. Controls which sub-agents the pipeline includes.',
-    usage: 'quick: tech→decision; standard: tech→intel→decision; full: tech→intel→risk→decision; specialist: full + per-strategy agents.',
+    usage: 'quick: tech→decision; standard: tech→intel→decision; full: tech→intel→risk→decision; specialist: full + per-strategy agents; debate: tech→intel→bull researcher→bear researcher→risk→decision.',
     valueNotes: [
       'More complete modes produce deeper analysis but consume more time and tokens.',
       'specialist mode starts a dedicated Agent for each strategy.',

@@ -157,6 +157,7 @@ describe('systemConfigI18n option label localization', () => {
     ['AGENT_ORCHESTRATOR_MODE', 'standard', 'Standard', '标准'],
     ['AGENT_ORCHESTRATOR_MODE', 'full', 'Full', '完整'],
     ['AGENT_ORCHESTRATOR_MODE', 'specialist', 'Specialist', '专家'],
+    ['AGENT_ORCHESTRATOR_MODE', 'debate', 'Debate', '多空辩论'],
     ['AGENT_SKILL_ROUTING', 'auto', 'Auto (Regime-based)', '自动（按市场状态）'],
     ['AGENT_SKILL_ROUTING', 'manual', 'Manual (Use AGENT_SKILLS)', '手动（使用 AGENT_SKILLS）'],
   ] as const;

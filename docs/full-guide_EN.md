@@ -790,6 +790,15 @@ P3 injects a low-sensitivity `AnalysisContextPack` summary into regular analysis
 
 P3 itself did not add API/Web/Bot parameters, persist fields into history/task status/report metadata, change report JSON schemas, or expose the full pack through history, notifications, or Web surfaces. Agent tool-level reuse of pack data and P5 data-quality scoring are left to later phases.
 
+### Multi-Agent Bull/Bear Debate Mode (`AGENT_ORCHESTRATOR_MODE=debate`)
+
+With `AGENT_ARCH=multi` and `AGENT_ORCHESTRATOR_MODE=debate`, the pipeline runs `technical → intel → bull → bear → risk → decision`:
+
+- `bull` (bull researcher) builds the strongest buy case using only evidence gathered by earlier stages (Agent opinions, risk flags, pre-fetched data) and states its biggest weakness and invalidation; `bear` (bear researcher) builds the strongest case against buying and rebuts the bull case point by point. Neither calls tools (about one LLM call each) and both must not invent evidence.
+- The researchers are deliberate advocacy, so they are **not written to `ctx.opinions`** and never count as directional votes in `agent_disagreement_summary`, risk override, or runtime facts. Their parsed cases are stored in `ctx.data["bull_case"]` / `ctx.data["bear_case"]` and reach `risk` and `decision` through the existing pre-fetched data channel. `DecisionAgent` also receives debate guidance: judge which side rests on stronger evidence, do not average the two, and carry unrefuted risks/catalysts into the matching fields.
+- `bull` and `bear` are non-critical stages like `intel` and `risk`: a failure degrades instead of aborting, and the decision stage is told when the debate is one-sided.
+- Costs about two more LLM calls than `full`; no new environment variable. Roll back by switching modes or reverting the code.
+
 ### Multi-Agent Decision Disagreement Summary Input (Issue #1904 P1 Plumbing)
 
 Before `DecisionAgent` runs, the multi-agent pipeline builds an internal low-sensitivity `agent_disagreement_summary` that summarizes directional disagreement across prior Agent opinions, risk-override evidence, whether risk override is enabled by the current `AGENT_RISK_OVERRIDE` setting, and non-critical stage degradation. The summary only contains agent name, signal, confidence, conflict type, decision path hint, low-sensitivity risk-control state, and degraded-stage markers. It does not include reasoning, raw data, raw error text, tokens, or private payloads.

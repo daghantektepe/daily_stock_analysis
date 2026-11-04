@@ -3958,7 +3958,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_ORCHESTRATOR_MODE": {
         "title": "Orchestrator Mode",
-        "description": "Pipeline mode when AGENT_ARCH=multi. 'quick' (tech→decision), 'standard' (tech→intel→decision), 'full' (tech→intel→risk→decision), 'specialist' (full + per-strategy specialist agents).",
+        "description": "Pipeline mode when AGENT_ARCH=multi. 'quick' (tech→decision), 'standard' (tech→intel→decision), 'full' (tech→intel→risk→decision), 'specialist' (full + per-strategy specialist agents), 'debate' (tech→intel→bull→bear→risk→decision).",
         "category": "agent",
         "data_type": "string",
         "ui_control": "select",
@@ -3971,8 +3971,9 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             {"label": "Standard", "value": "standard"},
             {"label": "Full", "value": "full"},
             {"label": "Specialist", "value": "specialist"},
+            {"label": "Debate", "value": "debate"},
         ],
-        "validation": {"enum": ["quick", "standard", "full", "specialist", "strategy", "skill"]},
+        "validation": {"enum": ["quick", "standard", "full", "specialist", "debate", "strategy", "skill"]},
         "display_order": 61,
         "help_key": "settings.agent.AGENT_ORCHESTRATOR_MODE",
         "examples": [

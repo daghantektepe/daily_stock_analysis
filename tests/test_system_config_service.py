@@ -2742,7 +2742,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(items["AGENT_ORCHESTRATOR_MODE"]["value"], "specialist")
         self.assertEqual(
             items["AGENT_ORCHESTRATOR_MODE"]["schema"]["validation"]["enum"],
-            ["quick", "standard", "full", "specialist", "strategy", "skill"],
+            ["quick", "standard", "full", "specialist", "debate", "strategy", "skill"],
         )
 
     @patch.object(

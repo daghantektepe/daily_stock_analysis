@@ -917,6 +917,15 @@ P3 在普通分析和 Agent 初始上下文中接入 `AnalysisContextPack` 低�
 
 P3 当时不新增 API/Web/Bot 参数，不写入 history/task status/report metadata，不改变报告 JSON schema，也不把完整 pack 暴露到历史、通知或 Web。Agent 工具级复用 pack 数据和 P5 数据质量评分留给后续阶段。
 
+#### Multi-Agent 多空辩论模式（`AGENT_ORCHESTRATOR_MODE=debate`）
+
+`AGENT_ARCH=multi` 且 `AGENT_ORCHESTRATOR_MODE=debate` 时，pipeline 为 `technical → intel → bull → bear → risk → decision`：
+
+- `bull`（多头研究员）只基于前序阶段已收集的证据（Agent opinion、风险标记、pre-fetched data）构建最强买入论证，并说明自身最大弱点与失效条件；`bear`（空头研究员）构建最强反对论证并逐条反驳多头观点。两者均不调用工具（每个阶段约 1 次 LLM 调用），禁止编造证据。
+- 多空研究员是刻意的立场倡导，**不写入 `ctx.opinions`**，因此不会作为方向投票进入 `agent_disagreement_summary`、风险 override 或 runtime facts；解析后的论证保存在 `ctx.data["bull_case"]` / `ctx.data["bear_case"]`，随既有 pre-fetched data 通道传给后续 `risk` 与 `decision`。`DecisionAgent` 额外收到辩论裁决指引：按证据质量判断哪一方更有说服力、不对双方取平均，并把未被驳倒的风险/催化写入对应字段。
+- `bull`、`bear` 与 `intel`、`risk` 一样属于非关键阶段：失败时降级继续，不中断 pipeline；若一方缺失，决策阶段会被告知辩论是单边的。
+- 相比 `full` 模式约多 2 次 LLM 调用；不新增环境变量，回滚方式为改回其他模式或 revert 对应代码。
+
 #### Multi-Agent 决策分歧摘要输入（Issue #1904 P1 plumbing）
 
 Multi-agent 在进入 `DecisionAgent` 前会构造内部低敏 `agent_disagreement_summary`，用于提示前序 Agent opinion 的方向分歧、风险 override 证据、风险 override 是否受当前 `AGENT_RISK_OVERRIDE` 配置启用，以及非关键阶段降级信息。该摘要只包含 agent name、signal、confidence、conflict type、decision path hint、低敏 risk control 状态和 degraded stage marker，不包含 reasoning、raw_data、原始错误文本、token 或私密 payload。

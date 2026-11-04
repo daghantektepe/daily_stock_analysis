@@ -75,8 +75,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Valid orchestrator modes (ordered by cost/depth)
-VALID_MODES = ("quick", "standard", "full", "specialist")
-NON_CRITICAL_BASE_STAGES = frozenset({"intel", "risk"})
+VALID_MODES = ("quick", "standard", "full", "specialist", "debate")
+NON_CRITICAL_BASE_STAGES = frozenset({"intel", "risk", "bull", "bear"})
 
 
 @dataclass
@@ -775,6 +775,7 @@ class AgentOrchestrator:
         from src.agent.agents.intel_agent import IntelAgent
         from src.agent.agents.decision_agent import DecisionAgent
         from src.agent.agents.risk_agent import RiskAgent
+        from src.agent.agents.debate_agents import BearResearcherAgent, BullResearcherAgent
 
         self._skill_agent_names = set()
 
@@ -800,6 +801,12 @@ class AgentOrchestrator:
             # Specialist agents are inserted lazily right before the decision
             # stage so the router can see the finished technical opinion.
             return [technical, intel, risk, decision]
+        elif self.mode == "debate":
+            # Bull/bear advocacy runs on gathered evidence before risk screening,
+            # so the risk agent and the decision agent both see the debate.
+            bull = self._prepare_agent(BullResearcherAgent(**common_kwargs))
+            bear = self._prepare_agent(BearResearcherAgent(**common_kwargs))
+            return [technical, intel, bull, bear, risk, decision]
         else:
             return [technical, intel, decision]
 
