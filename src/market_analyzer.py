@@ -640,14 +640,18 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         Returns:
             新闻列表
         """
+        # Borsa Istanbul: cross-checked Turkish macro / market headlines go first.
+        hub_news = self._get_tr_hub_market_news()
         if not self.search_service:
+            if hub_news:
+                return hub_news
             logger.warning(
                 "[大盘] %s action=search_market_news status=skipped reason=no_search_service",
                 self._log_context(),
             )
             return []
-        
-        all_news = []
+
+        all_news = list(hub_news)
 
         # 按 region 使用不同的新闻搜索词
         search_queries = self.profile.news_queries
@@ -692,6 +696,31 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         
         return all_news
     
+    def _get_tr_hub_market_news(self, max_stories: int = 4) -> List[Any]:
+        """Multi-source Turkish macro headlines with verification levels (``tr`` only, fail-open)."""
+        if self.region != "tr":
+            return []
+        try:
+            from data_provider.tr_news_hub import get_tr_news_hub, story_summary
+            from src.search_service import SearchResult
+
+            stories = get_tr_news_hub().macro_news(hours=36, max_stories=max_stories)
+            news = [
+                SearchResult(
+                    title=story.lead.title,
+                    snippet=story_summary(story, default_tag="macro"),
+                    url=story.lead.url,
+                    source=", ".join(story.sources[:3]),
+                    published_date=story.first_seen.isoformat() if story.first_seen else None,
+                )
+                for story in stories
+            ]
+        except Exception as exc:  # noqa: BLE001 - optional evidence, fail-open
+            logger.warning("[大盘] %s action=tr_news_hub status=failed error=%s", self._log_context(), exc)
+            return []
+        logger.info("[大盘] %s action=tr_news_hub status=success count=%d", self._log_context(), len(news))
+        return news
+
     def generate_market_review(self, overview: MarketOverview, news: List) -> str:
         """
         使用大模型生成大盘复盘报告

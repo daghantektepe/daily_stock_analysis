@@ -661,14 +661,13 @@ class StockAnalysisPipeline:
                 except Exception as e:
                     logger.warning(f"{stock_name}({code}) Social sentiment fetch failed: {e}")
 
-            # Step 4.6: KAP company disclosures (Borsa Istanbul only, fail-open)
-            kap_context = self._build_kap_disclosure_context(
-                code=code,
-                stock_name=stock_name,
-                query_id=query_id,
-            )
-            if kap_context:
-                news_context = f"{news_context}\n\n{kap_context}" if news_context else kap_context
+            # Step 4.6: KAP company disclosures + cross-checked Turkish news (Borsa Istanbul only, fail-open)
+            for tr_context in (
+                self._build_kap_disclosure_context(code=code, stock_name=stock_name, query_id=query_id),
+                self._build_tr_news_context(code=code, stock_name=stock_name, query_id=query_id),
+            ):
+                if tr_context:
+                    news_context = f"{news_context}\n\n{tr_context}" if news_context else tr_context
 
             if persisted_intelligence_context:
                 news_context = (
@@ -1395,15 +1394,18 @@ class StockAnalysisPipeline:
                 except Exception as e:
                     logger.warning(f"[{code}] Agent mode: social sentiment fetch failed: {e}")
 
-            kap_context = self._build_kap_disclosure_context(
-                code=code,
-                stock_name=stock_name,
-                query_id=query_id,
-            )
-            if kap_context:
-                existing = initial_context.get("news_context")
-                initial_context["news_context"] = f"{existing}\n\n{kap_context}" if existing else kap_context
-                logger.info(f"[{code}] Agent mode: KAP disclosures injected into news_context")
+            for label, tr_context in (
+                ("KAP disclosures", self._build_kap_disclosure_context(
+                    code=code, stock_name=stock_name, query_id=query_id,
+                )),
+                ("Turkish multi-source news", self._build_tr_news_context(
+                    code=code, stock_name=stock_name, query_id=query_id,
+                )),
+            ):
+                if tr_context:
+                    existing = initial_context.get("news_context")
+                    initial_context["news_context"] = f"{existing}\n\n{tr_context}" if existing else tr_context
+                    logger.info(f"[{code}] Agent mode: {label} injected into news_context")
 
             persisted_intelligence_context = self._load_persisted_intelligence_context(
                 code=code,
@@ -2836,6 +2838,66 @@ class StockAnalysisPipeline:
         except Exception as exc:  # noqa: BLE001 - persistence is best-effort
             logger.warning(f"[{code}] KAP disclosure persistence failed: {exc}")
         logger.info(f"[{code}] KAP disclosures added: {len(disclosures)}")
+        return context
+
+    def _build_tr_news_context(
+        self,
+        *,
+        code: str,
+        stock_name: str,
+        query_id: Optional[str],
+    ) -> str:
+        """Cross-checked multi-source Turkish news for ``.IS`` stocks, persisted as news intel.
+
+        Fail-open: any error returns an empty string and never interrupts analysis.
+        """
+        if get_market_for_stock(normalize_stock_code(code)) != "tr":
+            return ""
+        try:
+            from data_provider.tr_news_hub import format_tr_news_context, get_tr_news_hub, story_summary
+
+            days = max(1, int(self.config.get_effective_news_window_days() or 3))
+            digest = get_tr_news_hub().digest(code, stock_name or "", days=days)
+            context = format_tr_news_context(digest)
+        except Exception as exc:  # noqa: BLE001 - optional evidence, fail-open
+            logger.warning(f"[{code}] Turkish news hub failed: {exc}")
+            return ""
+        if not context:
+            return ""
+
+        if digest.stories:
+            try:
+                from src.search_service import SearchResponse, SearchResult
+
+                response = SearchResponse(
+                    query=f"TR news {code}",
+                    results=[
+                        SearchResult(
+                            title=story.lead.title,
+                            snippet=story_summary(story),
+                            url=story.lead.url,
+                            source=", ".join(story.sources[:3]),
+                            published_date=story.first_seen.isoformat() if story.first_seen else None,
+                        )
+                        for story in digest.stories
+                    ],
+                    provider="TrNewsHub",
+                )
+                self.db.save_news_intel(
+                    code=code,
+                    name=stock_name,
+                    dimension="latest_news",
+                    query=response.query,
+                    response=response,
+                    query_context=self._build_query_context(query_id=query_id),
+                )
+            except Exception as exc:  # noqa: BLE001 - persistence is best-effort
+                logger.warning(f"[{code}] Turkish news persistence failed: {exc}")
+        logger.info(
+            f"[{code}] Turkish news hub: {len(digest.stories)} stories from {digest.headline_count} headlines, "
+            f"{len(digest.macro_stories)} macro, feeds {digest.feeds_ok}/{digest.feeds_total}, "
+            f"google={'ok' if digest.google_ok else 'unavailable'}"
+        )
         return context
 
     def _load_persisted_intelligence_context(

@@ -106,7 +106,7 @@ LITELLM_FALLBACK_MODELS=ollama/qwen3:8b
 # --- Gizlilik: ekran görüntüsü (portföy / hisse listesi) okumayı yerelde yap (Ollama görsel modeliyle henüz denenmedi) ---
 VISION_MODEL=ollama/qwen2.5vl:7b
 
-# --- Haber araması (önerilir; ücretsiz katman yeterli) ---
+# --- Ek haber araması (isteğe bağlı; Türkçe haberler ve KAP zaten anahtarsız toplanır, bkz. 4.2) ---
 TAVILY_API_KEYS=
 
 # --- Bildirim ---
@@ -182,6 +182,37 @@ Web arayüzünün arama kutusu yaklaşık 800 BIST hissesini tanır: `THYAO`, `T
 ```bash
 python scripts/fetch_kap_stock_list.py && python scripts/generate_index_from_csv.py --merge-markets TR
 ```
+
+### 4.2 Haberler: nereden geliyor, nasıl doğrulanıyor?
+
+`.IS` hisseleri için API anahtarı gerekmeden üç kaynak birleştirilir:
+
+1. **KAP bildirimleri**: şirketin kendi Özel Durum Açıklamaları ve finansal raporları (son 14 gün).
+2. **Google News Türkiye araması**: hisse kodu ve şirket/marka adıyla (ör. `THYAO OR "Türk Hava Yolları"`). Onlarca yayını kapsar; Midas, Paratic, Bloomberg HT, Investing, Dünya, finans blogları dahil.
+3. **15 ekonomi masası RSS'i**: Bloomberg HT, AA, Dünya, Ekonomim, Paratic, BorsaGündem, Ekonomist, Investing.com Türkiye, Habertürk, Sözcü, Cumhuriyet, Yeni Şafak, Haber Global, CNN Türk ve TRT Haber. Makro başlıklar (TCMB, enflasyon, kur, CDS, BIST) da buradan gelir.
+
+Sistem başlıkları şöyle işler:
+
+- **Ayıklar:** hisse kodu ya da şirket adı başlıkta geçmeyen haberleri atar. Spor ve sponsorluk haberlerini de atar (ör. "VakıfBank–Türk Hava Yolları voleybol maçı").
+- **Birleştirir:** aynı olayı farklı yayınlardan tek hikâyede toplar. Örneğin bir bilanço açıklaması 18 kaynaklı tek hikâye olur.
+- **Etiketler:** her hikâyeye bir doğrulama seviyesi verir.
+
+| Seviye | Anlamı | Modelin kullanımı |
+|--------|--------|-------------------|
+| `OFFICIAL` (Resmî) | Resmî kurum ya da KAP bildirimine dayandığını söyleyen ana akım yayın | Karar için kullanılır |
+| `CONFIRMED` (Doğrulanmış) | En az bir birinci kademe finans yayını dahil 2+ kaynak ya da 3+ ana akım kaynak | Karar için kullanılır |
+| `REPORTED` (Tek kaynak) | Tek bir finans ya da ana akım yayın | "Doğrulanmamış" diye anılır |
+| `WEAK` (Zayıf) | Yalnızca küçük siteler veya bloglar | "Doğrulanmamış" diye anılır |
+| `RUMOR` (Söylenti) | Başlıkların yarısından fazlasında "iddia", "kulis", "duyum" gibi ifadeler var ve resmî teyit yok | Asla gerçek gibi ele alınmaz |
+
+Bilmen gereken sınırlar:
+
+- Sistem haberin **doğru olup olmadığını** bilemez. Yalnızca kaç güvenilir yayının aynı şeyi yazdığını ölçer.
+- Aynı ajans (AA, DHA, İHA) haberini kopyalayan siteler bağımsız teyit sayılmaz.
+- Eski haberler genelde fiyata çoktan yansımıştır.
+- Söylentiye dayanarak işlem yapmak risklidir. İçeriden öğrenilen bilgiyle işlem SPK mevzuatına göre suçtur.
+
+Midas uygulamasının sayfaları doğrudan çekilmez, çünkü kullanım koşulları belirsiz. Midas'ın yayımladığı haberler zaten Google News üzerinden gelir. KAP bildirimlerini de sistem KAP'tan kendisi okur.
 
 ## 5. Gizlilik: buluta ne gider?
 

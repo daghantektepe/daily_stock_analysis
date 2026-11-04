@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Borsa Istanbul 个股新增土耳其多源新闻交叉验证 `TrNewsHub`：Google News Türkiye 搜索 + 15 个公开经济频道 RSS，按标题相关性过滤（去除体育赞助噪音与 KAP 镜像），同一事件跨媒体聚类，按来源分级给出 OFFICIAL / CONFIRMED / REPORTED / WEAK / RUMOR 验证等级与事件标签，并附 36 小时土耳其宏观标题；注入传统与 Agent 分析的 `news_context` 并写入新闻情报，`MARKET_REVIEW_REGION=tr` 复盘优先使用；全链路 fail-open，无需 key
 - [修复] YFinance 指数行情改用近 5 日窗口计算涨跌幅：`period=2d` 对部分交易所（如 Borsa Istanbul 指数）只返回 1 行时，昨收等于今收导致涨跌幅恒为 0%
 - [新功能] 大盘复盘新增土耳其市场 `MARKET_REVIEW_REGION=tr`：BIST 100 / BIST 30 / 银行指数与美元/里拉汇率，土耳其市场 profile 与策略蓝图（含英文/土耳其语输出骨架），按 `XIST` 交易日过滤，Web 复盘市场选择器新增土耳其；`both` 仍为原五市场且不含 `tr`，需显式选择
 - [新功能] Web 股票自动补全新增约 800 个 Borsa Istanbul 代码：`scripts/fetch_kap_stock_list.py` 从 KAP 上市公司列表生成 TR 种子（土耳其语大小写规范化名称与 ASCII 别名），`generate_index_from_csv.py --merge-markets TR` 仅重建指定种子市场并合并进现有索引；建议列表新增 `BIST` 市场标签
