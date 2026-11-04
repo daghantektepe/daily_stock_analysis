@@ -1394,6 +1394,29 @@ Backtesting triggers automatically after the daily analysis flow completes (non-
 
 ---
 
+## Paper Trading
+
+Paper trading answers one question: *what if every new stock-analysis signal had been followed mechanically?* It is off by default. When enabled it only writes to a separate `paper_trades` ledger: it **never places real orders and never writes to Portfolio**, so holdings, portfolio risk, and the holding context read during analysis are unaffected.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PAPER_TRADING_ENABLED` | Record newly created analysis DecisionSignals in the paper ledger | `false` |
+| `PAPER_TRADING_POSITION_SIZE` | Notional per simulated buy, in the stock's quote currency (e.g. TRY for `.IS`, USD for US stocks) | `10000` |
+
+Fill rules (each signal fills at most once, idempotent on `signal_id`; only newly created signals trade, deduplicated/refreshed signals do not):
+
+- `buy` / `add`: open a whole-share position of the fixed notional when flat; no pyramiding while holding.
+- `reduce`: sell half (close if that rounds to zero); `sell`: close the position.
+- `hold` / `watch` / `avoid` / `alert`: no trade.
+- Fills use the analysis-time `current_price` without fees or slippage. Open positions are marked to the latest stored daily close; without one they are marked at cost and flagged `price_stale`.
+
+Read-only results (protected by admin auth):
+
+- `GET /api/v1/paper-trading/summary`: positions, average cost, realized/unrealized P&L and win rate, grouped per currency (currencies are never mixed).
+- `GET /api/v1/paper-trading/trades?limit=200`: most recent simulated fills.
+
+The ledger runs after the DecisionSignal write; any error is logged and never interrupts analysis. Roll back with `PAPER_TRADING_ENABLED=false` (existing rows are kept) or by reverting the code; the `paper_trades` table can be dropped.
+
 ## Local WebUI Management Interface
 
 The WebUI and FastAPI API share the same service process. After startup, use the browser workspace for configuration management, manual analysis, task progress, historical reports, backtesting, portfolio management, and smart import. Authentication, cloud-server access, and API usage details are covered below.

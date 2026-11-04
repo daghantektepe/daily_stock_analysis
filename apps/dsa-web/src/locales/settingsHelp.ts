@@ -1035,6 +1035,17 @@ const settingsHelpZhCN: SettingsHelpMap = {
     impact: ['影响历史回测评估、记忆校准和回测报告生成；不直接控制 Skill Outcome 权重。'],
     notes: ['AGENT_SKILL_AUTOWEIGHT 不再依赖全局回测胜率。'],
   },
+  'settings.backtest.PAPER_TRADING': {
+    title: '模拟交易',
+    summary: '把个股分析生成的买卖信号记入独立的模拟交易账本，用于观察 AI 建议的真实收益表现。',
+    usage: 'PAPER_TRADING_ENABLED=true 开启；PAPER_TRADING_POSITION_SIZE 设定每次建仓金额（按股票报价币种）。buy/add 在空仓时建仓，reduce 卖出一半，sell 清仓，其余动作不交易。',
+    valueNotes: [
+      '模拟账本与持仓（Portfolio）完全分离，不影响持仓统计、组合风险或分析中的持仓上下文。',
+      '不会下真实订单；成交价取分析时的当前价，不含手续费与滑点。',
+    ],
+    impact: ['影响模拟交易账本与 /api/v1/paper-trading/summary 汇总。'],
+    notes: ['默认关闭；同一信号只会成交一次。'],
+  },
   'settings.backtest.eval_params': {
     title: '回测评估参数',
     summary: '控制回测评估窗口、最小记录年龄和中性回报带的参数组。',
@@ -2221,6 +2232,17 @@ const settingsHelpEnUS: SettingsHelpMap = {
     ],
     impact: ['Affects historical backtesting, memory calibration, and backtest reports; it does not directly control Skill Outcome weights.'],
     notes: ['AGENT_SKILL_AUTOWEIGHT no longer depends on a global backtest win rate.'],
+  },
+  'settings.backtest.PAPER_TRADING': {
+    title: 'Paper Trading',
+    summary: 'Record buy/sell signals from stock analysis in a separate simulated ledger to track how AI suggestions would have performed.',
+    usage: 'Set PAPER_TRADING_ENABLED=true to enable; PAPER_TRADING_POSITION_SIZE sets the notional per buy in the stock quote currency. buy/add opens a position when flat, reduce sells half, sell closes, other actions do not trade.',
+    valueNotes: [
+      'The paper ledger is fully separate from Portfolio and never affects holdings, portfolio risk, or the holding context used in analysis.',
+      'No real orders are placed; fills use the analysis-time current price without fees or slippage.',
+    ],
+    impact: ['Affects the paper-trading ledger and the /api/v1/paper-trading/summary endpoint.'],
+    notes: ['Off by default; each signal fills at most once.'],
   },
   'settings.backtest.eval_params': {
     title: 'Backtest Evaluation Parameters',

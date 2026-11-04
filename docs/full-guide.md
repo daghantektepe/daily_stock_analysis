@@ -1555,6 +1555,29 @@ P5 在 Web `/decision-signals` 页面筛选区下方展示当前 outcome engine 
 
 ---
 
+## 模拟交易（Paper trading）
+
+模拟交易用于回答一个问题：*如果机械地执行每一条新的个股分析信号，结果会怎样？* 默认关闭，开启后只记入独立的 `paper_trades` 账本，**不下真实订单，也不写入 Portfolio**，因此不会影响持仓统计、组合风险或分析时读取的持仓上下文。
+
+| 变量 | 说明 | 默认 |
+|------|------|------|
+| `PAPER_TRADING_ENABLED` | 是否把个股分析新生成的 DecisionSignal 记入模拟账本 | `false` |
+| `PAPER_TRADING_POSITION_SIZE` | 每次模拟建仓金额，按股票自身报价币种计（如 `.IS` 为 TRY、美股为 USD） | `10000` |
+
+成交规则（每条信号最多成交一次，按 `signal_id` 幂等；只处理新创建的信号，去重/续期的信号不交易）：
+
+- `buy` / `add`：空仓时按固定金额建仓（整数股），已持仓时不加仓。
+- `reduce`：卖出一半持仓（不足 1 股时清仓）；`sell`：清仓。
+- `hold` / `watch` / `avoid` / `alert`：不交易。
+- 成交价取分析时的 `current_price`，不含手续费与滑点；持仓按本地已保存的最新日线收盘价估值，缺少收盘价时按成本估值并标记 `price_stale`。
+
+结果查询（只读，受管理员认证保护）：
+
+- `GET /api/v1/paper-trading/summary`：持仓、平均成本、已实现/未实现盈亏、胜率，金额按币种分组，不同币种不混合汇总。
+- `GET /api/v1/paper-trading/trades?limit=200`：最近的模拟成交记录。
+
+模拟账本挂在 DecisionSignal 写入之后，任何异常都只记录日志，不中断分析。回滚方式：设置 `PAPER_TRADING_ENABLED=false`（已有记录保留），或 revert 对应代码；`paper_trades` 表可直接删除。
+
 ## 本地 WebUI 管理界面
 
 WebUI 与 FastAPI API 服务共用同一服务进程，启动后可在浏览器中完成配置管理、手动分析、任务进度查看、历史报告、回测、持仓管理和智能导入等操作。认证、云服务器访问和 API 调用细节见下方说明。

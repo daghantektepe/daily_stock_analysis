@@ -22,6 +22,7 @@ from api.v1.endpoints import (
     health,
     history,
     intelligence,
+    paper_trading,
     portfolio,
     stocks,
     system_config,
@@ -66,6 +67,12 @@ router.include_router(
     backtest.router,
     prefix="/backtest",
     tags=["Backtest"]
+)
+
+router.include_router(
+    paper_trading.router,
+    prefix="/paper-trading",
+    tags=["PaperTrading"]
 )
 
 router.include_router(

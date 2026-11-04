@@ -1169,6 +1169,30 @@ class DecisionSignalFeedbackRecord(Base):
     updated_at = Column(DateTime, default=utc_naive_now, onupdate=utc_naive_now, index=True)
 
 
+class PaperTradeRecord(Base):
+    """Simulated fill derived from one DecisionSignal (paper trading ledger).
+
+    Kept separate from ``portfolio_*`` tables on purpose: paper fills must never
+    affect real holdings, portfolio risk, or the holding context used in analysis.
+    ``signal_id`` is unique so a signal fills at most once.
+    """
+
+    __tablename__ = 'paper_trades'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    signal_id = Column(Integer, nullable=False, unique=True, index=True)
+    stock_code = Column(String(32), nullable=False, index=True)
+    stock_name = Column(String(128))
+    market = Column(String(8), index=True)
+    currency = Column(String(8))
+    action = Column(String(16), nullable=False)
+    side = Column(String(8), nullable=False)
+    quantity = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)
+    trade_date = Column(Date, nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_naive_now, index=True)
+
+
 class SkillOpinionSampleRecord(Base):
     """Immutable, low-sensitivity skill opinion sample for Issue #1904 P2 PR1."""
 

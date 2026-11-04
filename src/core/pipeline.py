@@ -84,6 +84,7 @@ from src.services.run_diagnostics import (
     reset_run_diagnostic_context,
     sanitize_diagnostic_text,
 )
+from src.services.paper_trading_service import apply_paper_trade_for_signal
 from src.services.decision_signal_extractor import (
     extract_and_persist_from_analysis_result,
     resolve_decision_signal_action_fields,
@@ -2685,6 +2686,11 @@ class StockAnalysisPipeline:
                 summary = summarize_decision_signal(signal_result.get("item"))
                 if summary:
                     setattr(result, "decision_signal_summary", summary)
+                # Opt-in paper trading sidecar (PAPER_TRADING_ENABLED); fail-open.
+                apply_paper_trade_for_signal(
+                    signal_result,
+                    price=getattr(result, "current_price", None),
+                )
         except Exception as exc:
             logger.warning(
                 "Decision signal extraction skipped after history save: query_id=%s stock_code=%s error=%s",

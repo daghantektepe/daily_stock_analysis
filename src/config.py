@@ -1174,6 +1174,10 @@ class Config:
     backtest_min_age_days: int = 14
     backtest_engine_version: str = "v1"
     backtest_neutral_band_pct: float = 2.0
+
+    # === 模拟交易（Paper trading）===
+    paper_trading_enabled: bool = False
+    paper_trading_position_size: float = 10000.0
     
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
@@ -2129,6 +2133,13 @@ class Config:
                 2.0,
                 field_name='BACKTEST_NEUTRAL_BAND_PCT',
                 minimum=0.0,
+            ),
+            paper_trading_enabled=parse_env_bool(os.getenv('PAPER_TRADING_ENABLED'), default=False),
+            paper_trading_position_size=parse_env_float(
+                os.getenv('PAPER_TRADING_POSITION_SIZE'),
+                10000.0,
+                field_name='PAPER_TRADING_POSITION_SIZE',
+                minimum=1.0,
             ),
             log_dir=os.getenv('LOG_DIR', './logs'),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
