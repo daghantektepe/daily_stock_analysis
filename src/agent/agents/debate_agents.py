@@ -193,6 +193,37 @@ def format_debate_guidance(ctx: AgentContext) -> str:
     return "\n".join(lines)
 
 
+_REPORT_TEXT_FIELDS = {
+    "bull": ("thesis", "biggest_weakness", "invalidation", "conviction"),
+    "bear": ("thesis", "strongest_bull_point_conceded", "conviction"),
+}
+_REPORT_LIST_FIELDS = {
+    "bull": ("key_arguments", "catalysts"),
+    "bear": ("key_arguments", "risks", "rebuttals"),
+}
+
+
+def debate_report_block(ctx: AgentContext, *, max_items: int = 4, max_chars: int = 300) -> Dict[str, Any]:
+    """Compact bull/bear cases for the report (``dashboard["debate"]``); ``{}`` without a debate."""
+    block: Dict[str, Any] = {}
+    for side, key in (("bull", BULL_CASE_KEY), ("bear", BEAR_CASE_KEY)):
+        case = ctx.get_data(key)
+        if not isinstance(case, dict):
+            continue
+        compact: Dict[str, Any] = {}
+        for field in _REPORT_TEXT_FIELDS[side]:
+            value = str(case.get(field) or "").strip()
+            if value:
+                compact[field] = value[:max_chars]
+        for field in _REPORT_LIST_FIELDS[side]:
+            items = [str(item).strip()[:max_chars] for item in case.get(field) or [] if str(item).strip()]
+            if items:
+                compact[field] = items[:max_items]
+        if compact.get("thesis") or compact.get("key_arguments"):
+            block[side] = compact
+    return block
+
+
 def _normalize_case(parsed: Dict[str, Any], list_fields: tuple[str, ...]) -> Dict[str, Any]:
     case: Dict[str, Any] = {}
     for key, value in parsed.items():

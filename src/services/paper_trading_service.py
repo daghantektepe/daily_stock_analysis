@@ -166,8 +166,17 @@ class PaperTradingService:
             ).scalars().all()
             return [_trade_to_dict(row) for row in rows]
 
-    def get_summary(self) -> Dict[str, Any]:
-        """Positions, realized/unrealized P&L and win rate, grouped per currency."""
+    def get_summary(
+        self,
+        *,
+        include_benchmarks: bool = False,
+        benchmark_history: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Positions, realized/unrealized P&L and win rate, grouped per currency.
+
+        ``include_benchmarks`` adds per-market index-shadow and USD-based returns
+        (``benchmarks``; Borsa Istanbul vs BIST 100 / USD-TRY), fetched fail-open.
+        """
         with self.db.session_scope() as session:
             trades = session.execute(
                 select(PaperTradeRecord).order_by(PaperTradeRecord.trade_date, PaperTradeRecord.id)
@@ -240,6 +249,19 @@ class PaperTradingService:
         positions.sort(key=lambda item: item["stock_code"])
 
         wins = sum(1 for pnl in closed_results if pnl > 0)
+        benchmarks: Dict[str, Any] = {}
+        if include_benchmarks and trade_dicts:
+            from src.services.paper_trading_benchmark import compute_benchmarks, yfinance_history
+
+            mark_prices = {
+                position["stock_code"]: (
+                    position["last_close"] if position["last_close"] is not None else position["avg_cost"]
+                )
+                for position in positions
+            }
+            benchmarks = compute_benchmarks(
+                trade_dicts, mark_prices=mark_prices, history=benchmark_history or yfinance_history,
+            )
         return {
             "enabled": self.enabled,
             "position_size": self.position_size,
@@ -252,6 +274,7 @@ class PaperTradingService:
                 currency: {key: round(value, 6) for key, value in values.items()}
                 for currency, values in sorted(totals.items())
             },
+            "benchmarks": benchmarks,
         }
 
     def _latest_close(self, stock_code: str) -> tuple[Optional[float], Optional[date]]:

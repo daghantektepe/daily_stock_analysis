@@ -31,6 +31,20 @@ class PaperCurrencyTotals(BaseModel):
     unrealized_pnl: float
 
 
+class PaperBenchmark(BaseModel):
+    benchmark: str = Field(..., description="Benchmark index symbol, e.g. XU100.IS")
+    benchmark_name: str
+    currency: str
+    capital_deployed: float = Field(..., description="Sum of buy amounts in the quote currency")
+    strategy_return_pct: float
+    benchmark_return_pct: Optional[float] = Field(
+        None, description="Same cash flows invested in the benchmark index on the same days"
+    )
+    excess_return_pct: Optional[float] = None
+    usd_return_pct: Optional[float] = Field(None, description="Strategy return with cash flows converted to USD")
+    fx_change_pct: Optional[float] = Field(None, description="USD rate change since the first trade")
+
+
 class PaperTradingSummaryResponse(BaseModel):
     enabled: bool
     position_size: float
@@ -42,6 +56,10 @@ class PaperTradingSummaryResponse(BaseModel):
     totals_by_currency: Dict[str, PaperCurrencyTotals] = Field(
         default_factory=dict,
         description="Totals grouped by quote currency; currencies are never mixed",
+    )
+    benchmarks: Dict[str, PaperBenchmark] = Field(
+        default_factory=dict,
+        description="Per-market benchmark comparison (index shadow, USD-based return); empty when unavailable",
     )
 
 

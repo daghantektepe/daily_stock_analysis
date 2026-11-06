@@ -15,10 +15,13 @@ router = APIRouter()
 
 @router.get("/summary", response_model=PaperTradingSummaryResponse)
 def get_paper_trading_summary(
+    benchmark: bool = Query(True, description="Add index-shadow and USD-based returns (BIST: BIST 100, USD/TRY)"),
     db_manager: DatabaseManager = Depends(get_database_manager),
 ) -> PaperTradingSummaryResponse:
-    """Open positions, realized/unrealized P&L and win rate of the paper ledger."""
-    return PaperTradingSummaryResponse(**PaperTradingService(db_manager).get_summary())
+    """Open positions, realized/unrealized P&L, win rate and benchmark comparison of the paper ledger."""
+    return PaperTradingSummaryResponse(
+        **PaperTradingService(db_manager).get_summary(include_benchmarks=benchmark)
+    )
 
 
 @router.get("/trades", response_model=PaperTradeListResponse)

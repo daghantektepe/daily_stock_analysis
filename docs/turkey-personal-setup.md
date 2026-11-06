@@ -22,7 +22,39 @@ Bilmen gereken üç kısıt:
 
 ## 2. Kurulum
 
-### 2.1 Proje
+### 2.0 Windows: E: diskine tek komutla kurulum
+
+Önce Git, Python 3.11 ve Node.js 20+ kurulu olmalı. Eksikse PowerShell'de:
+
+```powershell
+winget install --id Git.Git -e; winget install --id Python.Python.3.11 -e; winget install --id OpenJS.NodeJS.LTS -e
+```
+
+Yeni bir PowerShell penceresi açıp kurulum betiğini indir ve çalıştır:
+
+```powershell
+git clone --branch claude/jolly-cray-fsps8k https://github.com/daghantektepe/daily_stock_analysis.git E:\daily_stock_analysis
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File E:\daily_stock_analysis\scripts\windows\install.ps1 -Target E:\daily_stock_analysis
+```
+
+Betik şunları yapar:
+
+- Python sanal ortamını (`.venv`) kurar ve gereksinimleri yükler.
+- Claude / Gemini / Codex CLI'larını kurar (`-SkipCli` ile atlanır).
+- `.env` dosyası yoksa `scripts\windows\env.tr.template` dosyasından oluşturur. Var olan `.env` dosyasına dokunmaz.
+
+Tekrar çalıştırmak güvenlidir; güncelleme için de aynı komutu kullan. Sonra 2.2'deki girişleri yap ve 4. bölümle devam et. Başlatma:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File E:\daily_stock_analysis\scripts\windows\start.ps1
+```
+
+İki pencere açılır: web arayüzü + zamanlanmış analiz, ve KAP izleyici (4.3). Oturum açılışında kendiliğinden başlaması için betiği `-RegisterAtLogon` ile bir kez çalıştır; kaldırmak için `-UnregisterAtLogon` kullan.
+
+### 2.1 Proje (Linux / macOS ya da elle kurulum)
 
 ```bash
 git clone https://github.com/daghantektepe/daily_stock_analysis.git
@@ -139,6 +171,8 @@ AGENT_LITELLM_MODEL=gemini/gemini-2.5-flash
 
 Bu modda analiz CLI aboneliklerini değil LiteLLM modelini kullanır ve hisse başına birkaç LLM çağrısı yapar. Önce klasik modla birkaç gün çalıştırıp raporları karşılaştırman önerilir.
 
+Raporda "⚖️ Boğa / Ayı Tartışması" bölümü çıkar. Her iki tarafın tezi, kanıtlı argümanları ve güven düzeyi (yüksek/orta/düşük) gösterilir. Boğa tarafında katalizörler, en zayıf nokta ve tezi geçersiz kılacak durum yer alır. Ayı tarafında riskler, boğa argümanlarına çürütmeler ve ayının çürütemediği boğa argümanı yer alır. Klasik modda bu bölüm yoktur; yerine "En Güçlü Yükseliş / Düşüş Sinyali" satırları vardır.
+
 ## 4. İlk çalıştırma ve kontrol
 
 1. Hangi modellerin gerçekten çalıştığını gör (her biri için küçük bir gerçek istek gönderir, az miktarda kota harcar):
@@ -220,6 +254,21 @@ Bilmen gereken sınırlar:
 
 Midas uygulamasının sayfaları doğrudan çekilmez, çünkü kullanım koşulları belirsiz. Midas'ın yayımladığı haberler zaten Google News üzerinden gelir. KAP bildirimlerini de sistem KAP'tan kendisi okur.
 
+### 4.3 KAP izleyici: seans içi uyarılar
+
+Günlük analiz günde birkaç kez çalışır. Saat 11:00'de gelen bir sözleşme, geri alım ya da devre kesici bildirimi bir sonraki çalıştırmayı beklememeli. İzleyici `STOCK_LIST`'teki `.IS` hisselerini KAP'ta `KAP_WATCH_INTERVAL_SECONDS` saniyede bir (varsayılan 300) kontrol eder. `KAP_WATCH_HOURS` (İstanbul saati, varsayılan `08:00-23:00`) içinde çalışır; akşam yayımlanan bildirimler de böylece yakalanır. Yeni ve önemli bir bildirim gelince Telegram'a (ya da `.env`'de ayarlı kanala) tek mesaj gönderir.
+
+```bash
+python scripts/kap_watch.py
+```
+
+- **Önemli sayılanlar:** bilanço, temettü, bedelsiz/bedelli, geri alım, pay/ortaklık değişikliği, sözleşme/iş ilişkisi, tedbir, derecelendirme, devre kesici. Varant fiyatı gibi rutin bildirimler kaydedilir ama gönderilmez.
+- **Mesajın içeriği:** bildirimin metninden tutar, karşı taraf gibi ayrıntılar.
+- **İlk çalıştırma:** mevcut bildirimleri yalnızca kaydeder, eski bildirim yağmuru olmaz. Durum `data/kap_watch_state.json` dosyasında tutulur, yeniden başlatınca tekrar göndermez.
+- **Önce deneme:** `--once` tek tur kontrol eder ve göndermeden ekrana yazar.
+
+Uyarı bilgi amaçlıdır. Habere hemen işlem yapmak yerine fiyatın tepkisine ve haberin teyidine bak.
+
 ## 5. Gizlilik: buluta ne gider?
 
 - Claude / Gemini / Codex / Grok kullanıldığında **hisse kodları, fiyat verisi, haberler, KAP bildirimleri ve (Portföy'e girdiysen) pozisyon bilgilerin** ilgili sağlayıcıya gider. Bunlar çoğunlukla zaten açık piyasa verisidir.
@@ -242,15 +291,27 @@ Midas uygulamasının sayfaları doğrudan çekilmez, çünkü kullanım koşull
 
 Bu sistem kazanç garantisi vermez. Bir sinyalin işe yarayıp yaramadığını ancak ölçerek öğrenirsin:
 
-1. **En az 4–6 hafta yalnızca sanal işlem** (`PAPER_TRADING_ENABLED=true`). Sonuçlar: `GET /api/v1/paper-trading/summary` (gerçekleşen/gerçekleşmeyen kâr-zarar, kazanma oranı).
+1. **En az 4–6 hafta yalnızca sanal işlem** (`PAPER_TRADING_ENABLED=true`). Özet için:
+
+```bash
+python scripts/paper_trading_report.py
+```
+
+   `--notify` eklersen özet Telegram'a da gider. Haftada bir çalıştırmak yeterli. Özet gerçekleşen/gerçekleşmeyen kâr-zararı ve kazanma oranını gösterir. Aynı tarihlerde aynı tutarla BIST 100 alınsaydı ne olacağıyla da kıyaslar, ve dolar bazında getiriyi verir (her nakit akışı o günün USD/TRY kuruyla çevrilir). Aynı bilgi `GET /api/v1/paper-trading/summary` uç noktasında `benchmarks` alanında da var.
 2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Gerekli fiyat geçmişi günlük çalıştırmalarla birikir. Hesaplama kendiliğinden yapılmaz, servis açıkken şu komutla tetiklenir:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/decision-signals/outcomes/run -H "Content-Type: application/json" -d '{"market": "tr"}'
 ```
 
+   Windows PowerShell'de:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/v1/decision-signals/outcomes/run -ContentType 'application/json' -Body '{"market":"tr"}'
+```
+
    İsabet oranları: <http://127.0.0.1:8000/api/v1/decision-signals/outcomes/stats>
-3. **Kıyasla:** Sonuçları aynı dönemde BIST 100'ün getirisiyle ve dolar bazında karşılaştır. Yüksek enflasyonda TL bazlı nominal kâr yanıltıcı olabilir.
+3. **Kıyasla:** Stratejin BIST 100'ü ve doları geçemiyorsa, TL bazlı nominal kâr yanıltıcıdır. Yüksek enflasyonda bu çok olasıdır. Rapordaki "fark" ve "dolar bazında" satırlarına bak.
 4. **Gerçek paraya geçersen küçük başla.** Pozisyon büyüklüğünü ve zarar kes seviyesini önceden belirle. Tek bir habere ya da söylentiye dayanarak işlem yapma.
 
 ## 8. Sonraki adımlar

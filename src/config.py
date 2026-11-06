@@ -1180,6 +1180,9 @@ class Config:
     # === 模拟交易（Paper trading）===
     paper_trading_enabled: bool = False
     paper_trading_position_size: float = 10000.0
+    # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
+    kap_watch_interval_seconds: int = 300
+    kap_watch_hours: str = "08:00-23:00"
     
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
@@ -2143,6 +2146,13 @@ class Config:
                 field_name='PAPER_TRADING_POSITION_SIZE',
                 minimum=1.0,
             ),
+            kap_watch_interval_seconds=parse_env_int(
+                os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
+                300,
+                field_name='KAP_WATCH_INTERVAL_SECONDS',
+                minimum=60,
+            ),
+            kap_watch_hours=(os.getenv('KAP_WATCH_HOURS') or "08:00-23:00").strip(),
             log_dir=os.getenv('LOG_DIR', './logs'),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
             max_workers=parse_env_int(os.getenv('MAX_WORKERS'), 3, field_name='MAX_WORKERS', minimum=1),

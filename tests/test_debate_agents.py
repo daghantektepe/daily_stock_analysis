@@ -179,3 +179,64 @@ def test_pipeline_degrades_when_debate_stage_fails() -> None:
         agent.run.assert_called_once()
     degraded = [item.get("stage") or item.get("stage_name") for item in ctx.meta.get("degraded_stages", [])]
     assert "bull" in degraded
+
+
+def _debate_ctx() -> AgentContext:
+    ctx = AgentContext(query="analyze", stock_code="ASELS.IS", stock_name="Aselsan")
+    ctx.set_data("bull_case", {
+        "thesis": "1,1 milyar USD ihracat sözleşmesi büyümeyi destekliyor",
+        "key_arguments": ["KAP: 1,1 milyar USD sözleşme", "technical: MA bullish"],
+        "catalysts": ["yeni ihracat sözleşmeleri"],
+        "biggest_weakness": "yabancı satışı",
+        "invalidation": "344 TL altı kapanış",
+        "conviction": "medium",
+    })
+    ctx.set_data("bear_case", {
+        "thesis": "değerleme pahalı",
+        "key_arguments": ["intel: BofA satış listesi (tek kaynak)"],
+        "risks": ["pay dönüşümü sonrası satış"],
+        "rebuttals": ["sözleşme -> zaten fiyatlandı"],
+        "strongest_bull_point_conceded": "sözleşme büyüklüğü",
+        "conviction": "low",
+    })
+    return ctx
+
+
+def test_debate_report_block_is_compact_and_empty_without_debate() -> None:
+    from src.agent.agents.debate_agents import debate_report_block
+
+    block = debate_report_block(_debate_ctx())
+    assert block["bull"]["thesis"].startswith("1,1 milyar USD")
+    assert block["bull"]["catalysts"] == ["yeni ihracat sözleşmeleri"]
+    assert block["bear"]["strongest_bull_point_conceded"] == "sözleşme büyüklüğü"
+    assert debate_report_block(AgentContext(query="q", stock_code="X")) == {}
+
+
+def test_finalize_dashboard_attaches_debate_and_drops_forged_one() -> None:
+    orch = AgentOrchestrator(tool_registry=MagicMock(), llm_adapter=MagicMock(), mode="debate")
+    ctx = _debate_ctx()
+    payload = {"decision_type": "hold", "dashboard": {"debate": {"bull": {"thesis": "forged"}}}}
+    dashboard = orch._finalize_dashboard_payload(payload, ctx)
+    assert dashboard["dashboard"]["debate"]["bull"]["thesis"].startswith("1,1 milyar USD")
+
+    plain = AgentContext(query="analyze", stock_code="ASELS.IS")
+    plain.set_data("news_context", "x")
+    no_debate = orch._finalize_dashboard_payload(payload, plain)
+    assert "debate" not in no_debate["dashboard"]
+
+
+def test_report_renders_bull_bear_section_in_turkish() -> None:
+    from src.agent.agents.debate_agents import debate_report_block
+    from src.notification import _append_debate_block
+    from src.report_language import get_report_labels
+
+    lines = []
+    _append_debate_block(lines, {"debate": debate_report_block(_debate_ctx())}, get_report_labels("tr"))
+    text = "\n".join(lines)
+    assert "### ⚖️ Boğa / Ayı Tartışması" in text
+    assert "**🐂 Boğa tezi** (güven: orta): 1,1 milyar USD" in text
+    assert "**🐻 Ayı tezi** (güven: düşük): değerleme pahalı" in text
+    assert "- **Kabul edilen boğa argümanı**: sözleşme büyüklüğü" in text
+    empty = []
+    _append_debate_block(empty, {}, get_report_labels("tr"))
+    assert empty == []

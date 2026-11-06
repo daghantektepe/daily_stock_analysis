@@ -254,6 +254,42 @@ class ChannelDetector:
         return names.get(channel, "未知渠道")
 
 
+def _append_debate_block(lines: List[str], dashboard: Any, labels: Dict[str, str]) -> None:
+    """Render ``dashboard["debate"]`` (debate orchestrator mode) as a bull vs bear section."""
+    debate = dashboard.get("debate") if isinstance(dashboard, dict) else None
+    if not isinstance(debate, dict) or not (debate.get("bull") or debate.get("bear")):
+        return
+
+    def label(key: str, default: str) -> str:
+        return labels.get(key) or default
+
+    lines.extend([f"### ⚖️ {label('debate_heading', 'Bull vs Bear Debate')}", ""])
+    sections = (
+        ("bull", "🐂", "bull_case_label", (("catalysts", "catalysts_label"),),
+         (("biggest_weakness", "biggest_weakness_label"), ("invalidation", "invalidation_label"))),
+        ("bear", "🐻", "bear_case_label", (("risks", "risks_label"), ("rebuttals", "rebuttals_label")),
+         (("strongest_bull_point_conceded", "conceded_label"),)),
+    )
+    for side, icon, title_key, list_fields, text_fields in sections:
+        case = debate.get(side)
+        if not isinstance(case, dict):
+            continue
+        conviction = str(case.get("conviction") or "").strip().lower()
+        conviction_text = label(f"conviction_{conviction}", conviction) if conviction else ""
+        suffix = f" ({label('conviction_label', 'conviction')}: {conviction_text})" if conviction_text else ""
+        lines.append(f"**{icon} {label(title_key, side)}**{suffix}: {case.get('thesis') or '-'}")
+        for argument in case.get("key_arguments") or []:
+            lines.append(f"- {argument}")
+        for field, field_label in list_fields:
+            values = case.get(field) or []
+            if values:
+                lines.append(f"- **{label(field_label, field)}**: " + "; ".join(values))
+        for field, field_label in text_fields:
+            if case.get(field):
+                lines.append(f"- **{label(field_label, field)}**: {case[field]}")
+        lines.append("")
+
+
 class NotificationService(
     AstrbotSender,
     CustomWebhookSender,
@@ -1526,6 +1562,8 @@ class NotificationService(
                         report_lines.append(f"**🐻 {labels['strongest_bearish_signal_label']}**: {signal_attr['strongest_bearish_signal']}")
                     report_lines.append("")
 
+                _append_debate_block(report_lines, dashboard, labels)
+
                 # ========== 多策略综合 ==========
                 strategy_synthesis = normalize_strategy_synthesis_payload(
                     dashboard.get('strategy_synthesis') if dashboard else None
@@ -2035,6 +2073,8 @@ class NotificationService(
             if bearish:
                 lines.append(f"**🐻 {labels.get('strongest_bearish_signal_label', '最强看空信号')}**: {bearish}")
             lines.append("")
+
+        _append_debate_block(lines, dashboard, labels)
 
         # 持仓建议
         pos_advice = core.get('position_advice', {}) if core else {}

@@ -1590,6 +1590,13 @@ class AgentOrchestrator:
         payload["analysis_summary"] = analysis_summary
         payload["key_points"] = key_points
         payload["risk_warning"] = risk_warning
+        # Debate cases are copied from the debate agents' context, never trusted from the LLM payload.
+        dashboard_block.pop("debate", None)
+        from src.agent.agents.debate_agents import debate_report_block
+
+        debate = debate_report_block(ctx)
+        if debate:
+            dashboard_block["debate"] = debate
         payload["dashboard"] = dashboard_block
         if risk_applied:
             for opinion in reversed(ctx.opinions):

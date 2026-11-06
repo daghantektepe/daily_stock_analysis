@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增 KAP 公告监控 `scripts/kap_watch.py`：按 `KAP_WATCH_INTERVAL_SECONDS`（默认 300 秒）在 `KAP_WATCH_HOURS`（伊斯坦布尔时间，默认 08:00-23:00）内轮询 STOCK_LIST 中 `.IS` 股票，新出现的重要公告（业绩、分红、送配股、回购、股权、合同、监管措施、评级、个股熔断）附正文要点按股票合并推送到已配置通知渠道；首次轮询只记录不推送，状态保存在 `data/kap_watch_state.json`，失败 fail-open
+- [新功能] 模拟交易汇总新增基准对比：Borsa Istanbul 交易按相同日期与金额复制到 BIST 100（`XU100.IS`）计算超额收益，并按当日 USD/TRY 换算美元口径收益；`GET /api/v1/paper-trading/summary` 新增 `benchmarks` 字段与 `benchmark` 查询参数（默认开启），新增 `scripts/paper_trading_report.py`（`--notify` 推送土耳其语汇总）
+- [新功能] 多空辩论模式（`AGENT_ORCHESTRATOR_MODE=debate`）的多方 / 空方观点写入 `dashboard.debate` 并在完整报告与单股报告中渲染「多空辩论」小节（论点、催化剂 / 风险、反驳、信心，含中英韩土文案）；辩论内容只取自辩论 Agent 上下文，忽略 LLM 自行输出的同名字段
+- [文档] 新增 Windows 本地安装脚本 `scripts/windows/install.ps1`（克隆到指定盘符如 `E:\`、Python 3.11 venv、订阅 CLI、土耳其语 `.env` 模板）与 `start.ps1`（分别启动 Web+定时任务与 KAP 监控，可注册登录自启），土耳其语部署指南同步更新
 - [改进] KAP 公告新增正文要点与事件标签：最近 3 条公司公告从公告页面提取合同金额、交易对手、回购规模等土耳其语要点（`Details:` 行，按公告编号缓存），每条公告标注 earnings / buyback / contract / ownership / circuit_breaker 等事件；新增保留 Borsa Istanbul 个股熔断 / 交易措施与 MKK 股份转换通知（最多 3 条），其余结算类 DKB 通知仍跳过
 - [新功能] Borsa Istanbul 个股新增土耳其多源新闻交叉验证 `TrNewsHub`：Google News Türkiye 搜索 + 15 个公开经济频道 RSS，按标题相关性过滤（去除体育赞助噪音与 KAP 镜像），同一事件跨媒体聚类，按来源分级给出 OFFICIAL / CONFIRMED / REPORTED / WEAK / RUMOR 验证等级与事件标签，并附 36 小时土耳其宏观标题；注入传统与 Agent 分析的 `news_context` 并写入新闻情报，`MARKET_REVIEW_REGION=tr` 复盘优先使用；全链路 fail-open，无需 key
 - [修复] YFinance 指数行情改用近 5 日窗口计算涨跌幅：`period=2d` 对部分交易所（如 Borsa Istanbul 指数）只返回 1 行时，昨收等于今收导致涨跌幅恒为 0%

@@ -168,8 +168,9 @@ def test_paper_trading_api_returns_summary_and_trades(db, tmp_path) -> None:
     static_dir.mkdir()
     client = TestClient(create_app(static_dir=Path(static_dir)))
 
-    summary = client.get("/api/v1/paper-trading/summary")
+    summary = client.get("/api/v1/paper-trading/summary?benchmark=false")
     assert summary.status_code == 200
+    assert summary.json()["benchmarks"] == {}
     body = summary.json()
     assert body["open_position_count"] == 1
     assert body["positions"][0]["stock_code"] == "THYAO.IS"
@@ -177,3 +178,80 @@ def test_paper_trading_api_returns_summary_and_trades(db, tmp_path) -> None:
     trades = client.get("/api/v1/paper-trading/trades?limit=5")
     assert trades.status_code == 200
     assert trades.json()["items"][0]["signal_id"] == 1
+
+
+# ------------------------------------------------------------- benchmarks
+_HISTORY = {
+    "XU100.IS": {date(2026, 11, 2): 10000.0, date(2026, 11, 4): 10500.0, date(2026, 11, 6): 11000.0},
+    "TRY=X": {date(2026, 11, 2): 40.0, date(2026, 11, 4): 41.0, date(2026, 11, 6): 42.0},
+}
+
+
+def _fake_history(symbol, start, end):
+    return {day: close for day, close in _HISTORY.get(symbol, {}).items() if start <= day <= end}
+
+
+_TRADES = [
+    {"id": 1, "stock_code": "THYAO.IS", "market": "tr", "side": "buy", "quantity": 40, "price": 250.0,
+     "trade_date": "2026-11-02"},
+    {"id": 2, "stock_code": "THYAO.IS", "market": "tr", "side": "sell", "quantity": 40, "price": 300.0,
+     "trade_date": "2026-11-04"},
+    # Saturday buy: priced at Friday's index close / FX rate.
+    {"id": 3, "stock_code": "ASELS.IS", "market": "tr", "side": "buy", "quantity": 10, "price": 100.0,
+     "trade_date": "2026-11-05"},
+]
+
+
+def test_benchmark_index_shadow_and_usd_return() -> None:
+    from src.services.paper_trading_benchmark import compute_market_benchmark
+
+    result = compute_market_benchmark(
+        _TRADES, market="tr", mark_prices={"ASELS.IS": 110.0}, today=date(2026, 11, 6), history=_fake_history,
+    )
+    invested = 10000 + 1000
+    strategy = (12000 + 1100 - invested) / invested * 100
+    index = (10500 + 1000 / 10500 * 11000 - invested) / invested * 100
+    usd_in = 10000 / 40 + 1000 / 41
+    usd = (12000 / 41 + 1100 / 42 - usd_in) / usd_in * 100
+    assert result["benchmark_name"] == "BIST 100"
+    assert result["capital_deployed"] == 11000
+    assert result["strategy_return_pct"] == pytest.approx(strategy, abs=0.01)
+    assert result["benchmark_return_pct"] == pytest.approx(index, abs=0.01)
+    assert result["excess_return_pct"] == pytest.approx(strategy - index, abs=0.02)
+    assert result["usd_return_pct"] == pytest.approx(usd, abs=0.01)
+    assert result["fx_change_pct"] == pytest.approx(5.0)
+
+
+def test_benchmark_fails_open_without_history_and_skips_other_markets() -> None:
+    from src.services.paper_trading_benchmark import compute_benchmarks, compute_market_benchmark
+
+    result = compute_market_benchmark(
+        _TRADES, market="tr", mark_prices={"ASELS.IS": 110.0}, today=date(2026, 11, 6),
+        history=lambda *_args: {},
+    )
+    assert result["strategy_return_pct"] is not None
+    assert result["benchmark_return_pct"] is None and result["usd_return_pct"] is None
+    us_trades = [dict(trade, market="us") for trade in _TRADES]
+    assert compute_benchmarks(us_trades, mark_prices={}, history=_fake_history) == {}
+
+    def broken(*_args):
+        raise RuntimeError("down")
+
+    assert compute_benchmarks(_TRADES, mark_prices={}, history=broken) == {}
+
+
+def test_summary_includes_benchmarks_and_report_text(db) -> None:
+    from src.services.paper_trading_benchmark import format_paper_trading_report
+
+    service = _service(db)
+    service.apply_signal(_signal(1, "buy"), price=250.0, trade_date=date(2026, 11, 2))
+    _add_close(db, "THYAO.IS", date(2026, 11, 6), 275.0)
+    summary = service.get_summary(include_benchmarks=True, benchmark_history=_fake_history)
+
+    benchmark = summary["benchmarks"]["tr"]
+    assert benchmark["benchmark"] == "XU100.IS"
+    assert benchmark["strategy_return_pct"] == pytest.approx(10.0)
+    text = format_paper_trading_report(summary)
+    assert "Kıyas (BIST 100): strateji +10.00%" in text
+    assert "THYAO.IS" in text and "komisyon" in text
+    assert service.get_summary()["benchmarks"] == {}
