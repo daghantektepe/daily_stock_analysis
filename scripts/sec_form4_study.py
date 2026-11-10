@@ -3,14 +3,17 @@
 """SEC Form 4 Executive Insider Buying Event Study CLI.
 
 Measures whether corporate insider purchases filed with the SEC on Form 4
-produce abnormal returns (Alpha) relative to the S&P 500 benchmark (SPY).
+produce abnormal returns (Alpha) relative to benchmarks (SPY for S&P 500, IWM for Russell 2000).
 
 Examples:
-    # Evaluate 2026 Q1 insider purchases >= $50,000 (first 50 events)
-    python scripts/sec_form4_study.py --quarters 2026q1 --min-value 50000 --limit 50
+    # Evaluate 2026 Q1 insider purchases >= $50,000 (first 60 events)
+    python scripts/sec_form4_study.py --quarters 2026q1 --min-value 50000 --limit 60
 
-    # Evaluate multiple quarters and notify via Telegram
-    python scripts/sec_form4_study.py --quarters 2025q3,2025q4 --min-value 100000 --notify
+    # Evaluate against Russell 2000 (small caps) for small-cap alpha
+    python scripts/sec_form4_study.py --quarters 2026q1 --benchmark IWM
+
+    # Run multi-quarter backtest (e.g. last 4 quarters)
+    python scripts/sec_form4_study.py --quarters 2025q2,2025q3,2025q4,2026q1 --limit 200
 """
 
 from __future__ import annotations
@@ -20,11 +23,16 @@ import logging
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from data_provider.sec_form4_fetcher import SecForm4Fetcher
+# Load local environment (e.g. SEC_EDGAR_USER_AGENT)
+load_dotenv(REPO_ROOT / ".env")
+
+from data_provider.sec_form4_fetcher import SecForm4Fetcher, quarter_range
 from src.services.sec_form4_study import format_sec_form4_study_report, run_sec_form4_event_study
 
 
@@ -33,7 +41,7 @@ def main() -> int:
     parser.add_argument(
         "--quarters",
         default="2026q1",
-        help="Comma-separated quarters to evaluate (e.g. 2026q1 or 2025q3,2025q4)",
+        help="Comma-separated quarters or range (e.g. '2026q1' or '2025q1..2026q1' or '2025q3,2025q4')",
     )
     parser.add_argument(
         "--min-value",
@@ -50,7 +58,13 @@ def main() -> int:
     parser.add_argument(
         "--benchmark",
         default="SPY",
-        help="Benchmark symbol (default: SPY for S&P 500)",
+        help="Benchmark symbol (default: SPY for S&P 500; IWM for Russell 2000 small caps)",
+    )
+    parser.add_argument(
+        "--slippage",
+        type=float,
+        default=0.5,
+        help="Estimated bid-ask spread and slippage percentage (default: 0.5%%)",
     )
     parser.add_argument(
         "--notify",
@@ -63,7 +77,14 @@ def main() -> int:
     logger = logging.getLogger(__name__)
 
     fetcher = SecForm4Fetcher()
-    quarters = [q.strip().lower() for q in args.quarters.split(",") if q.strip()]
+
+    # Parse quarters specification (supports '2024q1..2026q1' or comma-separated)
+    raw_q = args.quarters.strip().lower()
+    if ".." in raw_q:
+        parts = raw_q.split("..")
+        quarters = quarter_range(parts[0].strip(), parts[1].strip())
+    else:
+        quarters = [q.strip().lower() for q in raw_q.split(",") if q.strip()]
 
     all_events = []
     for q in quarters:
@@ -87,6 +108,7 @@ def main() -> int:
         benchmark_symbol=args.benchmark,
         min_value=args.min_value,
         max_events=args.limit,
+        estimated_slippage_pct=args.slippage,
     )
 
     report_text = format_sec_form4_study_report(results)

@@ -6,24 +6,32 @@ and Exchange Commission (SEC) on Form 4 under Section 16(a) of the Securities
 Exchange Act of 1934.
 
 Two access modes:
-1. **Quarterly Bulk Data Sets**:
-   Downloads and parses official SEC quarterly Form 3/4/5 archives
-   (``{year}q{q}_form345.zip``), providing comprehensive coverage of all open-market
-   executive transactions for event studies and backtesting.
-2. **Live SEC EDGAR Atom Stream**:
-   Polls the latest real-time Form 4 filings via SEC's public browse-edgar feed
-   for near-real-time intraday screening.
+1. **Quarterly Bulk Data Sets** (``{year}q{q}_form345.zip``): complete history for
+   event studies. NOTE: SEC publishes these with a lag of several months, so they
+   are NOT suitable for live screening on their own.
+2. **Live SEC EDGAR Atom Stream**: lists the latest Form 4 filings (the per-filing
+   XML still has to be parsed for live screening).
 
-Academic basis (Cohen, Malloy, Pomorski 2012; Lakonishok & Lee 2001):
-- Filters for open-market purchases (``TRANS_CODE == 'P'``).
-- Identifies C-suite executives (CEO, CFO, COO, President) vs. board/other.
-- Distinguishes opportunistic purchases from pre-planned Rule 10b5-1 trading plans
-  (``AFF10B5ONE == '1'``).
-- Groups multi-insider buying ("cluster purchases"), the strongest documented
-  predictive signal for post-filing abnormal returns.
+Data hygiene applied when building purchase events:
+- Only original Form 4 filings (``DOCUMENT_TYPE == '4'``); ``4/A`` amendments and
+  annual Form 5 reports are skipped so the same purchase is never counted twice.
+- Only open-market purchases (``TRANS_CODE == 'P'``) of common/ordinary shares.
+- Purchases whose footnotes / remarks mention an underwritten public offering,
+  IPO, private placement or registered direct offering are flagged
+  (``is_offering``) and excluded by default: they are allocations, not
+  open-market conviction trades.
+- The Rule 10b5-1 checkbox (``AFF10B5ONE``) is read robustly (``1``/``true``).
+- Routine vs. opportunistic insiders follow Cohen, Malloy & Pomorski (2012):
+  an insider who traded in the same calendar month in each of the three prior
+  years is *routine*; an insider with trades in each of the three prior years
+  but without that pattern is *opportunistic*; others are *unclassified*.
+- Multi-owner (joint) filings: owners appearing on the same filing are merged
+  into one economic actor so that a fund and its affiliates are not mistaken
+  for several independent insiders ("fake cluster").
 
-SEC EDGAR requires a user-agent header containing identifying contact info in the
-format ``Sample Company Name AdminContact@<sample company domain>.com``.
+SEC EDGAR requires a User-Agent with contact information. It is read from the
+``SEC_EDGAR_USER_AGENT`` environment variable (e.g. in ``.env``):
+``SEC_EDGAR_USER_AGENT=DailyStockAnalysis/1.0 (contact: you@example.com)``.
 """
 
 from __future__ import annotations
@@ -34,34 +42,59 @@ import logging
 import os
 import re
 import tempfile
-import time
 import xml.etree.ElementTree as ET
 import zipfile
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import requests
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SEC_USER_AGENT = "DailyStockAnalysis/1.0 (contact: xavrail@gmail.com)"
+SEC_USER_AGENT_ENV = "SEC_EDGAR_USER_AGENT"
 DEFAULT_CACHE_DIR = Path("data") / "cache" / "sec_form4"
 
 SEC_BULK_URL_PATTERNS = [
     "https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/{quarter}_form345.zip",
     "https://www.sec.gov/files/datastandardsinnovation/data/insider-transactions-data-sets/{quarter}_form345.zip",
 ]
+SEC_DATASET_LISTING_URL = "https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets"
 SEC_RECENT_ATOM_URL = (
     "https://www.sec.gov/cgi-bin/browse-edgar"
     "?action=getcurrent&type=4&company=&dateb=&owner=only&start=0&count={count}&output=atom"
 )
+SEC_ISSUER_FILINGS_URL = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=4&dateb=&owner=include&count=40"
 
-_C_LEVEL_KEYWORDS = (
-    "ceo", "chief executive", "cfo", "chief financial", "coo", "chief operating",
-    "president", "chairman", "vice chairman", "executive chairman", "treasurer",
+_TRUE_VALUES = {"1", "true", "t", "y", "yes"}
+_OFFERING_PATTERN = re.compile(
+    r"(public offering|underwrit|initial public|\bipo\b|private placement|registered direct|"
+    r"subscription agreement|securities purchase agreement|concurrent (?:private )?placement|"
+    r"directed share|purchased in the offering|participated in the offering)",
+    re.IGNORECASE,
 )
+_NON_COMMON_PATTERN = re.compile(
+    r"(preferred|warrant|\bnote|debenture|\bright|convertible|option)", re.IGNORECASE
+)
+
+
+def resolve_sec_user_agent(explicit: Optional[str] = None) -> str:
+    """Return the SEC User-Agent from argument or environment, or raise a clear error."""
+    value = (explicit or os.getenv(SEC_USER_AGENT_ENV) or "").strip()
+    if not value or "@" not in value:
+        raise RuntimeError(
+            f"{SEC_USER_AGENT_ENV} tanımlı değil. SEC, otomatik erişimde iletişim e-postası içeren bir "
+            f"User-Agent ister. .env dosyasına ekleyin: "
+            f"{SEC_USER_AGENT_ENV}=DailyStockAnalysis/1.0 (contact: siz@ornek.com)"
+        )
+    return value
+
+
+def parse_bool_flag(value: Any) -> bool:
+    """Parse SEC boolean columns that mix ``1/0`` and ``true/false`` spellings."""
+    return str(value or "").strip().lower() in _TRUE_VALUES
 
 
 @dataclass
@@ -85,11 +118,16 @@ class InsiderTransaction:
     price: float
     total_value: float
     security_title: str = "Common Stock"
+    issuer_cik: str = ""
+    owner_ciks: Tuple[str, ...] = ()
+    shares_owned_after: float = 0.0
+    is_offering: bool = False
+    is_direct: bool = True
 
 
 @dataclass
 class InsiderClusterEvent:
-    """Aggregated open-market insider purchase event for a company on a filing date/window."""
+    """Aggregated open-market insider purchase event for a company on a filing window."""
 
     symbol: str
     company_name: str
@@ -100,20 +138,74 @@ class InsiderClusterEvent:
     total_shares: float = 0.0
     avg_price: float = 0.0
     has_c_level: bool = False
-    is_opportunistic: bool = True
+    # Cohen-Malloy-Pomorski: True only when at least one insider is classified opportunistic.
+    is_opportunistic: bool = False
     is_cluster: bool = False
     primary_titles: List[str] = field(default_factory=list)
+    issuer_cik: str = ""
+    cmp_class: str = "unclassified"  # opportunistic | routine | unclassified
+    has_10b51: bool = False
+    officer_director_count: int = 0
+    ten_pct_only: bool = False
+    holding_change_pct: Optional[float] = None
+    last_filing_date: Optional[date] = None
+
+    @property
+    def sec_url(self) -> str:
+        return SEC_ISSUER_FILINGS_URL.format(cik=self.issuer_cik) if self.issuer_cik else ""
 
     @property
     def summary_headline(self) -> str:
         roles = ", ".join(self.primary_titles[:3]) or "Yönetici"
-        cluster_tag = f" [KÜME ALIMI: {self.insider_count} Yönetici]" if self.is_cluster else ""
-        c_tag = " [C-SUITE]" if self.has_c_level else ""
-        opp_tag = " [FIRSATÇI / 10b5-1 Yok]" if self.is_opportunistic else ""
+        cluster_tag = f" [KÜME ALIMI: {self.officer_director_count} yönetici]" if self.is_cluster else ""
+        c_tag = " [ÜST YÖNETİM]" if self.has_c_level else ""
+        cmp_tag = {"opportunistic": " [FIRSATÇI]", "routine": " [RUTİN]"}.get(self.cmp_class, "")
+        plan_tag = " [10b5-1 PLANLI]" if self.has_10b51 else ""
         return (
             f"{self.symbol} — ${self.total_value:,.0f} ({self.total_shares:,.0f} adet @ ${self.avg_price:.2f}) "
-            f"— {roles}{cluster_tag}{c_tag}{opp_tag}"
+            f"— {roles}{cluster_tag}{c_tag}{cmp_tag}{plan_tag}"
         )
+
+
+@dataclass
+class QuarterData:
+    """Parsed content of one quarterly archive."""
+
+    quarter: str
+    purchases: List[InsiderTransaction]
+    # owner CIK -> {(year, month)} of open-market trades (P or S), for routine classification
+    trade_months: Dict[str, Set[Tuple[int, int]]]
+    stats: Dict[str, int] = field(default_factory=dict)
+
+
+class RoutineClassifier:
+    """Cohen-Malloy-Pomorski (2012) routine/opportunistic insider classification.
+
+    Uses only trades from the three calendar years *before* the event year, so the
+    classification never looks ahead.
+    """
+
+    def __init__(self) -> None:
+        self._months: Dict[str, Set[Tuple[int, int]]] = defaultdict(set)
+
+    def add_trade_months(self, trade_months: Dict[str, Set[Tuple[int, int]]]) -> None:
+        for cik, months in trade_months.items():
+            self._months[cik].update(months)
+
+    def add(self, owner_cik: str, trade_date: date) -> None:
+        self._months[owner_cik].add((trade_date.year, trade_date.month))
+
+    def classify(self, owner_cik: str, event_date: date) -> str:
+        months = self._months.get(owner_cik)
+        if not owner_cik or not months:
+            return "unclassified"
+        years = {y for y, _ in months}
+        prior = (event_date.year - 1, event_date.year - 2, event_date.year - 3)
+        if not all(y in years for y in prior):
+            return "unclassified"
+        if all((y, event_date.month) in months for y in prior):
+            return "routine"
+        return "opportunistic"
 
 
 def _parse_sec_date(value: Any) -> Optional[date]:
@@ -131,10 +223,45 @@ def _parse_sec_date(value: Any) -> Optional[date]:
     return None
 
 
-def _is_c_level_title(title: str, relationship: str) -> bool:
-    """Determine whether an officer title represents a C-suite executive."""
-    combined = f"{title} {relationship}".lower()
-    return any(kw in combined for kw in _C_LEVEL_KEYWORDS)
+_C_LEVEL_PATTERN = re.compile(
+    r"(\bceo\b|chief executive|\bcfo\b|chief financial|\bcoo\b|chief operating|chairman|\bchair\b|"
+    r"(?<!vice )(?<!vice-)\bpresident\b)",
+    re.IGNORECASE,
+)
+
+
+def _is_c_level_title(title: str, relationship: str = "") -> bool:
+    """Whether a title represents top management (CEO/CFO/COO/President/Chair, not Vice President)."""
+    if not title:
+        return False
+    return bool(_C_LEVEL_PATTERN.search(title))
+
+
+def normalize_symbol(raw: Any) -> str:
+    """Normalize SEC issuer trading symbols ('ABC, ABCW' -> 'ABC'; 'NONE' -> '')."""
+    text = str(raw or "").strip().upper()
+    if not text:
+        return ""
+    text = re.split(r"[,;/\s]+", text)[0]
+    if text in ("NONE", "N/A", "NA", "NULL"):
+        return ""
+    return text
+
+
+def _safe_float(val: Any) -> float:
+    try:
+        num = float(val)
+        return 0.0 if (num < 0 or num != num) else num
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _referenced_footnote_ids(row: Dict[str, Any]) -> Set[str]:
+    ids: Set[str] = set()
+    for key, value in row.items():
+        if key and key.endswith("_FN") and value:
+            ids.update(part.strip() for part in str(value).split(",") if part.strip())
+    return ids
 
 
 class SecForm4Fetcher:
@@ -145,20 +272,35 @@ class SecForm4Fetcher:
         *,
         user_agent: Optional[str] = None,
         cache_dir: Optional[Path] = None,
-        timeout: float = 30.0,
+        timeout: float = 60.0,
         session_get: Optional[Callable[..., requests.Response]] = None,
     ) -> None:
-        self.user_agent = user_agent or os.getenv("SEC_EDGAR_USER_AGENT") or DEFAULT_SEC_USER_AGENT
+        self._user_agent = user_agent
         self.cache_dir = Path(cache_dir or DEFAULT_CACHE_DIR)
         self.timeout = float(timeout)
         self._get = session_get or requests.get
 
+    @property
+    def user_agent(self) -> str:
+        return resolve_sec_user_agent(self._user_agent)
+
     def _headers(self) -> Dict[str, str]:
-        return {
-            "User-Agent": self.user_agent,
-            "Accept-Encoding": "gzip, deflate",
-            "Host": "www.sec.gov",
-        }
+        return {"User-Agent": self.user_agent, "Accept-Encoding": "gzip, deflate"}
+
+    # ------------------------------------------------------------ Discovery
+    def list_available_quarters(self) -> List[str]:
+        """Quarters published on the SEC data set page, oldest first (e.g. ['2023q4', ...])."""
+        resp = self._get(SEC_DATASET_LISTING_URL, headers=self._headers(), timeout=self.timeout)
+        if resp.status_code != 200:
+            raise RuntimeError(f"SEC dataset listing returned HTTP {resp.status_code}")
+        found = set(re.findall(r"(\d{4}q[1-4])_form345\.zip", resp.text))
+        return sorted(found)
+
+    def latest_available_quarter(self) -> str:
+        quarters = self.list_available_quarters()
+        if not quarters:
+            raise RuntimeError("No SEC Form 3/4/5 quarterly datasets listed")
+        return quarters[-1]
 
     # -------------------------------------------------------- Bulk Quarterly
     def download_quarter_zip(self, quarter_str: str, force: bool = False) -> Path:
@@ -168,7 +310,7 @@ class SecForm4Fetcher:
         local_path = self.cache_dir / f"{norm_q}_form345.zip"
 
         if not force and local_path.is_file() and local_path.stat().st_size > 100_000:
-            logger.info("[sec-form4] Using cached zip: %s", local_path)
+            logger.debug("[sec-form4] Using cached zip: %s", local_path)
             return local_path
 
         errors = []
@@ -194,128 +336,190 @@ class SecForm4Fetcher:
 
         raise RuntimeError(f"Failed to download SEC Form 4 zip for {norm_q}: {'; '.join(errors)}")
 
+    def load_quarter(
+        self,
+        quarter_str: str,
+        *,
+        min_value: float = 10_000.0,
+        target_symbols: Optional[Iterable[str]] = None,
+        zip_path: Optional[Path] = None,
+    ) -> QuarterData:
+        """Parse a quarterly archive into clean purchases plus trade-month history."""
+        target_set = {s.strip().upper() for s in target_symbols} if target_symbols else None
+        source_zip = Path(zip_path) if zip_path else self.download_quarter_zip(quarter_str)
+        stats: Dict[str, int] = defaultdict(int)
+
+        with zipfile.ZipFile(source_zip, "r") as archive:
+            names = set(archive.namelist())
+            if "SUBMISSION.tsv" not in names or "NONDERIV_TRANS.tsv" not in names:
+                raise ValueError(f"Malformed SEC Form 4 zip archive: missing TSV tables in {source_zip}")
+
+            def rows(name: str):
+                with archive.open(name) as handle:
+                    yield from csv.DictReader(
+                        io.TextIOWrapper(handle, encoding="utf-8", errors="ignore"), delimiter="\t"
+                    )
+
+            # 1. Submissions (original Form 4 only)
+            submissions: Dict[str, Dict[str, Any]] = {}
+            for row in rows("SUBMISSION.tsv"):
+                doc_type = (row.get("DOCUMENT_TYPE") or "").strip().upper()
+                if doc_type != "4":
+                    stats["skipped_non_form4_or_amendment"] += 1
+                    continue
+                filing_d = _parse_sec_date(row.get("FILING_DATE"))
+                if not filing_d:
+                    continue
+                sym = normalize_symbol(row.get("ISSUERTRADINGSYMBOL"))
+                submissions[row["ACCESSION_NUMBER"]] = {
+                    "symbol": sym,
+                    "company_name": (row.get("ISSUERNAME") or "").strip(),
+                    "issuer_cik": (row.get("ISSUERCIK") or "").strip(),
+                    "filing_date": filing_d,
+                    "is_10b51": parse_bool_flag(row.get("AFF10B5ONE")),
+                    "remarks_offering": bool(_OFFERING_PATTERN.search(row.get("REMARKS") or "")),
+                }
+
+            # 2. Reporting owners (all owners of each filing)
+            owners: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+            if "REPORTINGOWNER.tsv" in names:
+                for row in rows("REPORTINGOWNER.tsv"):
+                    acc = row.get("ACCESSION_NUMBER")
+                    if acc not in submissions:
+                        continue
+                    rel = (row.get("RPTOWNER_RELATIONSHIP") or "").lower()
+                    title = (row.get("RPTOWNER_TITLE") or "").strip()
+                    is_off = "officer" in rel
+                    is_dir = "director" in rel
+                    owners[acc].append({
+                        "cik": (row.get("RPTOWNERCIK") or "").strip(),
+                        "name": (row.get("RPTOWNERNAME") or "").strip(),
+                        "title": title or ("Director" if is_dir else ("Officer" if is_off else rel.title() or "Insider")),
+                        "is_officer": is_off,
+                        "is_director": is_dir,
+                        "is_ten_percent": "tenpercentowner" in rel,
+                        "is_c_level": (is_off or is_dir) and _is_c_level_title(title),
+                    })
+
+            # 3. Footnotes that mention offerings, keyed by (accession, footnote id)
+            offering_notes: Set[Tuple[str, str]] = set()
+            if "FOOTNOTES.tsv" in names:
+                for row in rows("FOOTNOTES.tsv"):
+                    acc = row.get("ACCESSION_NUMBER")
+                    if acc in submissions and _OFFERING_PATTERN.search(row.get("FOOTNOTE_TXT") or ""):
+                        offering_notes.add((acc, (row.get("FOOTNOTE_ID") or "").strip()))
+
+            # 4. Transactions
+            purchases: List[InsiderTransaction] = []
+            trade_months: Dict[str, Set[Tuple[int, int]]] = defaultdict(set)
+            for row in rows("NONDERIV_TRANS.tsv"):
+                acc = row.get("ACCESSION_NUMBER")
+                sub = submissions.get(acc)
+                if not sub:
+                    continue
+                code = (row.get("TRANS_CODE") or "").strip().upper()
+                if code not in ("P", "S"):
+                    continue
+                t_date = _parse_sec_date(row.get("TRANS_DATE")) or sub["filing_date"]
+                owner_list = owners.get(acc) or []
+                for owner in owner_list:
+                    if owner["cik"]:
+                        trade_months[owner["cik"]].add((t_date.year, t_date.month))
+                if code != "P":
+                    continue
+
+                stats["purchase_rows"] += 1
+                sym = sub["symbol"]
+                if not sym:
+                    stats["skipped_no_symbol"] += 1
+                    continue
+                if target_set and sym not in target_set:
+                    continue
+                if (row.get("TRANS_FORM_TYPE") or "4").strip() not in ("4", ""):
+                    stats["skipped_form5_rows"] += 1
+                    continue
+                title_text = str(row.get("SECURITY_TITLE") or "Common Stock")
+                if _NON_COMMON_PATTERN.search(title_text):
+                    stats["skipped_non_common"] += 1
+                    continue
+                shares = _safe_float(row.get("TRANS_SHARES"))
+                price = _safe_float(row.get("TRANS_PRICEPERSHARE"))
+                if shares <= 0 or price <= 0:
+                    stats["skipped_zero_price"] += 1
+                    continue
+                value = shares * price
+                if value < min_value:
+                    stats["skipped_below_min_value"] += 1
+                    continue
+
+                fn_ids = _referenced_footnote_ids(row)
+                is_offering = sub["remarks_offering"] or any((acc, fid) in offering_notes for fid in fn_ids)
+                primary = owner_list[0] if owner_list else {}
+                purchases.append(InsiderTransaction(
+                    accession_number=acc,
+                    symbol=sym,
+                    company_name=sub["company_name"],
+                    filing_date=sub["filing_date"],
+                    trans_date=t_date,
+                    owner_name=primary.get("name", "Unknown Insider"),
+                    owner_title=" / ".join(dict.fromkeys(o["title"] for o in owner_list if o.get("title"))) or "Insider",
+                    is_officer=any(o["is_officer"] for o in owner_list),
+                    is_director=any(o["is_director"] for o in owner_list),
+                    is_ten_percent=any(o["is_ten_percent"] for o in owner_list),
+                    is_c_level=any(o["is_c_level"] for o in owner_list),
+                    is_10b51=sub["is_10b51"],
+                    trans_code=code,
+                    shares=shares,
+                    price=price,
+                    total_value=value,
+                    security_title=title_text,
+                    issuer_cik=sub["issuer_cik"],
+                    owner_ciks=tuple(o["cik"] for o in owner_list if o.get("cik")),
+                    shares_owned_after=_safe_float(row.get("SHRS_OWND_FOLWNG_TRANS")),
+                    is_offering=is_offering,
+                    is_direct=(row.get("DIRECT_INDIRECT_OWNERSHIP") or "D").strip().upper() != "I",
+                ))
+                if is_offering:
+                    stats["offering_flagged"] += 1
+
+        stats["purchases_kept"] = len(purchases)
+        return QuarterData(quarter=quarter_str.lower(), purchases=purchases, trade_months=dict(trade_months), stats=dict(stats))
+
     def parse_quarter(
         self,
         quarter_str: str,
         *,
-        min_value: float = 20_000.0,
-        open_market_only: bool = True,
+        min_value: float = 10_000.0,
+        open_market_only: bool = True,  # kept for backwards compatibility; always True
         cluster_window_days: int = 5,
         target_symbols: Optional[Iterable[str]] = None,
         zip_path: Optional[Path] = None,
+        classifier: Optional[RoutineClassifier] = None,
+        exclude_offerings: bool = True,
     ) -> List[InsiderClusterEvent]:
-        """Parse quarterly SEC Form 4 dataset and group into insider purchase events."""
-        target_set = {s.strip().upper() for s in target_symbols} if target_symbols else None
-        source_zip = Path(zip_path) if zip_path else self.download_quarter_zip(quarter_str)
+        """Parse one quarter into purchase events (convenience wrapper)."""
+        data = self.load_quarter(quarter_str, min_value=min_value, target_symbols=target_symbols, zip_path=zip_path)
+        return build_purchase_events(
+            data.purchases,
+            classifier=classifier,
+            window_days=cluster_window_days,
+            exclude_offerings=exclude_offerings,
+        )
 
-        with zipfile.ZipFile(source_zip, "r") as archive:
-            name_list = archive.namelist()
-            if "SUBMISSION.tsv" not in name_list or "NONDERIV_TRANS.tsv" not in name_list:
-                raise ValueError(f"Malformed SEC Form 4 zip archive: missing TSV tables in {source_zip}")
-
-            # 1. Parse SUBMISSION.tsv: Accession -> metadata
-            submissions: Dict[str, Dict[str, Any]] = {}
-            with archive.open("SUBMISSION.tsv") as f:
-                reader = csv.DictReader(
-                    io.TextIOWrapper(f, encoding="utf-8", errors="ignore"), delimiter="\t"
-                )
-                for row in reader:
-                    sym = (row.get("ISSUERTRADINGSYMBOL") or "").strip().upper()
-                    if not sym or sym in ("NONE", "N/A"):
-                        continue
-                    if target_set and sym not in target_set:
-                        continue
-                    filing_d = _parse_sec_date(row.get("FILING_DATE"))
-                    if not filing_d:
-                        continue
-                    submissions[row["ACCESSION_NUMBER"]] = {
-                        "symbol": sym,
-                        "company_name": (row.get("ISSUERNAME") or "").strip(),
-                        "filing_date": filing_d,
-                        "is_10b51": row.get("AFF10B5ONE") == "1",
-                    }
-
-            # 2. Parse REPORTINGOWNER.tsv: Accession -> list of owners/titles
-            owners: Dict[str, List[Dict[str, Any]]] = {}
-            if "REPORTINGOWNER.tsv" in name_list:
-                with archive.open("REPORTINGOWNER.tsv") as f:
-                    reader = csv.DictReader(
-                        io.TextIOWrapper(f, encoding="utf-8", errors="ignore"), delimiter="\t"
-                    )
-                    for row in reader:
-                        acc = row.get("ACCESSION_NUMBER")
-                        if acc not in submissions:
-                            continue
-                        rel = (row.get("RPTOWNER_RELATIONSHIP") or "").strip()
-                        title = (row.get("RPTOWNER_TITLE") or "").strip()
-                        name = (row.get("RPTOWNERNAME") or "").strip()
-                        is_off = "officer" in rel.lower()
-                        is_dir = "director" in rel.lower()
-                        is_ten = "tenpercentowner" in rel.lower()
-                        is_c = _is_c_level_title(title, rel)
-                        owners.setdefault(acc, []).append({
-                            "name": name,
-                            "title": title or ("Director" if is_dir else ("Officer" if is_off else rel)),
-                            "is_officer": is_off,
-                            "is_director": is_dir,
-                            "is_ten_percent": is_ten,
-                            "is_c_level": is_c,
-                        })
-
-            # 3. Parse NONDERIV_TRANS.tsv: Extract purchases
-            raw_txs: List[InsiderTransaction] = []
-            with archive.open("NONDERIV_TRANS.tsv") as f:
-                reader = csv.DictReader(
-                    io.TextIOWrapper(f, encoding="utf-8", errors="ignore"), delimiter="\t"
-                )
-                for row in reader:
-                    acc = row.get("ACCESSION_NUMBER")
-                    sub = submissions.get(acc)
-                    if not sub:
-                        continue
-
-                    code = (row.get("TRANS_CODE") or "").strip().upper()
-                    if open_market_only and code != "P":
-                        continue
-
-                    shares = _safe_float(row.get("TRANS_SHARES"))
-                    price = _safe_float(row.get("TRANS_PRICEPERSHARE"))
-                    if shares <= 0 or price <= 0:
-                        continue
-                    val = shares * price
-                    if val < min_value:
-                        continue
-
-                    owner_list = owners.get(acc, [{}])
-                    primary_owner = owner_list[0] if owner_list else {}
-                    t_date = _parse_sec_date(row.get("TRANS_DATE")) or sub["filing_date"]
-
-                    raw_txs.append(InsiderTransaction(
-                        accession_number=acc,
-                        symbol=sub["symbol"],
-                        company_name=sub["company_name"],
-                        filing_date=sub["filing_date"],
-                        trans_date=t_date,
-                        owner_name=primary_owner.get("name", "Unknown Insider"),
-                        owner_title=primary_owner.get("title", "Insider"),
-                        is_officer=bool(primary_owner.get("is_officer")),
-                        is_director=bool(primary_owner.get("is_director")),
-                        is_ten_percent=bool(primary_owner.get("is_ten_percent")),
-                        is_c_level=bool(primary_owner.get("is_c_level")),
-                        is_10b51=sub["is_10b51"],
-                        trans_code=code,
-                        shares=shares,
-                        price=price,
-                        total_value=val,
-                        security_title=str(row.get("SECURITY_TITLE") or "Common Stock"),
-                    ))
-
-        # 4. Cluster purchases for the same ticker within a rolling window
-        return cluster_insider_transactions(raw_txs, window_days=cluster_window_days)
+    def build_classifier(self, quarters: Sequence[str]) -> RoutineClassifier:
+        """Load trade-month history from the given quarters into a routine classifier."""
+        classifier = RoutineClassifier()
+        for quarter in quarters:
+            try:
+                data = self.load_quarter(quarter, min_value=float("inf"))
+                classifier.add_trade_months(data.trade_months)
+            except Exception as exc:  # noqa: BLE001 - history is best effort
+                logger.warning("[sec-form4] history quarter %s unavailable: %s", quarter, exc)
+        return classifier
 
     # --------------------------------------------------------- Live Stream
     def fetch_recent_filings(self, count: int = 50) -> List[Dict[str, Any]]:
-        """Fetch recent real-time Form 4 filings from the SEC EDGAR Atom feed."""
+        """Fetch recent Form 4 filings from the SEC EDGAR Atom feed (metadata only)."""
         url = SEC_RECENT_ATOM_URL.format(count=max(10, min(100, int(count))))
         try:
             resp = self._get(url, headers=self._headers(), timeout=self.timeout)
@@ -328,73 +532,131 @@ class SecForm4Fetcher:
             return []
 
 
-def _safe_float(val: Any) -> float:
-    try:
-        num = float(val)
-        return 0.0 if (num < 0 or num != num) else num
-    except (TypeError, ValueError):
-        return 0.0
+def quarter_range(start: str, end: str) -> List[str]:
+    """Inclusive list of quarters, e.g. quarter_range('2025q3', '2026q1')."""
+    sy, sq = int(start[:4]), int(start[-1])
+    ey, eq = int(end[:4]), int(end[-1])
+    out = []
+    y, q = sy, sq
+    while (y, q) <= (ey, eq):
+        out.append(f"{y}q{q}")
+        q += 1
+        if q > 4:
+            y, q = y + 1, 1
+    return out
+
+
+def _merge_actors(txs: Sequence[InsiderTransaction]) -> Dict[str, str]:
+    """Union owners that co-appear on a filing; returns owner key -> actor root."""
+    parent: Dict[str, str] = {}
+
+    def find(x: str) -> str:
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for tx in txs:
+        keys = list(tx.owner_ciks) or [f"name:{tx.owner_name}"]
+        root = find(keys[0])
+        for key in keys[1:]:
+            other = find(key)
+            if other != root:
+                parent[other] = root
+    return {k: find(k) for k in list(parent)}
+
+
+def build_purchase_events(
+    txs: Iterable[InsiderTransaction],
+    *,
+    classifier: Optional[RoutineClassifier] = None,
+    window_days: int = 5,
+    exclude_offerings: bool = True,
+) -> List[InsiderClusterEvent]:
+    """Group purchases of the same symbol filed within ``window_days`` into events."""
+    by_symbol: Dict[str, List[InsiderTransaction]] = defaultdict(list)
+    for tx in txs:
+        if exclude_offerings and tx.is_offering:
+            continue
+        by_symbol[tx.symbol].append(tx)
+
+    events: List[InsiderClusterEvent] = []
+    for sym_txs in by_symbol.values():
+        sym_txs.sort(key=lambda t: t.filing_date)
+        current: List[InsiderTransaction] = []
+        for tx in sym_txs:
+            if current and (tx.filing_date - current[0].filing_date).days > window_days:
+                events.append(_create_cluster_event(current, classifier))
+                current = []
+            current.append(tx)
+        if current:
+            events.append(_create_cluster_event(current, classifier))
+
+    events.sort(key=lambda e: (e.filing_date, -e.total_value))
+    return events
 
 
 def cluster_insider_transactions(
     txs: Iterable[InsiderTransaction],
     *,
     window_days: int = 5,
+    classifier: Optional[RoutineClassifier] = None,
 ) -> List[InsiderClusterEvent]:
-    """Group transactions of the same symbol within ``window_days`` into cluster events."""
-    by_symbol: Dict[str, List[InsiderTransaction]] = {}
-    for tx in txs:
-        by_symbol.setdefault(tx.symbol, []).append(tx)
-
-    events: List[InsiderClusterEvent] = []
-    for symbol, sym_txs in by_symbol.items():
-        sym_txs.sort(key=lambda t: t.filing_date)
-        current_cluster: List[InsiderTransaction] = []
-
-        for tx in sym_txs:
-            if not current_cluster:
-                current_cluster.append(tx)
-                continue
-            first_date = current_cluster[0].filing_date
-            if (tx.filing_date - first_date).days <= window_days:
-                current_cluster.append(tx)
-            else:
-                events.append(_create_cluster_event(current_cluster))
-                current_cluster = [tx]
-        if current_cluster:
-            events.append(_create_cluster_event(current_cluster))
-
-    events.sort(key=lambda e: (e.filing_date, -e.total_value))
-    return events
+    """Backwards compatible alias of :func:`build_purchase_events` (offerings kept)."""
+    return build_purchase_events(txs, classifier=classifier, window_days=window_days, exclude_offerings=False)
 
 
-def _create_cluster_event(cluster: List[InsiderTransaction]) -> InsiderClusterEvent:
+def _create_cluster_event(
+    cluster: List[InsiderTransaction],
+    classifier: Optional[RoutineClassifier] = None,
+) -> InsiderClusterEvent:
     first = cluster[0]
     total_val = sum(t.total_value for t in cluster)
     total_qty = sum(t.shares for t in cluster)
     avg_px = total_val / total_qty if total_qty > 0 else first.price
 
-    distinct_owners = {t.owner_name for t in cluster if t.owner_name and t.owner_name != "Unknown Insider"}
-    insider_count = len(distinct_owners) or 1
-    has_c = any(t.is_c_level for t in cluster)
-    all_opp = all(not t.is_10b51 for t in cluster)
+    actor_of = _merge_actors(cluster)
+    actors: Set[str] = set()
+    officer_director_actors: Set[str] = set()
+    actor_classes: List[str] = []
+    for tx in cluster:
+        keys = list(tx.owner_ciks) or [f"name:{tx.owner_name}"]
+        actor = actor_of[keys[0]]
+        actors.add(actor)
+        if tx.is_officer or tx.is_director:
+            officer_director_actors.add(actor)
+        if classifier is not None:
+            for cik in tx.owner_ciks:
+                actor_classes.append(classifier.classify(cik, tx.trans_date or tx.filing_date))
 
-    titles = []
-    seen_titles = set()
+    classified = [c for c in actor_classes if c != "unclassified"]
+    if "opportunistic" in classified:
+        cmp_class = "opportunistic"
+    elif classified:
+        cmp_class = "routine"
+    else:
+        cmp_class = "unclassified"
+
+    pre_holdings = sum(max(t.shares_owned_after - t.shares, 0.0) for t in cluster if t.shares_owned_after > 0)
+    holding_change = (total_qty / pre_holdings * 100.0) if pre_holdings > 0 else None
+
+    titles: List[str] = []
     for t in cluster:
-        if t.owner_title and t.owner_title not in seen_titles:
+        if t.owner_title and t.owner_title not in titles:
             titles.append(t.owner_title)
-            seen_titles.add(t.owner_title)
 
     insiders_detail = [
         {
             "name": t.owner_name,
             "title": t.owner_title,
+            "owner_ciks": list(t.owner_ciks),
             "shares": t.shares,
             "price": t.price,
             "value": t.total_value,
             "is_c_level": t.is_c_level,
             "is_10b51": t.is_10b51,
+            "trans_date": t.trans_date.isoformat() if t.trans_date else None,
         }
         for t in cluster
     ]
@@ -403,15 +665,22 @@ def _create_cluster_event(cluster: List[InsiderTransaction]) -> InsiderClusterEv
         symbol=first.symbol,
         company_name=first.company_name,
         filing_date=first.filing_date,
-        insider_count=insider_count,
+        insider_count=len(actors) or 1,
         insiders=insiders_detail,
         total_value=round(total_val, 2),
         total_shares=round(total_qty, 2),
         avg_price=round(avg_px, 4),
-        has_c_level=has_c,
-        is_opportunistic=all_opp,
-        is_cluster=insider_count >= 2,
+        has_c_level=any(t.is_c_level for t in cluster),
+        is_opportunistic=cmp_class == "opportunistic",
+        is_cluster=len(officer_director_actors) >= 2,
         primary_titles=titles,
+        issuer_cik=first.issuer_cik,
+        cmp_class=cmp_class,
+        has_10b51=any(t.is_10b51 for t in cluster),
+        officer_director_count=len(officer_director_actors),
+        ten_pct_only=not any(t.is_officer or t.is_director for t in cluster),
+        holding_change_pct=round(holding_change, 2) if holding_change is not None else None,
+        last_filing_date=max(t.filing_date for t in cluster),
     )
 
 
@@ -434,7 +703,7 @@ def parse_sec_atom_feed(xml_bytes: bytes) -> List[Dict[str, Any]]:
         raw_title = (title_el.text or "").strip() if title_el is not None else ""
         link = link_el.attrib.get("href", "") if link_el is not None else ""
         updated_str = updated_el.text.strip() if (updated_el is not None and updated_el.text) else ""
-        summary_text = summary_el.text or "" if summary_el is not None else ""
+        summary_text = (summary_el.text or "") if summary_el is not None else ""
 
         # Form 4 title format: "4 - COMPANY NAME (CIK) (Issuer)" or "4 - PERSON (CIK) (Reporting)"
         match = re.match(r"^4\s*-\s*(.+?)\s*\((.*?)\)\s*\((Issuer|Reporting)\)", raw_title, re.IGNORECASE)
@@ -455,10 +724,17 @@ def parse_sec_atom_feed(xml_bytes: bytes) -> List[Dict[str, Any]]:
 
 
 __all__ = [
-    "DEFAULT_SEC_USER_AGENT",
     "InsiderClusterEvent",
     "InsiderTransaction",
+    "QuarterData",
+    "RoutineClassifier",
+    "SEC_USER_AGENT_ENV",
     "SecForm4Fetcher",
+    "build_purchase_events",
     "cluster_insider_transactions",
+    "normalize_symbol",
+    "parse_bool_flag",
     "parse_sec_atom_feed",
+    "quarter_range",
+    "resolve_sec_user_agent",
 ]

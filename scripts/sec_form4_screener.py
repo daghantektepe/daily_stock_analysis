@@ -6,11 +6,11 @@ Screens recent U.S. executive insider buying (cluster purchases, C-suite convict
 opportunistic non-10b5-1 programs) and ranks top candidates for deep analysis.
 
 Examples:
-    # Screen top 8 insider buying stocks from latest quarterly dataset
+    # Screen top 8 insider buying stocks from latest available quarterly dataset
     python scripts/sec_form4_screener.py --top 8
 
-    # Filter for larger purchases ($100k+) and notify via Telegram
-    python scripts/sec_form4_screener.py --min-value 100000 --notify
+    # Filter for larger purchases ($100k+) on a specific quarter and notify via Telegram
+    python scripts/sec_form4_screener.py --quarter 2026q1 --min-value 100000 --notify
 """
 
 from __future__ import annotations
@@ -20,9 +20,14 @@ import logging
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+# Load local environment (e.g. SEC_EDGAR_USER_AGENT)
+load_dotenv(REPO_ROOT / ".env")
 
 from data_provider.sec_form4_fetcher import SecForm4Fetcher
 from src.services.sec_form4_screener import format_sec_screener_report, screen_us_insider_stocks
@@ -32,8 +37,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="SEC Form 4 Executive Insider Buying Screener (U.S. Stocks)")
     parser.add_argument(
         "--quarter",
-        default="2026q1",
-        help="Quarter dataset to screen (default: 2026q1)",
+        default="latest",
+        help="Quarter dataset to screen (e.g. '2026q1' or 'latest')",
     )
     parser.add_argument(
         "--top",
@@ -64,11 +69,20 @@ def main() -> int:
     logger = logging.getLogger(__name__)
 
     fetcher = SecForm4Fetcher()
-    logger.info("Loading Form 4 insider transactions for %s ...", args.quarter)
+    quarter = args.quarter.strip().lower()
+    if quarter == "latest":
+        try:
+            quarter = fetcher.latest_available_quarter()
+            logger.info("Auto-detected latest available quarter on SEC EDGAR: %s", quarter)
+        except Exception as exc:
+            logger.warning("Could not auto-detect latest quarter (%s), falling back to 2026q1", exc)
+            quarter = "2026q1"
+
+    logger.info("Loading Form 4 insider transactions for %s ...", quarter)
     try:
-        events = fetcher.parse_quarter(args.quarter, min_value=args.min_value)
+        events = fetcher.parse_quarter(quarter, min_value=args.min_value)
     except Exception as exc:
-        logger.error("Failed to parse quarter %s: %s", args.quarter, exc)
+        logger.error("Failed to parse quarter %s: %s", quarter, exc)
         return 1
 
     candidates = screen_us_insider_stocks(
@@ -87,7 +101,7 @@ def main() -> int:
 
             notifier = NotificationService()
             if notifier.is_available():
-                notifier.send(report_text, dedup_key=f"sec-form4-screener:{args.quarter}")
+                notifier.send(report_text, dedup_key=f"sec-form4-screener:{quarter}")
                 print("[Info] Report delivered to notification channels.")
             else:
                 print("[Warn] No notification channel configured in .env", file=sys.stderr)

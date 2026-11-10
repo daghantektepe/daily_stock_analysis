@@ -2,9 +2,9 @@
 """U.S. Corporate Insider Buying Daily Screener.
 
 Ranks U.S. equities by executive insider buying signals (SEC Form 4):
-1. **Cluster Buying** (>= 2 distinct insiders buying within 5 days).
-2. **C-Suite Conviction** (CEO / CFO / COO buying with personal capital).
-3. **Opportunistic Timing** (excluding Rule 10b5-1 automated recurring programs).
+1. **Cluster Buying** (>= 2 distinct officers/directors buying within 5 days).
+2. **C-Suite Conviction** (CEO / CFO / COO / President / Chair buying).
+3. **Opportunistic Timing** (Cohen-Malloy-Pomorski 2012 non-routine insiders + no 10b5-1 plan).
 4. **Significant Dollar Commitment** (filtering out token purchases).
 
 Can feed candidates directly into ``python main.py --stocks TICKER1,TICKER2``
@@ -17,7 +17,11 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from data_provider.sec_form4_fetcher import InsiderClusterEvent, SecForm4Fetcher
+from data_provider.sec_form4_fetcher import (
+    InsiderClusterEvent,
+    SecForm4Fetcher,
+    resolve_sec_user_agent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +44,9 @@ class ScoredInsiderCandidate:
     reasons: List[str]
     primary_titles: List[str]
     sec_edgar_url: str = ""
+    cmp_class: str = "unclassified"
+    has_10b51: bool = False
+    holding_change_pct: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -57,6 +64,9 @@ class ScoredInsiderCandidate:
             "reasons": self.reasons,
             "primary_titles": self.primary_titles,
             "sec_edgar_url": self.sec_edgar_url,
+            "cmp_class": self.cmp_class,
+            "has_10b51": self.has_10b51,
+            "holding_change_pct": self.holding_change_pct,
         }
 
 
@@ -65,28 +75,44 @@ def score_insider_event(event: InsiderClusterEvent) -> Tuple[int, List[str]]:
     score = 0
     reasons: List[str] = []
 
-    # 1. Cluster buying (strongest predictive signal)
+    # 1. Cluster buying by officers/directors (strongest documented empirical alpha driver)
     if event.is_cluster:
+        cnt = event.officer_director_count or event.insider_count
         score += 35
-        reasons.append(f"Küme Alımı: {event.insider_count} farklı yönetici eşzamanlı aldı (+35)")
+        reasons.append(f"Küme Alımı: {cnt} farklı yönetici eşzamanlı aldı (+35)")
     else:
         score += 10
         reasons.append("Tek yönetici alımı (+10)")
 
-    # 2. C-Suite conviction
+    # 2. C-Suite conviction (CEO / CFO / COO / President / Chair)
     if event.has_c_level:
         score += 25
         reasons.append("C-Suite / Üst Yönetim (CEO / CFO / Başkan) şahsi alımı (+25)")
 
-    # 3. Opportunistic vs. 10b5-1 program
-    if event.is_opportunistic:
+    # 3. Cohen-Malloy-Pomorski opportunistic vs routine pattern
+    if event.cmp_class == "opportunistic":
         score += 20
-        reasons.append("Fırsatçı alım (10b5-1 otomatik plan yok) (+20)")
+        reasons.append("CMP: Fırsatçı alım (geçmişte rutin takvim kalıbı yok) (+20)")
+    elif event.cmp_class == "routine":
+        score -= 20
+        reasons.append("CMP: Rutin takvim alımı (-20)")
     else:
-        score -= 10
-        reasons.append("Önceden planlanmış 10b5-1 rutin programı (-10)")
+        # Unclassified history: fall back to 10b5-1 flag
+        if not event.has_10b51:
+            score += 15
+            reasons.append("Fırsatçı alım (10b5-1 otomatik plan yok) (+15)")
 
-    # 4. Dollar commitment scale
+    # 4. Pre-planned Rule 10b5-1 check
+    if event.has_10b51:
+        score -= 10
+        reasons.append("Önceden planlanmış 10b5-1 programı (-10)")
+
+    # 5. Institutional 10% owners only penalty (hedge funds / PE filing 10% form 4)
+    if event.ten_pct_only:
+        score -= 10
+        reasons.append("Yalnızca %10 pay sahibi alımı (-10)")
+
+    # 6. Dollar commitment scale
     val = event.total_value
     if val >= 500_000:
         score += 20
@@ -99,6 +125,11 @@ def score_insider_event(event: InsiderClusterEvent) -> Tuple[int, List[str]]:
         reasons.append(f"Tutar: ${val:,.0f} (+10)")
     else:
         score += 5
+
+    # 7. Significant increase in holdings
+    if event.holding_change_pct is not None and event.holding_change_pct >= 20.0:
+        score += 10
+        reasons.append(f"Mevcut pozisyonda belirgin artış: +%{event.holding_change_pct:.0f} (+10)")
 
     final_score = max(0, min(100, score))
     return final_score, reasons
@@ -128,7 +159,7 @@ def screen_us_insider_stocks(
         if score < min_score:
             continue
 
-        edgar_url = f"https://www.sec.gov/edgar/browse/?CIK={e.symbol}"
+        edgar_url = e.sec_url or f"https://www.sec.gov/edgar/browse/?CIK={e.symbol}"
         candidates.append(ScoredInsiderCandidate(
             symbol=e.symbol,
             company_name=e.company_name,
@@ -138,12 +169,15 @@ def screen_us_insider_stocks(
             avg_price=e.avg_price,
             insider_count=e.insider_count,
             has_c_level=e.has_c_level,
-            is_opportunistic=e.is_opportunistic,
+            is_opportunistic=e.is_opportunistic or (not e.has_10b51 and e.cmp_class != "routine"),
             is_cluster=e.is_cluster,
             score=score,
             reasons=reasons,
             primary_titles=e.primary_titles,
             sec_edgar_url=edgar_url,
+            cmp_class=e.cmp_class,
+            has_10b51=e.has_10b51,
+            holding_change_pct=e.holding_change_pct,
         ))
         seen_symbols.add(e.symbol)
         if len(candidates) >= top_n * 2:
@@ -159,7 +193,7 @@ def format_sec_screener_report(candidates: Sequence[ScoredInsiderCandidate]) -> 
         "🇺🇸 ABD Yönetici Alımları (SEC Form 4) Günlük Taraması",
         "=" * 66,
         f"Seçilen Aday Sayısı: {len(candidates)} hisse (En yüksek içsel bilgi ve küme alım puanı)",
-        "Filtreler: Açık piyasa alımı ('P'), fırsatçı (10b5-1 yok), C-Suite ve küme alımları öncelikli.",
+        "Filtreler: Açık piyasa alımı ('P'), halka arz/tahsisli hariç, C-Suite ve küme alımları öncelikli.",
         "",
     ]
     if not candidates:
