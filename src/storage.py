@@ -1189,6 +1189,8 @@ class PaperTradeRecord(Base):
     side = Column(String(8), nullable=False)
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
+    stop_loss = Column(Float)
+    take_profit = Column(Float)
     trade_date = Column(Date, nullable=False, index=True)
     created_at = Column(DateTime, default=utc_naive_now, index=True)
 
@@ -1396,6 +1398,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             Base.metadata.create_all(self._engine)
             self._ensure_llm_usage_telemetry_columns()
             self._ensure_decision_signal_profile_schema()
+            self._ensure_paper_trades_risk_columns()
             self._ensure_intelligence_item_scope_values()
             self._ensure_schema_migration_record()
             self._ensure_intelligence_items_unique_index()
@@ -1442,6 +1445,34 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             raise
         finally:
             session.close()
+
+    def _ensure_paper_trades_risk_columns(self) -> None:
+        """Add nullable stop_loss and take_profit columns to paper_trades for existing SQLite DBs."""
+        if not self._is_sqlite_engine:
+            return
+        inspector = inspect(self._engine)
+        if not inspector.has_table(PaperTradeRecord.__tablename__):
+            return
+        try:
+            existing = {
+                column["name"]
+                for column in inspector.get_columns(PaperTradeRecord.__tablename__)
+            }
+        except Exception as exc:
+            logger.warning("[paper] failed to inspect paper_trades columns: %s", exc)
+            return
+
+        for col_name in ("stop_loss", "take_profit"):
+            if col_name in existing:
+                continue
+            try:
+                with self._engine.begin() as connection:
+                    connection.exec_driver_sql(
+                        f"ALTER TABLE {PaperTradeRecord.__tablename__} ADD COLUMN {col_name} FLOAT"
+                    )
+            except OperationalError as exc:
+                if not self._is_sqlite_duplicate_column_error(exc, col_name):
+                    raise
 
     def _ensure_decision_signal_profile_schema(self) -> None:
         """Add and backfill nullable decision_profile for existing SQLite DBs."""

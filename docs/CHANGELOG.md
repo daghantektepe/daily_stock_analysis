@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] WebUI 新增「Sanal İşlem / KAP」（`/paper-trading`）页面与 `GET /api/v1/paper-trading/kap-alerts` 接口：集中展示模拟交易持仓、ATR 止损/止盈水平、BIST 100 与美元（USD/TRY）基准对比、1/3/5/10 日信号准确率以及近期 KAP 重要公告、多源证实新闻与传闻预警
+- [新功能] `scripts/kap_watch.py`（`KapWatchService`）新增多源新闻与扩散传闻监控（`KAP_WATCH_NEWS_ENABLED=true` / `--no-news`）：除官方 KAP 公告外，对至少 2 家独立媒体共同报道的证实催化新闻（`CONFIRMED` / `OFFICIAL`）以及在至少 2 家媒体扩散的传闻（`RUMOR`，明确标注无官方证实）发送盘中提醒，并将最近预警持久化至 `data/kap_watch_state.json`
+- [新功能] 模拟交易新增 ATR 波动率仓位管理与止损/止盈自动执行（`PAPER_TRADING_RISK_PCT` / `PAPER_TRADING_ATR_STOP_MULT` / `PAPER_TRADING_ATR_TP_MULT`）：根据 14 日 ATR（或信号止损价）计算建议止损（默认 `2×ATR`）、止盈（默认 `3×ATR`）并按单笔风险预算自动缩减高波动标的建仓股数；持仓期间后续日线最低/最高价或最新价触及止损/止盈线时自动记入 `stop_loss` / `take_profit` 平仓记录
+- [新功能] 新增 BIST 全市场每日筛选 `scripts/bist_screener.py`（`BIST_SCREENER_ENABLED` / `BIST_SCREENER_TOP_N` / `--screen-bist`）：结合技术形态（`MA5>MA20`、20 日突破、RSI 动量/超卖反弹、防追涨涨停惩罚）、成交量放大（相对 20 日均量与最低成交额过滤）与单次全市场 KAP 公告查询，从约 800 只 BIST 股票中选出排名前 N 的标的送入深度分析；失败或无候选时自动回退至 `STOCK_LIST`
+- [新功能] 新增 KAP 历史事件效应分析 `scripts/kap_event_study.py`（`src/services/kap_event_study.py`）：按事件标签（合同、回购、送股、分红、业绩等）统计披露后 1、5、20 个交易日的平均收益、BIST 100 超额收益与跑赢指数比例；18:00 后披露自动对齐至下一交易日收盘价以避免前视偏差，长跨度查询自动按 180 天分段拉取并去重
+- [新功能] 新增每周五自动绩效汇总与信号准确率自动评估：每日分析后自动计算 `DecisionSignal` 的 1/3/5/10 日后验准确率，`scripts/paper_trading_report.py` 汇总模拟交易、BIST 100 / 美元基准与信号准确率，并在每周五收盘后（伊斯坦布尔时间 18:00 后）自动推送一次（状态保存在 `data/weekly_report_state.json`）
+
 - [新功能] 新增 KAP 公告监控 `scripts/kap_watch.py`：按 `KAP_WATCH_INTERVAL_SECONDS`（默认 300 秒）在 `KAP_WATCH_HOURS`（伊斯坦布尔时间，默认 08:00-23:00）内轮询 STOCK_LIST 中 `.IS` 股票，新出现的重要公告（业绩、分红、送配股、回购、股权、合同、监管措施、评级、个股熔断）附正文要点按股票合并推送到已配置通知渠道；首次轮询只记录不推送，状态保存在 `data/kap_watch_state.json`，失败 fail-open
 - [新功能] 模拟交易汇总新增基准对比：Borsa Istanbul 交易按相同日期与金额复制到 BIST 100（`XU100.IS`）计算超额收益，并按当日 USD/TRY 换算美元口径收益；`GET /api/v1/paper-trading/summary` 新增 `benchmarks` 字段与 `benchmark` 查询参数（默认开启），新增 `scripts/paper_trading_report.py`（`--notify` 推送土耳其语汇总）
 - [新功能] 多空辩论模式（`AGENT_ORCHESTRATOR_MODE=debate`）的多方 / 空方观点写入 `dashboard.debate` 并在完整报告与单股报告中渲染「多空辩论」小节（论点、催化剂 / 风险、反驳、信心，含中英韩土文案）；辩论内容只取自辩论 Agent 上下文，忽略 LLM 自行输出的同名字段

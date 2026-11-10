@@ -77,6 +77,7 @@ _MAX_MARKET_NOTICES = 3
 DEFAULT_LOOKBACK_DAYS = 14
 DEFAULT_MAX_ITEMS = 8
 DEFAULT_DETAIL_ITEMS = 3
+_MAX_QUERY_SPAN_DAYS = 180
 _DETAIL_MAX_BYTES = 3 * 1024 * 1024
 _DETAIL_CACHE_MAX = 512
 
@@ -129,7 +130,7 @@ class KapDisclosureFetcher:
                 return []
             end = today or date.today()
             start = end - timedelta(days=max(1, int(days)))
-            rows = self._disclosures_for(company["mkk_member_oid"], start, end)
+            rows = self._disclosures_for_range(company["mkk_member_oid"], start, end)
         except Exception as exc:  # noqa: BLE001 - fail-open by contract
             logger.info("[kap] disclosure fetch failed code=%s: %s", stock_code, exc)
             return []
@@ -139,10 +140,53 @@ class KapDisclosureFetcher:
             if item is not None
         ]
         items.sort(key=lambda item: item["published_at"], reverse=True)
-        # Keep a few market notices without letting them crowd out company filings.
-        notices = [item for item in items if item["disclosure_class"] == "DKB"][_MAX_MARKET_NOTICES:]
-        items = [item for item in items if item not in notices]
+        # Keep a few market notices without letting them crowd out company filings on short windows.
+        if int(days) <= DEFAULT_LOOKBACK_DAYS and int(max_items) <= DEFAULT_MAX_ITEMS:
+            notices = [item for item in items if item["disclosure_class"] == "DKB"][_MAX_MARKET_NOTICES:]
+            items = [item for item in items if item not in notices]
         return items[: max(0, int(max_items))]
+
+    def get_market_disclosures(
+        self,
+        *,
+        days: int = 2,
+        today: Optional[date] = None,
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Return recent disclosures across all BIST companies in a single KAP query, keyed by ``TICKER.IS``.
+
+        Fail-open: returns ``{}`` on any network or parsing error.
+        """
+        end = today or date.today()
+        start = end - timedelta(days=max(1, int(days)))
+        try:
+            rows = self._disclosures_for("", start, end, member_type="IGS")
+        except Exception as exc:  # noqa: BLE001 - fail-open by contract
+            logger.info("[kap] market disclosure fetch failed: %s", exc)
+            return {}
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        seen_by_code: Dict[str, set] = {}
+        for row in rows:
+            raw_codes = str(row.get("stockCodes") or row.get("relatedStocks") or "")
+            tickers = [
+                code.strip().upper().rsplit(".", 1)[0]
+                for code in raw_codes.replace(";", ",").split(",")
+                if code.strip()
+            ]
+            for ticker in tickers:
+                if not re.fullmatch(r"[A-Z][A-Z0-9]{2,5}", ticker):
+                    continue
+                item = self._normalize_disclosure(row, ticker)
+                if item is None:
+                    continue
+                symbol = f"{ticker}.IS"
+                seen = seen_by_code.setdefault(symbol, set())
+                if item["index"] in seen:
+                    continue
+                seen.add(item["index"])
+                grouped.setdefault(symbol, []).append(item)
+        for items in grouped.values():
+            items.sort(key=lambda item: item["published_at"], reverse=True)
+        return grouped
 
     def attach_details(self, items: List[Dict[str, Any]], *, limit: int = DEFAULT_DETAIL_ITEMS) -> List[Dict[str, Any]]:
         """Add the disclosure body (amounts, counterparty, explanation) to the newest company filings.
@@ -232,8 +276,33 @@ class KapDisclosureFetcher:
         return table
 
     # ------------------------------------------------------------- disclosures
-    def _disclosures_for(self, member_oid: str, start: date, end: date) -> List[Dict[str, Any]]:
-        key = (member_oid, start.isoformat(), end.isoformat())
+    def _disclosures_for_range(self, member_oid: str, start: date, end: date) -> List[Dict[str, Any]]:
+        if (end - start).days <= _MAX_QUERY_SPAN_DAYS:
+            return self._disclosures_for(member_oid, start, end)
+        combined: List[Dict[str, Any]] = []
+        seen_indexes = set()
+        chunk_end = end
+        while chunk_end > start:
+            chunk_start = max(start, chunk_end - timedelta(days=_MAX_QUERY_SPAN_DAYS))
+            for row in self._disclosures_for(member_oid, chunk_start, chunk_end):
+                idx = row.get("disclosureIndex")
+                if idx is not None and idx in seen_indexes:
+                    continue
+                if idx is not None:
+                    seen_indexes.add(idx)
+                combined.append(row)
+            chunk_end = chunk_start - timedelta(days=1)
+        return combined
+
+    def _disclosures_for(
+        self,
+        member_oid: str,
+        start: date,
+        end: date,
+        *,
+        member_type: str = "",
+    ) -> List[Dict[str, Any]]:
+        key = (member_oid, member_type, start.isoformat(), end.isoformat())
         now = time.monotonic()
         with self._lock:
             cached_at = self._disclosure_cache_at.get(key)
@@ -242,8 +311,8 @@ class KapDisclosureFetcher:
         body = {
             "fromDate": start.isoformat(),
             "toDate": end.isoformat(),
-            "memberType": "",
-            "mkkMemberOidList": [member_oid],
+            "memberType": member_type,
+            "mkkMemberOidList": [member_oid] if member_oid else [],
             "inactiveMkkMemberOidList": [],
             "disclosureClass": "",
             "subjectList": [],

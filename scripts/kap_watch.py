@@ -24,9 +24,10 @@ if str(REPO_ROOT) not in sys.path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="KAP material disclosure watcher (Borsa Istanbul)")
+    parser = argparse.ArgumentParser(description="KAP & Turkish news material disclosure watcher (Borsa Istanbul)")
     parser.add_argument("--stocks", help="comma separated .IS codes (default: STOCK_LIST)")
     parser.add_argument("--once", action="store_true", help="poll once and print, without sending")
+    parser.add_argument("--no-news", action="store_true", help="disable multi-source news and rumor alerts (KAP only)")
     parser.add_argument("--state", type=Path, default=REPO_ROOT / "data" / "kap_watch_state.json")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -43,8 +44,13 @@ def main() -> int:
         notifier = NotificationService()
         if not notifier.is_available():
             print("[Warn] no notification channel configured; alerts will only be logged", file=sys.stderr)
+    watch_news = False if args.no_news else bool(getattr(config, "kap_watch_news_enabled", True))
     service = KapWatchService(
-        stocks=stocks, notifier=notifier, state_path=args.state, active_hours=config.kap_watch_hours,
+        stocks=stocks,
+        watch_news=watch_news,
+        notifier=notifier,
+        state_path=args.state,
+        active_hours=config.kap_watch_hours,
     )
     if not service.stocks:
         print("[Error] no .IS stocks to watch (set STOCK_LIST or --stocks)", file=sys.stderr)

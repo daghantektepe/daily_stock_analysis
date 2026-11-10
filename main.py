@@ -307,6 +307,12 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        '--screen-bist',
+        action='store_true',
+        help='BIST (~800 hisse) taramasını çalıştırıp en ilginç adayları seçer'
+    )
+
+    parser.add_argument(
         '--portfolio',
         type=str.lower,
         choices=('futu',),
@@ -715,6 +721,48 @@ def _run_auto_backtest(config: Config) -> None:
         logger.warning(f"自动回测失败（已忽略）: {exc}")
 
 
+def _run_auto_weekly_performance_report(
+    config: Config,
+    *,
+    notifier: Any = None,
+    send_notification: bool = False,
+) -> None:
+    """Evaluate DecisionSignal outcomes automatically and send the weekly report on Friday evenings."""
+    try:
+        if not getattr(config, "paper_trading_enabled", False):
+            return
+        from src.services.paper_trading_benchmark import (
+            evaluate_signal_outcomes,
+            maybe_send_weekly_performance_report,
+        )
+
+        if send_notification:
+            maybe_send_weekly_performance_report(notifier=notifier)
+        else:
+            evaluate_signal_outcomes()
+    except Exception as exc:  # noqa: BLE001 - optional sidecar, fail-open
+        logger.warning("Haftalık performans / sinyal isabet hesabı hatası (yoksayıldı): %s", exc)
+
+
+def _resolve_bist_screener_codes(config: Config, args: argparse.Namespace) -> Optional[List[str]]:
+    """Return screened BIST stock codes when enabled, or ``None`` to keep STOCK_LIST."""
+    if not (getattr(config, "bist_screener_enabled", False) or getattr(args, "screen_bist", False)):
+        return None
+    try:
+        from src.services.bist_screener import format_bist_screener_report, screen_bist_stocks
+
+        top_n = int(getattr(config, "bist_screener_top_n", 8) or 8)
+        result = screen_bist_stocks(top_n=top_n)
+        selected = result.get("selected_codes") or []
+        if selected:
+            logger.info("\n%s", format_bist_screener_report(result))
+            return list(selected)
+        logger.warning("[bist-screener] Eşiği geçen hisse bulunamadı; STOCK_LIST kullanılacak.")
+    except Exception as exc:  # noqa: BLE001 - fail-open
+        logger.warning("[bist-screener] Tarama hatası, STOCK_LIST kullanılacak: %s", exc)
+    return None
+
+
 def run_full_analysis(
     config: Config,
     args: argparse.Namespace,
@@ -758,6 +806,9 @@ def run_full_analysis(
         # Issue #529: Hot-reload STOCK_LIST from .env on each scheduled run
         if stock_codes is None and portfolio_stock_codes is None:
             config.refresh_stock_list()
+            screened_codes = _resolve_bist_screener_codes(config, args)
+            if screened_codes:
+                stock_codes = screened_codes
 
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list
@@ -1065,6 +1116,11 @@ def run_full_analysis(
 
         # === Auto backtest ===
         _run_auto_backtest(config)
+        _run_auto_weekly_performance_report(
+            config,
+            notifier=pipeline.notifier,
+            send_notification=not args.no_notify and not args.dry_run,
+        )
 
         return True
 

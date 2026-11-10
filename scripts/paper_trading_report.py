@@ -21,16 +21,32 @@ if str(REPO_ROOT) not in sys.path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Paper trading summary with BIST 100 / USD benchmarks")
+    parser = argparse.ArgumentParser(description="Paper trading summary with BIST 100 / USD benchmarks and signal hit rates")
     parser.add_argument("--notify", action="store_true", help="send the summary to configured notification channels")
     parser.add_argument("--no-benchmark", action="store_true", help="skip index / USD comparison (no network)")
+    parser.add_argument("--no-outcomes", action="store_true", help="skip DecisionSignal outcome evaluation and stats")
+    parser.add_argument("--market", default=None, help="optional market filter for signal outcomes (e.g. tr)")
+    parser.add_argument(
+        "--weekly-if-due",
+        action="store_true",
+        help="only send when it is Friday after market close in Istanbul and not yet sent this ISO week",
+    )
     args = parser.parse_args()
 
-    from src.services.paper_trading_benchmark import format_paper_trading_report
+    from src.services.paper_trading_benchmark import (
+        evaluate_signal_outcomes,
+        format_paper_trading_report,
+        maybe_send_weekly_performance_report,
+    )
     from src.services.paper_trading_service import PaperTradingService
 
+    if args.weekly_if_due:
+        maybe_send_weekly_performance_report(market=args.market)
+        return 0
+
+    outcomes = {} if args.no_outcomes else evaluate_signal_outcomes(market=args.market)
     summary = PaperTradingService().get_summary(include_benchmarks=not args.no_benchmark)
-    text = format_paper_trading_report(summary)
+    text = format_paper_trading_report(summary, outcome_stats=outcomes)
     print(text)
     if args.notify:
         from src.notification import NotificationService

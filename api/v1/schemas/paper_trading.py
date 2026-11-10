@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Schemas for the read-only paper trading API."""
+"""Schemas for the read-only paper trading and KAP/news alert API."""
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,6 +22,13 @@ class PaperPosition(BaseModel):
     unrealized_pnl: float
     unrealized_pnl_pct: Optional[float] = None
     realized_pnl: float
+    stop_loss: Optional[float] = None
+    take_profit: Optional[float] = None
+    stops_enforced: bool = False
+    atr14: Optional[float] = None
+    atr_pct: Optional[float] = None
+    recommended_quantity: Optional[float] = None
+    max_loss_amount: Optional[float] = None
 
 
 class PaperCurrencyTotals(BaseModel):
@@ -48,9 +55,12 @@ class PaperBenchmark(BaseModel):
 class PaperTradingSummaryResponse(BaseModel):
     enabled: bool
     position_size: float
+    risk_pct: float = 5.0
     trade_count: int
     open_position_count: int
     closed_trade_count: int
+    stop_loss_count: int = 0
+    take_profit_count: int = 0
     win_rate_pct: Optional[float] = None
     positions: List[PaperPosition]
     totals_by_currency: Dict[str, PaperCurrencyTotals] = Field(
@@ -60,6 +70,10 @@ class PaperTradingSummaryResponse(BaseModel):
     benchmarks: Dict[str, PaperBenchmark] = Field(
         default_factory=dict,
         description="Per-market benchmark comparison (index shadow, USD-based return); empty when unavailable",
+    )
+    signal_outcomes: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Optional DecisionSignal 1/3/5/10d outcome hit rate summary",
     )
 
 
@@ -74,8 +88,32 @@ class PaperTrade(BaseModel):
     side: str
     quantity: float
     price: float
+    stop_loss: Optional[float] = None
+    take_profit: Optional[float] = None
     trade_date: Optional[str] = None
 
 
 class PaperTradeListResponse(BaseModel):
     items: List[PaperTrade]
+
+
+class KapAlertItem(BaseModel):
+    stock_code: str
+    kind: str = Field("kap", description="kap | news | rumor")
+    index: Optional[int] = None
+    story_key: Optional[str] = None
+    title: str
+    published_date: str = ""
+    class_label: Optional[str] = None
+    verification: Optional[str] = None
+    sources: List[str] = Field(default_factory=list)
+    source_count: int = 1
+    tags: List[str] = Field(default_factory=list)
+    tag_labels_tr: List[str] = Field(default_factory=list)
+    details: Optional[str] = None
+    url: Optional[str] = None
+    alerted_at: Optional[str] = None
+
+
+class KapAlertListResponse(BaseModel):
+    items: List[KapAlertItem]

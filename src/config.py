@@ -1180,9 +1180,16 @@ class Config:
     # === 模拟交易（Paper trading）===
     paper_trading_enabled: bool = False
     paper_trading_position_size: float = 10000.0
+    paper_trading_risk_pct: float = 5.0
+    paper_trading_atr_stop_mult: float = 2.0
+    paper_trading_atr_tp_mult: float = 3.0
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
+    kap_watch_news_enabled: bool = True
+    # BIST screener (scripts/bist_screener.py): scan ~800 BIST stocks to pick top N candidates
+    bist_screener_enabled: bool = False
+    bist_screener_top_n: int = 8
     
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
@@ -2146,6 +2153,25 @@ class Config:
                 field_name='PAPER_TRADING_POSITION_SIZE',
                 minimum=1.0,
             ),
+            paper_trading_risk_pct=parse_env_float(
+                os.getenv('PAPER_TRADING_RISK_PCT'),
+                5.0,
+                field_name='PAPER_TRADING_RISK_PCT',
+                minimum=0.1,
+                maximum=100.0,
+            ),
+            paper_trading_atr_stop_mult=parse_env_float(
+                os.getenv('PAPER_TRADING_ATR_STOP_MULT'),
+                2.0,
+                field_name='PAPER_TRADING_ATR_STOP_MULT',
+                minimum=0.5,
+            ),
+            paper_trading_atr_tp_mult=parse_env_float(
+                os.getenv('PAPER_TRADING_ATR_TP_MULT'),
+                3.0,
+                field_name='PAPER_TRADING_ATR_TP_MULT',
+                minimum=0.5,
+            ),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
                 300,
@@ -2153,6 +2179,15 @@ class Config:
                 minimum=60,
             ),
             kap_watch_hours=(os.getenv('KAP_WATCH_HOURS') or "08:00-23:00").strip(),
+            kap_watch_news_enabled=parse_env_bool(os.getenv('KAP_WATCH_NEWS_ENABLED'), default=True),
+            bist_screener_enabled=parse_env_bool(os.getenv('BIST_SCREENER_ENABLED'), default=False),
+            bist_screener_top_n=parse_env_int(
+                os.getenv('BIST_SCREENER_TOP_N'),
+                8,
+                field_name='BIST_SCREENER_TOP_N',
+                minimum=1,
+                maximum=25,
+            ),
             log_dir=os.getenv('LOG_DIR', './logs'),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
             max_workers=parse_env_int(os.getenv('MAX_WORKERS'), 3, field_name='MAX_WORKERS', minimum=1),

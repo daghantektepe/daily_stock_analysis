@@ -254,20 +254,44 @@ Bilmen gereken sınırlar:
 
 Midas uygulamasının sayfaları doğrudan çekilmez, çünkü kullanım koşulları belirsiz. Midas'ın yayımladığı haberler zaten Google News üzerinden gelir. KAP bildirimlerini de sistem KAP'tan kendisi okur.
 
-### 4.3 KAP izleyici: seans içi uyarılar
+### 4.3 KAP ve haber izleyici: seans içi uyarılar
 
-Günlük analiz günde birkaç kez çalışır. Saat 11:00'de gelen bir sözleşme, geri alım ya da devre kesici bildirimi bir sonraki çalıştırmayı beklememeli. İzleyici `STOCK_LIST`'teki `.IS` hisselerini KAP'ta `KAP_WATCH_INTERVAL_SECONDS` saniyede bir (varsayılan 300) kontrol eder. `KAP_WATCH_HOURS` (İstanbul saati, varsayılan `08:00-23:00`) içinde çalışır; akşam yayımlanan bildirimler de böylece yakalanır. Yeni ve önemli bir bildirim gelince Telegram'a (ya da `.env`'de ayarlı kanala) tek mesaj gönderir.
+Günlük analiz günde birkaç kez çalışır. Saat 11:00'de gelen bir sözleşme, geri alım, devre kesici ya da birden çok güvenilir yayında aynı anda çıkan bir haber bir sonraki çalıştırmayı beklememeli. İzleyici `STOCK_LIST`'teki `.IS` hisselerini `KAP_WATCH_INTERVAL_SECONDS` saniyede bir (varsayılan 300) kontrol eder. `KAP_WATCH_HOURS` (İstanbul saati, varsayılan `08:00-23:00`) içinde çalışır; akşam yayımlanan bildirimler ve haberler de böylece yakalanır. Yeni önemli bir gelişme gelince Telegram'a (ya da `.env`'de ayarlı kanala) tek mesaj gönderir.
 
 ```bash
 python scripts/kap_watch.py
 ```
 
-- **Önemli sayılanlar:** bilanço, temettü, bedelsiz/bedelli, geri alım, pay/ortaklık değişikliği, sözleşme/iş ilişkisi, tedbir, derecelendirme, devre kesici. Varant fiyatı gibi rutin bildirimler kaydedilir ama gönderilmez.
-- **Mesajın içeriği:** bildirimin metninden tutar, karşı taraf gibi ayrıntılar.
-- **İlk çalıştırma:** mevcut bildirimleri yalnızca kaydeder, eski bildirim yağmuru olmaz. Durum `data/kap_watch_state.json` dosyasında tutulur, yeniden başlatınca tekrar göndermez.
+- **Resmî KAP bildirimleri:** bilanço, temettü, bedelsiz/bedelli, geri alım, pay/ortaklık değişikliği, sözleşme/iş ilişkisi, tedbir, derecelendirme, devre kesici. Varant fiyatı gibi rutin bildirimler kaydedilir ama gönderilmez.
+- **Çok kaynaklı teyitli haberler (`CONFIRMED` / `OFFICIAL`):** En az 2 farklı yayında (en az biri Bloomberg HT, Dünya, Ekonomim, AA gibi birinci kademe ekonomi kaynağı veya 3 ana akım kaynak) aynı anda çıkan sözleşme, bilanço, hedef fiyat, yabancı akışı gibi haberler `📰 Çok kaynaklı haber` olarak bildirilir.
+- **Yayılan söylenti uyarısı (`RUMOR`):** Kulis/iddia/söylenti niteliğindeki bir haber en az 2 farklı yayına yayıldığında `⚠️ SÖYLENTİ — resmî teyit yok` etiketiyle uyarılır; böylece piyasada dolaşan söylentiden haberdar olursun ama resmî bildirimle karıştırmazsın (`--no-news` veya `KAP_WATCH_NEWS_ENABLED=false` ile kapatılabilir).
+- **İlk çalıştırma:** mevcut bildirimleri ve haberleri yalnızca kaydeder, eski haber yağmuru olmaz. Durum ve son uyarılar `data/kap_watch_state.json` dosyasında tutulur; Web arayüzündeki **Sanal İşlem / KAP** sayfası da buradan beslenir.
 - **Önce deneme:** `--once` tek tur kontrol eder ve göndermeden ekrana yazar.
 
 Uyarı bilgi amaçlıdır. Habere hemen işlem yapmak yerine fiyatın tepkisine ve haberin teyidine bak.
+
+### 4.4 BIST taraması: ~800 hisseden günün en ilginç 5–10 adayını seçme
+
+Sabit 5 hisse yerine her gün ~800 BIST hissesini tarayıp yalnızca teknik kurulumu, hacim artışı veya yeni KAP bildirimi olan en ilginç 5–10 hisseyi derin analize sokabilirsin. Böylece fırsat kaçırmaz ve CLI kotasını tüm tahtalara harcamazsın:
+
+```bash
+python scripts/bist_screener.py --top 8
+```
+
+Tarama üç sinyali birleştirir:
+
+- **Teknik kurulum:** `MA5 > MA20` yükseliş trendi, `MA5`'e yakın dengeli giriş, 20 günlük zirve kırılımı, `RSI(14)` güçlenme (52–68) veya aşırı satımdan hacimli dönüş (<35). Günlük +%8,5 üzeri (tavana yakın) veya `MA5`'ten aşırı uzaklaşmış hisseler elenir/cezalandırılır.
+- **Hacim artışı:** Son gün hacminin önceki 20 gün ortalamasına oranı (`>= 1,5x`) ve sığ tahtaları elemek için minimum günlük işlem hacmi (varsayılan 5 milyon TL; önemli KAP olayı varsa muaf).
+- **Yeni KAP olayı:** Tek bir KAP sorgusuyla son 2 gündeki tüm BIST bildirimleri taranır; sözleşme, geri alım, bedelsiz, temettü ve bilanço bildirimleri puanı artırır, devre kesici ve tedbir bildirimleri puan düşürür.
+
+Günlük analizde otomatik kullanmak için `.env` dosyasına ekle (veya `python main.py --screen-bist` ile çalıştır):
+
+```env
+BIST_SCREENER_ENABLED=true
+BIST_SCREENER_TOP_N=8
+```
+
+Tarama veri çekemezse veya eşiği geçen aday bulamazsa sistem otomatik olarak `STOCK_LIST` listesine döner.
 
 ## 5. Gizlilik: buluta ne gider?
 
@@ -291,14 +315,14 @@ Uyarı bilgi amaçlıdır. Habere hemen işlem yapmak yerine fiyatın tepkisine 
 
 Bu sistem kazanç garantisi vermez. Bir sinyalin işe yarayıp yaramadığını ancak ölçerek öğrenirsin:
 
-1. **En az 4–6 hafta yalnızca sanal işlem** (`PAPER_TRADING_ENABLED=true`). Özet için:
+1. **En az 4–6 hafta yalnızca sanal işlem, ATR risk yönetimi ve otomatik haftalık rapor** (`PAPER_TRADING_ENABLED=true`). Sanal işlem motoru her yeni `buy`/`add` sinyalinde 14 günlük ATR volatilitesini (veya sinyalin kendi zarar kes seviyesini) kullanarak pozisyon büyüklüğünü `PAPER_TRADING_RISK_PCT` (varsayılan `%5`) risk bütçesine göre otomatik ölçekler; yüksek volatiliteli hissede daha az lot alır. Açık pozisyonlar sonraki günlerin dip/zirve fiyatlarında **zarar kes (`stop_loss`, varsayılan `2 × ATR`)** veya **kâr al (`take_profit`, varsayılan `3 × ATR`)** seviyesine değdiğinde sanal defterde otomatik olarak kapatılır. Özet için:
 
 ```bash
 python scripts/paper_trading_report.py
 ```
 
-   `--notify` eklersen özet Telegram'a da gider. Haftada bir çalıştırmak yeterli. Özet gerçekleşen/gerçekleşmeyen kâr-zararı ve kazanma oranını gösterir. Aynı tarihlerde aynı tutarla BIST 100 alınsaydı ne olacağıyla da kıyaslar, ve dolar bazında getiriyi verir (her nakit akışı o günün USD/TRY kuruyla çevrilir). Aynı bilgi `GET /api/v1/paper-trading/summary` uç noktasında `benchmarks` alanında da var.
-2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Gerekli fiyat geçmişi günlük çalıştırmalarla birikir. Hesaplama kendiliğinden yapılmaz, servis açıkken şu komutla tetiklenir:
+   `--notify` eklersen özet Telegram'a da gider. Sistem her günlük analizden sonra bekleyen sinyal isabetlerini (`1/3/5/10` işlem günü, ±%2 nötr bant) kendiliğinden hesaplar ve **her Cuma 18:00 sonrası** çalıştırmada sanal işlem özetini, BIST 100 ve dolar kıyasını ve sinyal isabet oranlarını otomatik olarak Telegram'a gönderir (haftada bir kez, `data/weekly_report_state.json`). Ayrıca Web arayüzündeki **Sanal İşlem / KAP** (`/paper-trading`) sayfasından açık pozisyonları, ATR zarar kes / kâr al seviyelerini, BIST 100 & dolar kıyasını ve KAP / haber uyarılarını doğrudan görebilirsin.
+2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Artık günlük çalıştırmalarda ve `paper_trading_report.py` içinde kendiliğinden hesaplanır; istersen API üzerinden de tetikleyebilirsin:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/decision-signals/outcomes/run -H "Content-Type: application/json" -d '{"market": "tr"}'
@@ -311,8 +335,15 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/v1/decision-signal
 ```
 
    İsabet oranları: <http://127.0.0.1:8000/api/v1/decision-signals/outcomes/stats>
-3. **Kıyasla:** Stratejin BIST 100'ü ve doları geçemiyorsa, TL bazlı nominal kâr yanıltıcıdır. Yüksek enflasyonda bu çok olasıdır. Rapordaki "fark" ve "dolar bazında" satırlarına bak.
-4. **Gerçek paraya geçersen küçük başla.** Pozisyon büyüklüğünü ve zarar kes seviyesini önceden belirle. Tek bir habere ya da söylentiye dayanarak işlem yapma.
+3. **KAP olaylarının geçmiş etkisi (Event Study):** Sözleşme, geri alım, bedelsiz, temettü ve bilanço gibi KAP bildirimlerinden sonra hissenin `1`, `5` ve `20` işlem gününde ortalama ne yaptığını ve BIST 100'e göre farkını (alfa) ölçmek için:
+
+```bash
+python scripts/kap_event_study.py --days 365
+```
+
+   Saat 18:00'den sonra gelen bildirimler (seans kapandığı için) ertesi işlem günü kapanışından başlatılır; böylece gerçekte alamayacağın kapanış fiyatı hesaba katılmaz. `--stocks THYAO.IS,ASELS.IS` ile hisse listesini değiştirebilir, `--notify` ile sonucu Telegram'a gönderebilirsin.
+4. **Kıyasla:** Stratejin BIST 100'ü ve doları geçemiyorsa, TL bazlı nominal kâr yanıltıcıdır. Yüksek enflasyonda bu çok olasıdır. Rapordaki "fark" ve "dolar bazında" satırlarına bak.
+5. **Gerçek paraya geçersen küçük başla.** Pozisyon büyüklüğünü ve zarar kes seviyesini önceden belirle. Tek bir habere ya da söylentiye dayanarak işlem yapma.
 
 ## 8. Sonraki adımlar
 

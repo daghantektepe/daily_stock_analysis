@@ -108,3 +108,95 @@ def test_run_forever_skips_polls_outside_active_hours(tmp_path) -> None:
     service.run_forever(interval_seconds=10, sleep=sleeps.append, max_polls=2)
     assert sleeps == [60, 60]  # interval floor
     assert not (tmp_path / "state.json").exists()  # never polled at night
+
+
+def test_confirmed_multi_source_news_and_rumor_alerts(tmp_path) -> None:
+    from types import SimpleNamespace
+    from data_provider.tr_news_hub import NewsItem, NewsStory
+    from src.services.kap_watch_service import get_recent_kap_and_news_alerts
+
+    t0 = datetime(2026, 11, 6, 8, 15, tzinfo=timezone.utc)
+
+    def _make_story(titles_and_sources):
+        items = [
+            NewsItem(
+                title=title,
+                url=f"https://example.com/{idx}",
+                source=source,
+                published_at=t0,
+                summary="Detay özet",
+            )
+            for idx, (title, source) in enumerate(titles_and_sources)
+        ]
+        return NewsStory(items=items)
+
+    class _FakeNewsHub:
+        def __init__(self):
+            self.stories_by_code = {
+                "ASELS.IS": [
+                    # Existing confirmed story at startup -> recorded on first poll, not alerted
+                    _make_story([
+                        ("Aselsan 3. çeyrek bilançosunda net kârını artırdı", "Bloomberg HT"),
+                        ("Aselsan 3. çeyrek finansal sonuçlarını açıkladı", "Dünya"),
+                    ])
+                ]
+            }
+
+        def digest(self, code, **_kwargs):
+            return SimpleNamespace(stories=list(self.stories_by_code.get(code, [])))
+
+    fetcher = _Fetcher()
+    notifier = _Notifier()
+    hub = _FakeNewsHub()
+    state_file = tmp_path / "state_news.json"
+    clock = lambda: t0  # noqa: E731
+
+    service = KapWatchService(
+        stocks=["ASELS.IS"],
+        fetcher=fetcher,
+        news_hub=hub,
+        notifier=notifier,
+        state_path=state_file,
+        clock=clock,
+    )
+
+    # First poll seeds existing KAP and existing news without sending alerts
+    assert service.poll_once() == {}
+    assert notifier.messages == []
+
+    # Second poll:
+    # 1) Single-outlet story -> ignored (not multi-source)
+    # 2) Multi-source confirmed contract story (Bloomberg HT + Ekonomim) -> alerted!
+    # 3) Multi-source spreading rumor (2 outlets with 'kulis'/'iddia') -> alerted with rumor warning!
+    hub.stories_by_code["ASELS.IS"].extend([
+        _make_story([
+            ("Aselsan'dan tek kaynaklı haber", "Paratic"),
+        ]),
+        _make_story([
+            ("Aselsan 120 milyon dolarlık yeni ihracat sözleşmesi imzaladı", "Bloomberg HT"),
+            ("Aselsan'dan 120 milyon dolarlık yeni sözleşme", "Ekonomim"),
+        ]),
+        _make_story([
+            ("Kulis: Aselsan için stratejik ortaklık iddiası konuşuluyor", "Sözcü"),
+            ("Aselsan hisselerinde ortaklık söylentisi ve kulis iddiası", "Habertürk"),
+        ]),
+    ])
+
+    alerts = service.poll_once()
+    assert len(alerts["ASELS.IS"]) == 2
+    kinds = [item["kind"] for item in alerts["ASELS.IS"]]
+    assert kinds == ["news", "rumor"]
+    assert len(notifier.messages) == 1
+    msg_text, _ = notifier.messages[0]
+    assert "Çok kaynaklı haber | 2 güvenilir kaynak: Bloomberg HT, Ekonomim" in msg_text
+    assert "⚠️ [SÖYLENTİ — resmî teyit yok | 2 kaynak:" in msg_text
+
+    # Third poll: no duplicate alerts
+    assert service.poll_once() == {}
+    assert len(notifier.messages) == 1
+
+    # Recent alerts are persisted and readable via get_recent_kap_and_news_alerts
+    recent = get_recent_kap_and_news_alerts(state_path=state_file, live_fallback=False)
+    assert len(recent) == 2
+    assert {item["kind"] for item in recent} == {"news", "rumor"}
+
