@@ -78,11 +78,23 @@ _OFFERING_PATTERN = re.compile(
 _NON_COMMON_PATTERN = re.compile(
     r"(preferred|warrant|\bnote|debenture|\bright|convertible|option)", re.IGNORECASE
 )
+_FUND_TRUST_PATTERN = re.compile(
+    r"(\bfund\b|\bmunicipal\b|closed-end|income trust|term trust|floating rate|senior income|high income|"
+    r"preferred income|fixed income|\betf\b|\bindex fund\b)",
+    re.IGNORECASE,
+)
 
 
 def resolve_sec_user_agent(explicit: Optional[str] = None) -> str:
-    """Return the SEC User-Agent from argument or environment, or raise a clear error."""
+    """Return the SEC User-Agent from argument, env, or .env file, or raise a clear error."""
     value = (explicit or os.getenv(SEC_USER_AGENT_ENV) or "").strip()
+    if not value or "@" not in value:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+            value = (os.getenv(SEC_USER_AGENT_ENV) or "").strip()
+        except Exception:  # noqa: BLE001
+            pass
     if not value or "@" not in value:
         raise RuntimeError(
             f"{SEC_USER_AGENT_ENV} tanımlı değil. SEC, otomatik erişimde iletişim e-postası içeren bir "
@@ -149,6 +161,7 @@ class InsiderClusterEvent:
     ten_pct_only: bool = False
     holding_change_pct: Optional[float] = None
     last_filing_date: Optional[date] = None
+    trend_regime: str = "unclassified"  # uptrend | downtrend | unclassified
 
     @property
     def sec_url(self) -> str:
@@ -341,6 +354,8 @@ class SecForm4Fetcher:
         quarter_str: str,
         *,
         min_value: float = 10_000.0,
+        min_price: float = 2.0,
+        exclude_funds_and_trusts: bool = True,
         target_symbols: Optional[Iterable[str]] = None,
         zip_path: Optional[Path] = None,
     ) -> QuarterData:
@@ -442,10 +457,17 @@ class SecForm4Fetcher:
                 if _NON_COMMON_PATTERN.search(title_text):
                     stats["skipped_non_common"] += 1
                     continue
+                if exclude_funds_and_trusts:
+                    if _FUND_TRUST_PATTERN.search(sub["company_name"]) or _FUND_TRUST_PATTERN.search(title_text):
+                        stats["skipped_fund_or_trust"] += 1
+                        continue
                 shares = _safe_float(row.get("TRANS_SHARES"))
                 price = _safe_float(row.get("TRANS_PRICEPERSHARE"))
                 if shares <= 0 or price <= 0:
                     stats["skipped_zero_price"] += 1
+                    continue
+                if price < min_price:
+                    stats["skipped_penny_stock"] += 1
                     continue
                 value = shares * price
                 if value < min_value:
@@ -490,6 +512,8 @@ class SecForm4Fetcher:
         quarter_str: str,
         *,
         min_value: float = 10_000.0,
+        min_price: float = 2.0,
+        exclude_funds_and_trusts: bool = True,
         open_market_only: bool = True,  # kept for backwards compatibility; always True
         cluster_window_days: int = 5,
         target_symbols: Optional[Iterable[str]] = None,
@@ -498,7 +522,14 @@ class SecForm4Fetcher:
         exclude_offerings: bool = True,
     ) -> List[InsiderClusterEvent]:
         """Parse one quarter into purchase events (convenience wrapper)."""
-        data = self.load_quarter(quarter_str, min_value=min_value, target_symbols=target_symbols, zip_path=zip_path)
+        data = self.load_quarter(
+            quarter_str,
+            min_value=min_value,
+            min_price=min_price,
+            exclude_funds_and_trusts=exclude_funds_and_trusts,
+            target_symbols=target_symbols,
+            zip_path=zip_path,
+        )
         return build_purchase_events(
             data.purchases,
             classifier=classifier,

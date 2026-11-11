@@ -46,6 +46,7 @@ _ACTION_LABELS_TR = {
 # market -> benchmark index and USD rate (quote currency per 1 USD).
 BENCHMARKS: Dict[str, Dict[str, str]] = {
     "tr": {"index": "XU100.IS", "index_name": "BIST 100", "fx": "TRY=X", "currency": "TRY"},
+    "us": {"index": "SPY", "index_name": "S&P 500 (SPY)", "fx": "", "currency": "USD"},
 }
 
 HistoryProvider = Callable[[str, date, date], Dict[date, float]]
@@ -119,7 +120,7 @@ def compute_market_benchmark(
     today = today or date.today()
     start = min(_parse_day(trade["trade_date"]) for trade in rows) - timedelta(days=10)
     index = _Series(history(spec["index"], start, today))
-    fx = _Series(history(spec["fx"], start, today))
+    fx = _Series(history(spec["fx"], start, today)) if spec.get("fx") else None
 
     invested = proceeds = 0.0
     index_proceeds = 0.0
@@ -131,7 +132,8 @@ def compute_market_benchmark(
         quantity = float(trade.get("quantity") or 0)
         price = float(trade.get("price") or 0)
         book = books.setdefault(trade["stock_code"], {"quantity": 0.0, "index_units": 0.0})
-        index_close, fx_rate = index.at(day), fx.at(day)
+        index_close = index.at(day)
+        fx_rate = 1.0 if spec.get("currency") == "USD" else (fx.at(day) if fx else None)
         index_ok = index_ok and index_close is not None
         fx_ok = fx_ok and fx_rate is not None
         if trade.get("side") == "buy":
@@ -158,7 +160,8 @@ def compute_market_benchmark(
 
     if invested <= 0:
         return None
-    index_today, fx_today = index.at(today), fx.at(today)
+    index_today = index.at(today)
+    fx_today = 1.0 if spec.get("currency") == "USD" else (fx.at(today) if fx else None)
     open_value = sum(book["quantity"] * mark_prices.get(code, 0.0) for code, book in books.items())
     strategy_return = (proceeds + open_value - invested) / invested * 100
     result: Dict[str, Any] = {
@@ -178,11 +181,15 @@ def compute_market_benchmark(
         result["benchmark_return_pct"] = round(benchmark_return, 2)
         result["excess_return_pct"] = round(strategy_return - benchmark_return, 2)
     if fx_ok and fx_today and usd_invested > 0:
-        usd_value = open_value / fx_today
-        result["usd_return_pct"] = round((usd_proceeds + usd_value - usd_invested) / usd_invested * 100, 2)
-        first_rate = fx.at(min(_parse_day(trade["trade_date"]) for trade in rows))
-        if first_rate:
-            result["fx_change_pct"] = round((fx_today / first_rate - 1) * 100, 2)
+        if spec.get("currency") == "USD":
+            result["usd_return_pct"] = round(strategy_return, 2)
+            result["fx_change_pct"] = 0.0
+        else:
+            usd_value = open_value / fx_today
+            result["usd_return_pct"] = round((usd_proceeds + usd_value - usd_invested) / usd_invested * 100, 2)
+            first_rate = fx.at(min(_parse_day(trade["trade_date"]) for trade in rows)) if fx else None
+            if first_rate:
+                result["fx_change_pct"] = round((fx_today / first_rate - 1) * 100, 2)
     return result
 
 

@@ -238,13 +238,41 @@ def test_benchmark_fails_open_without_history_and_skips_other_markets() -> None:
     )
     assert result["strategy_return_pct"] is not None
     assert result["benchmark_return_pct"] is None and result["usd_return_pct"] is None
-    us_trades = [dict(trade, market="us") for trade in _TRADES]
-    assert compute_benchmarks(us_trades, mark_prices={}, history=_fake_history) == {}
+    hk_trades = [dict(trade, market="hk") for trade in _TRADES]
+    assert compute_benchmarks(hk_trades, mark_prices={}, history=_fake_history) == {}
 
     def broken(*_args):
         raise RuntimeError("down")
 
     assert compute_benchmarks(_TRADES, mark_prices={}, history=broken) == {}
+
+
+def test_us_benchmark_index_and_return() -> None:
+    from src.services.paper_trading_benchmark import compute_market_benchmark
+
+    us_history = {
+        "SPY": {date(2026, 11, 2): 500.0, date(2026, 11, 4): 520.0, date(2026, 11, 6): 525.0},
+    }
+
+    def _us_history(symbol, start, end):
+        return {d: c for d, c in us_history.get(symbol, {}).items() if start <= d <= end}
+
+    us_trades = [
+        {"id": 1, "stock_code": "AAPL", "market": "us", "side": "buy", "quantity": 10, "price": 150.0,
+         "trade_date": "2026-11-02"},
+        {"id": 2, "stock_code": "AAPL", "market": "us", "side": "sell", "quantity": 10, "price": 180.0,
+         "trade_date": "2026-11-04"},
+    ]
+    result = compute_market_benchmark(
+        us_trades, market="us", mark_prices={"AAPL": 180.0}, today=date(2026, 11, 6), history=_us_history
+    )
+    assert result is not None
+    assert result["benchmark_name"] == "S&P 500 (SPY)"
+    assert result["strategy_return_pct"] == pytest.approx(20.0)
+    assert result["benchmark_return_pct"] == pytest.approx(4.0)
+    assert result["excess_return_pct"] == pytest.approx(16.0)
+    assert result["usd_return_pct"] == pytest.approx(20.0)
+    assert result["fx_change_pct"] == 0.0
 
 
 def test_summary_includes_benchmarks_and_report_text(db) -> None:

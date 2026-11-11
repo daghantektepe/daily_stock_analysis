@@ -47,6 +47,7 @@ class ScoredInsiderCandidate:
     cmp_class: str = "unclassified"
     has_10b51: bool = False
     holding_change_pct: Optional[float] = None
+    trend_regime: str = "unclassified"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -67,6 +68,7 @@ class ScoredInsiderCandidate:
             "cmp_class": self.cmp_class,
             "has_10b51": self.has_10b51,
             "holding_change_pct": self.holding_change_pct,
+            "trend_regime": self.trend_regime,
         }
 
 
@@ -131,6 +133,14 @@ def score_insider_event(event: InsiderClusterEvent) -> Tuple[int, List[str]]:
         score += 10
         reasons.append(f"Mevcut pozisyonda belirgin artış: +%{event.holding_change_pct:.0f} (+10)")
 
+    # 8. Trend / Momentum confirmation (protect against falling knives)
+    if event.trend_regime == "uptrend":
+        score += 20
+        reasons.append("Trend Onayı: 200 günlük ortalama üzerinde / yükseliş trendinde (+20)")
+    elif event.trend_regime == "downtrend":
+        score -= 20
+        reasons.append("Düşüş Trendi: 200 günlük ortalama altında / değer tuzağı riski (-20)")
+
     final_score = max(0, min(100, score))
     return final_score, reasons
 
@@ -178,6 +188,7 @@ def screen_us_insider_stocks(
             cmp_class=e.cmp_class,
             has_10b51=e.has_10b51,
             holding_change_pct=e.holding_change_pct,
+            trend_regime=e.trend_regime,
         ))
         seen_symbols.add(e.symbol)
         if len(candidates) >= top_n * 2:

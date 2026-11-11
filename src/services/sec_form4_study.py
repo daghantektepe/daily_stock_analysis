@@ -25,6 +25,7 @@ Methodology (Cohen, Malloy, Pomorski 2012; Lakonishok & Lee 2001):
 from __future__ import annotations
 
 import bisect
+import concurrent.futures
 import json
 import logging
 import math
@@ -34,7 +35,7 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from data_provider.sec_form4_fetcher import InsiderClusterEvent
 
@@ -148,6 +149,14 @@ class _PriceCalendar:
             return d, self.closes[d]
         return None, None
 
+    def simple_moving_average(self, as_of_date: date, window: int) -> Optional[float]:
+        """Compute simple moving average over ``window`` bars on or before ``as_of_date``."""
+        idx = bisect.bisect_right(self.dates, as_of_date)
+        if idx < window or window <= 0:
+            return None
+        window_closes = [self.closes[self.dates[i]] for i in range(idx - window, idx)]
+        return sum(window_closes) / float(window)
+
     def close_after_n_bars(self, from_date: date, n_bars: int) -> Tuple[Optional[date], Optional[float]]:
         idx = bisect.bisect_right(self.dates, from_date)
         target_idx = idx + n_bars - 1
@@ -175,6 +184,9 @@ class Form4EventOutcome:
     has_10b51: bool
     primary_titles: List[str]
     horizons: Dict[str, Dict[str, Any]]
+    trend_regime: str = "unclassified"  # uptrend | downtrend | unclassified
+    sma200: Optional[float] = None
+    sma50: Optional[float] = None
 
 
 def compute_sample_statistics(values: Sequence[float]) -> Dict[str, Any]:
@@ -238,21 +250,40 @@ def run_sec_form4_event_study(
     max_horizon_days = max(bars for _, bars, _ in horizons) * 2 + 30
     study_end_date = max(e.filing_date for e in filtered_events) + timedelta(days=max_horizon_days)
 
-    # 1. Fetch benchmark price series
-    bench_closes = history(benchmark_symbol, min_date - timedelta(days=10), study_end_date)
+    # 1. Fetch benchmark price series (with 320 days pre-history for moving averages)
+    bench_start = min_date - timedelta(days=320)
+    bench_closes = history(benchmark_symbol, bench_start, study_end_date)
     bench_cal = _PriceCalendar(bench_closes)
 
-    # 2. Evaluate each event
+    # 2. Parallel pre-fetch of unique stock price series
     outcomes: List[Form4EventOutcome] = []
     symbol_caches: Dict[str, _PriceCalendar] = {}
     missing_symbols: Set[str] = set()
 
+    unique_symbols = sorted({e.symbol for e in filtered_events if e.symbol})
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(12, max(2, len(unique_symbols)))) as executor:
+        futures = {
+            executor.submit(history, sym, bench_start, study_end_date): sym
+            for sym in unique_symbols
+        }
+        for future in concurrent.futures.as_completed(futures):
+            sym = futures[future]
+            try:
+                closes = future.result()
+                if closes:
+                    symbol_caches[sym] = _PriceCalendar(closes)
+                else:
+                    missing_symbols.add(sym)
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("[sec-form4-study] parallel fetch error %s: %s", sym, exc)
+                missing_symbols.add(sym)
+
     for event in filtered_events:
         sym = event.symbol
-        if sym not in symbol_caches:
-            sym_closes = history(sym, event.filing_date - timedelta(days=5), study_end_date)
-            symbol_caches[sym] = _PriceCalendar(sym_closes)
-        stock_cal = symbol_caches[sym]
+        stock_cal = symbol_caches.get(sym)
+        if stock_cal is None or not stock_cal.dates:
+            missing_symbols.add(sym)
+            continue
 
         entry_date, entry_price = stock_cal.next_trading_day_close(event.filing_date)
         if entry_date is None or entry_price is None:
@@ -262,6 +293,13 @@ def run_sec_form4_event_study(
         _, bench_entry = bench_cal.next_trading_day_close(event.filing_date)
         if bench_entry is None:
             continue
+
+        sma200 = stock_cal.simple_moving_average(entry_date, 200)
+        sma50 = stock_cal.simple_moving_average(entry_date, 50)
+        if sma200 is not None:
+            trend_regime = "uptrend" if entry_price > sma200 else "downtrend"
+        else:
+            trend_regime = "unclassified"
 
         horizon_results: Dict[str, Dict[str, Any]] = {}
         for h_key, n_bars, h_label in horizons:
@@ -302,6 +340,9 @@ def run_sec_form4_event_study(
                 has_10b51=event.has_10b51,
                 primary_titles=event.primary_titles,
                 horizons=horizon_results,
+                trend_regime=trend_regime,
+                sma200=round(sma200, 4) if sma200 else None,
+                sma50=round(sma50, 4) if sma50 else None,
             ))
 
     # 3. Compute aggregate statistics across horizons and segments
@@ -325,6 +366,10 @@ def run_sec_form4_event_study(
             "tier_20k_50k": _aggregate_horizon_metrics([o for o in outcomes if 20_000 <= o.total_value < 50_000], [h[0] for h in horizons], estimated_slippage_pct),
             "tier_50k_250k": _aggregate_horizon_metrics([o for o in outcomes if 50_000 <= o.total_value < 250_000], [h[0] for h in horizons], estimated_slippage_pct),
             "tier_250k_plus": _aggregate_horizon_metrics([o for o in outcomes if o.total_value >= 250_000], [h[0] for h in horizons], estimated_slippage_pct),
+        },
+        "trend": {
+            "uptrend": _aggregate_horizon_metrics([o for o in outcomes if o.trend_regime == "uptrend"], [h[0] for h in horizons], estimated_slippage_pct),
+            "downtrend": _aggregate_horizon_metrics([o for o in outcomes if o.trend_regime == "downtrend"], [h[0] for h in horizons], estimated_slippage_pct),
         },
     }
 
@@ -491,6 +536,25 @@ def _generate_dynamic_conclusions(results: Dict[str, Any]) -> List[str]:
                 f"ℹ️ 10b5-1 planlı alımlar (%{r_exc:+.2f}) ile plansız alımlar (%{n_exc:+.2f}) arasında fark tespit edilemedi."
             )
 
+    # 6. Trend / Momentum Confluence Check (SMA 200)
+    trend_seg = seg.get("trend", {})
+    up_21 = trend_seg.get("uptrend", {}).get("21d", {})
+    down_21 = trend_seg.get("downtrend", {}).get("21d", {})
+    if up_21.get("count", 0) >= 3 and down_21.get("count", 0) >= 3:
+        up_exc = up_21.get("avg_excess_return_pct", 0.0)
+        down_exc = down_21.get("avg_excess_return_pct", 0.0)
+        diff_trend = up_exc - down_exc
+        if diff_trend > 1.0:
+            conclusions.append(
+                f"📈 Trend Kesişimi KANITI: 200 günlük hareketli ortalamanın üzerindeki alımlar (%{up_exc:+.2f}), "
+                f"düşüş trendindeki alımlara göre (%{down_exc:+.2f}) %{diff_trend:.2f} daha yüksek alfa üretti. "
+                f"Düşüş trendindeki yönetici alımları değer tuzağıdır; momentum onayı zorunludur."
+            )
+        else:
+            conclusions.append(
+                f"ℹ️ Trend durumuna göre belirgin getiri farkı oluşmadı (Yükseliş: %{up_exc:+.2f} vs Düşüş: %{down_exc:+.2f})."
+            )
+
     return conclusions
 
 
@@ -598,6 +662,16 @@ def format_sec_form4_study_report(results: Dict[str, Any]) -> str:
             f"$50k-$250k: %{t2.get('avg_excess_return_pct', 0):+.2f} | "
             f"$250k+: %{t3.get('avg_excess_return_pct', 0):+.2f}"
         )
+
+    # E. Trend / Momentum Confluence (SMA 200)
+    trend_seg = seg.get("trend", {})
+    up_21 = trend_seg.get("uptrend", {}).get("21d", {})
+    down_21 = trend_seg.get("downtrend", {}).get("21d", {})
+    if up_21.get("count", 0) > 0 or down_21.get("count", 0) > 0:
+        lines.append("E) Trend / Momentum Kesişimi (Fiyat > SMA 200 vs. SMA 200 Altı):")
+        up_str = f"SMA200 Üstü (Yükseliş Trendi): %{up_21.get('avg_excess_return_pct', 0):+.2f} (N={up_21.get('count', 0)}, Kazanma: %{up_21.get('win_rate_pct', 0):.0f})" if up_21.get("count", 0) > 0 else "SMA200 Üstü: Yetersiz veri"
+        down_str = f"SMA200 Altı (Düşüş Trendi): %{down_21.get('avg_excess_return_pct', 0):+.2f} (N={down_21.get('count', 0)}, Kazanma: %{down_21.get('win_rate_pct', 0):.0f})" if down_21.get("count", 0) > 0 else "SMA200 Altı: Yetersiz veri"
+        lines.append(f"   - 1 Ay (21g) Alfa: {up_str} vs. {down_str}")
 
     # 3. Dynamic Findings / Conclusions
     lines.extend([

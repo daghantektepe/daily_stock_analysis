@@ -50,6 +50,17 @@ def main() -> int:
         help="Minimum total purchase amount in USD (default: $50,000)",
     )
     parser.add_argument(
+        "--min-price",
+        type=float,
+        default=2.0,
+        help="Minimum stock share price to exclude penny stocks (default: $2.00)",
+    )
+    parser.add_argument(
+        "--include-funds",
+        action="store_true",
+        help="Include closed-end funds and municipal trusts (excluded by default)",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=60,
@@ -90,7 +101,12 @@ def main() -> int:
     for q in quarters:
         logger.info("Loading SEC Form 4 dataset for %s ...", q)
         try:
-            events = fetcher.parse_quarter(q, min_value=args.min_value)
+            events = fetcher.parse_quarter(
+                q,
+                min_value=args.min_value,
+                min_price=args.min_price,
+                exclude_funds_and_trusts=not args.include_funds,
+            )
             logger.info("Found %d insider purchase events in %s", len(events), q)
             all_events.extend(events)
         except Exception as exc:

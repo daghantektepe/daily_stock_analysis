@@ -259,3 +259,67 @@ def test_parse_sec_atom_feed() -> None:
     assert entries[0]["cik"] == "0000106532"
     assert entries[0]["entity_role"] == "Issuer"
     assert "Archives/edgar" in entries[0]["link"]
+
+
+def test_parse_quarter_filters_funds_and_penny_stocks(tmp_path) -> None:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        sub_content = (
+            "ACCESSION_NUMBER\tFILING_DATE\tPERIOD_OF_REPORT\tDOCUMENT_TYPE\tISSUERNAME\tISSUERTRADINGSYMBOL\tISSUERCIK\tAFF10B5ONE\tREMARKS\n"
+            "001\t02-MAR-2026\t01-MAR-2026\t4\tBlackRock Municipal Income Trust\tBBK\t000100\t0\t\n"
+            "002\t02-MAR-2026\t01-MAR-2026\t4\tPenny Bio Inc\tPENNY\t000200\t0\t\n"
+            "003\t02-MAR-2026\t01-MAR-2026\t4\tReal Tech Inc\tREAL\t000300\t0\t\n"
+        )
+        z.writestr("SUBMISSION.tsv", sub_content)
+        owner_content = (
+            "ACCESSION_NUMBER\tRPTOWNERCIK\tRPTOWNERNAME\tRPTOWNER_RELATIONSHIP\tRPTOWNER_TITLE\n"
+            "001\t10\tFund Officer\tOfficer\tVice President\n"
+            "002\t20\tPenny CEO\tOfficer\tCEO\n"
+            "003\t30\tReal CEO\tOfficer\tCEO\n"
+        )
+        z.writestr("REPORTINGOWNER.tsv", owner_content)
+        trans_content = (
+            "ACCESSION_NUMBER\tTRANS_DATE\tTRANS_CODE\tTRANS_SHARES\tTRANS_PRICEPERSHARE\tSECURITY_TITLE\tTRANS_FORM_TYPE\n"
+            "001\t01-MAR-2026\tP\t1000.0\t15.0\tCommon Shares\t4\n"
+            "002\t01-MAR-2026\tP\t50000.0\t0.50\tCommon Stock\t4\n"
+            "003\t01-MAR-2026\tP\t2000.0\t50.0\tCommon Stock\t4\n"
+        )
+        z.writestr("NONDERIV_TRANS.tsv", trans_content)
+
+    mock_zip = tmp_path / "mock.zip"
+    mock_zip.write_bytes(buf.getvalue())
+    fetcher = SecForm4Fetcher(cache_dir=tmp_path, user_agent="DailyStockAnalysis/1.0 (contact: test@example.com)")
+    events = fetcher.parse_quarter("2026q1", zip_path=mock_zip, min_price=2.0, exclude_funds_and_trusts=True)
+    assert len(events) == 1
+    assert events[0].symbol == "REAL"
+    assert events[0].total_value == 100_000.0
+
+
+def test_sec_screener_trend_regime_scoring() -> None:
+    e_uptrend = InsiderClusterEvent(
+        symbol="UP",
+        company_name="Upward Inc",
+        filing_date=date(2026, 3, 2),
+        insider_count=1,
+        officer_director_count=1,
+        total_value=25_000.0,
+        has_c_level=False,
+        is_cluster=False,
+        trend_regime="uptrend",
+    )
+    e_downtrend = InsiderClusterEvent(
+        symbol="DOWN",
+        company_name="Downward Inc",
+        filing_date=date(2026, 3, 2),
+        insider_count=1,
+        officer_director_count=1,
+        total_value=25_000.0,
+        has_c_level=False,
+        is_cluster=False,
+        trend_regime="downtrend",
+    )
+    score_up, reasons_up = score_insider_event(e_uptrend)
+    score_down, reasons_down = score_insider_event(e_downtrend)
+    assert score_up == score_down + 40
+    assert any("Trend Onayı" in r for r in reasons_up)
+    assert any("Düşüş Trendi" in r for r in reasons_down)
