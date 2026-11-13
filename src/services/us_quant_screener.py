@@ -590,20 +590,21 @@ def screen_us_alpha_candidates(
     # 2. PEAD 2.0 Earnings Surprise Boost
     if include_pead:
         try:
-            from src.services.pead_screener import screen_pead_stocks
+            from src.services.pead_screener import screen_pead_candidates
 
-            pead_hits = screen_pead_stocks(
-                symbols=list(symbols) if symbols else None,
+            pead_hits = screen_pead_candidates(
+                symbols=list(symbols) if symbols else list(DEFAULT_US_QUANT_UNIVERSE),
                 top_n=top_n,
-                min_score=30.0,
+                min_score=30,
             )
             for p in pead_hits:
                 sym = p.symbol.upper()
+                surp_str = f"{p.eps_surprise_pct:+.1f}%" if p.eps_surprise_pct is not None else "n/a"
                 pead_bonus = round(min(25.0, p.score * 0.25), 2)
                 if sym in merged:
                     merged[sym].pead_score = pead_bonus
                     merged[sym].score = round(merged[sym].score + pead_bonus, 2)
-                    merged[sym].reasons.append(f"PEAD={p.score:.0f} (EPS+{p.surprise_pct:.1f}%)")
+                    merged[sym].reasons.append(f"PEAD={p.score:.0f} (EPS {surp_str})")
                 else:
                     merged[sym] = UsQuantCandidate(
                         symbol=sym,
@@ -611,7 +612,7 @@ def screen_us_alpha_candidates(
                         near_52w_high=p.near_52w_high,
                         avg_dollar_volume=p.avg_dollar_volume,
                         pead_score=pead_bonus,
-                        reasons=[f"PEAD={p.score:.0f} (EPS+{p.surprise_pct:.1f}%)"],
+                        reasons=[f"PEAD={p.score:.0f} (EPS {surp_str})"],
                     )
         except Exception as exc:
             logger.warning("PEAD integration failed in composite US screener: %s", exc)
