@@ -189,7 +189,7 @@ class PortfolioRiskService:
             for pos in account.get("positions", []) or []:
                 symbol = str(pos.get("symbol") or "").strip().upper()
                 market = str(pos.get("market") or "").strip().lower()
-                if not symbol or market not in {"cn", "hk", "us"}:
+                if not symbol or market not in {"cn", "hk", "us", "tr"}:
                     continue
                 signal_stock_code = DecisionSignalService.normalize_stock_code_for_signal(symbol, market=market)
                 positions.append({
@@ -400,6 +400,11 @@ class PortfolioRiskService:
             return board_cache[cache_key]
 
         if market != "cn":
+            sector_name = self._fetch_global_sector(symbol, market, errors)
+            if sector_name:
+                coverage["classified_count"] += 1
+                board_cache[cache_key] = sector_name
+                return board_cache[cache_key]
             coverage["unclassified_count"] += 1
             board_cache[cache_key] = "UNCLASSIFIED"
             return board_cache[cache_key]
@@ -427,6 +432,28 @@ class PortfolioRiskService:
         if isinstance(result, list):
             return result
         return []
+
+    def _fetch_global_sector(self, symbol: str, market: str, errors: List[str]) -> Optional[str]:
+        """Resolve sector for US/HK/TR equities via yfinance info (fail-open)."""
+        try:
+            import yfinance as yf
+        except ImportError:
+            return None
+
+        yf_sym = symbol.upper()
+        if market == "tr" and not yf_sym.endswith(".IS"):
+            yf_sym = f"{yf_sym}.IS"
+        elif market == "hk" and not yf_sym.endswith(".HK"):
+            yf_sym = f"{yf_sym.lstrip('0').zfill(4)}.HK"
+
+        try:
+            info = yf.Ticker(yf_sym).info or {}
+            sector = info.get("sector") or info.get("industry")
+            if isinstance(sector, str) and sector.strip():
+                return sector.strip()
+        except Exception as exc:
+            errors.append(f"{symbol}: {exc}")
+        return None
 
     @staticmethod
     def _pick_primary_board_name(boards: List[Dict[str, Any]]) -> Optional[str]:

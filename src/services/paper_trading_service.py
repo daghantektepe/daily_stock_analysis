@@ -215,6 +215,10 @@ class PaperTradingService:
         risk_pct: Optional[float] = None,
         atr_stop_mult: Optional[float] = None,
         atr_tp_mult: Optional[float] = None,
+        commission_bps: Optional[float] = None,
+        slippage_bps: Optional[float] = None,
+        vol_target_pct: Optional[float] = None,
+        max_holding_days: Optional[int] = None,
     ) -> None:
         self.db = db_manager or DatabaseManager.get_instance()
         config = None
@@ -224,6 +228,10 @@ class PaperTradingService:
             or risk_pct is None
             or atr_stop_mult is None
             or atr_tp_mult is None
+            or commission_bps is None
+            or slippage_bps is None
+            or vol_target_pct is None
+            or max_holding_days is None
         ):
             config = get_config()
         if enabled is None:
@@ -236,12 +244,26 @@ class PaperTradingService:
             atr_stop_mult = float(getattr(config, "paper_trading_atr_stop_mult", 2.0))
         if atr_tp_mult is None:
             atr_tp_mult = float(getattr(config, "paper_trading_atr_tp_mult", 3.0))
+        if commission_bps is None:
+            commission_bps = float(getattr(config, "paper_trading_commission_bps", 0.0) or 0.0)
+        if slippage_bps is None:
+            slippage_bps = float(getattr(config, "paper_trading_slippage_bps", 0.0) or 0.0)
+        if vol_target_pct is None:
+            raw_vt = getattr(config, "paper_trading_vol_target_pct", None)
+            vol_target_pct = float(raw_vt) if raw_vt is not None else None
+        if max_holding_days is None:
+            raw_mhd = getattr(config, "paper_trading_max_holding_days", None)
+            max_holding_days = int(raw_mhd) if raw_mhd is not None else None
 
         self.enabled = bool(enabled)
         self.position_size = float(position_size)
         self.risk_pct = float(risk_pct)
         self.atr_stop_mult = float(atr_stop_mult)
         self.atr_tp_mult = float(atr_tp_mult)
+        self.commission_bps = max(0.0, float(commission_bps))
+        self.slippage_bps = max(0.0, float(slippage_bps))
+        self.vol_target_pct = float(vol_target_pct) if (vol_target_pct and float(vol_target_pct) > 0) else None
+        self.max_holding_days = int(max_holding_days) if (max_holding_days and int(max_holding_days) > 0) else None
 
     def recommend_position(
         self,
@@ -340,7 +362,7 @@ class PaperTradingService:
                 continue
             stop_loss = book["stop_loss"]
             take_profit = book["take_profit"]
-            if stop_loss is None and take_profit is None:
+            if stop_loss is None and take_profit is None and self.max_holding_days is None:
                 continue
 
             exit_action: Optional[str] = None
@@ -380,6 +402,16 @@ class PaperTradingService:
                         )
                         exit_date = bar_date
                         break
+                    if (
+                        self.max_holding_days is not None
+                        and book["last_trade_date"] is not None
+                        and c_val is not None
+                        and (bar_date - book["last_trade_date"]).days >= self.max_holding_days
+                    ):
+                        exit_action = "time_stop"
+                        exit_price = c_val
+                        exit_date = bar_date
+                        break
 
             if exit_action is None and target_code == code and current_price is not None:
                 live_price = _positive_float(current_price)
@@ -395,6 +427,10 @@ class PaperTradingService:
 
             if exit_action is None or exit_price is None:
                 continue
+
+            total_cost_bps = self.commission_bps + self.slippage_bps
+            if total_cost_bps > 0:
+                exit_price = round(exit_price * max(0.0, 1.0 - total_cost_bps / 10000.0), 6)
 
             synthetic_signal_id = -int(book["last_buy_id"])
             record = PaperTradeRecord(
@@ -465,10 +501,11 @@ class PaperTradingService:
             if held > _EPS:
                 return None
             side = "buy"
+            effective_pos_size = self._vol_scaled_position_size(stock_code, effective_date)
             plan = compute_atr_risk_plan(
                 stock_code,
                 price=fill_price,
-                position_size=self.position_size,
+                position_size=effective_pos_size,
                 risk_pct=self.risk_pct,
                 atr_stop_multiplier=self.atr_stop_mult,
                 atr_take_profit_multiplier=self.atr_tp_mult,
@@ -501,6 +538,11 @@ class PaperTradingService:
             )
             return None
 
+        total_cost_bps = self.commission_bps + self.slippage_bps
+        if total_cost_bps > 0:
+            adj = 1.0 + (total_cost_bps / 10000.0) if side == "buy" else max(0.0, 1.0 - (total_cost_bps / 10000.0))
+            fill_price = round(fill_price * adj, 6)
+
         market = str(signal.get("market") or "").strip().lower() or None
         record = PaperTradeRecord(
             signal_id=signal_id,
@@ -529,6 +571,35 @@ class PaperTradingService:
             side, stock_code, quantity, fill_price, signal_id, stop_loss, take_profit,
         )
         return payload
+
+    def _vol_scaled_position_size(self, stock_code: str, as_of_date: date) -> float:
+        """Apply Barroso-Santa-Clara volatility scaling when ``vol_target_pct`` is set."""
+        if not self.vol_target_pct:
+            return self.position_size
+        try:
+            with self.db.session_scope() as session:
+                stmt = (
+                    select(StockDaily.close)
+                    .where(StockDaily.code == stock_code)
+                    .where(StockDaily.date <= as_of_date)
+                    .order_by(desc(StockDaily.date))
+                    .limit(130)
+                )
+                closes = [float(r[0]) for r in session.execute(stmt).all() if r[0] and float(r[0]) > 0]
+            if len(closes) < 21:
+                return self.position_size
+            closes.reverse()
+            rets = [(closes[i] / closes[i - 1]) - 1.0 for i in range(1, len(closes))]
+            mean_r = sum(rets) / len(rets)
+            var_r = sum((r - mean_r) ** 2 for r in rets) / max(1, len(rets) - 1)
+            realized_vol_pct = math.sqrt(var_r) * math.sqrt(252.0) * 100.0
+            if realized_vol_pct <= 1e-6:
+                return self.position_size
+            scale = max(0.25, min(2.0, self.vol_target_pct / realized_vol_pct))
+            return round(self.position_size * scale, 2)
+        except Exception as exc:
+            logger.debug("[paper] vol scaling fallback for %s: %s", stock_code, exc)
+            return self.position_size
 
     # ------------------------------------------------------------------- read
     def open_quantity(self, stock_code: str) -> float:

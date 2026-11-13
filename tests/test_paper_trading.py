@@ -500,3 +500,43 @@ def test_atr_risk_sizing_and_stop_take_profit_enforcement(db) -> None:
     report_text = format_paper_trading_report(summary2)
     assert "ZK/KA: 1/1" in report_text
 
+
+def test_paper_trading_costs_and_time_stop(db) -> None:
+    service = PaperTradingService(
+        db,
+        enabled=True,
+        position_size=10_000.0,
+        risk_pct=5.0,
+        commission_bps=10.0,
+        slippage_bps=10.0,
+        max_holding_days=5,
+    )
+    buy = service.apply_signal(
+        _signal(201, "buy", code="AAPL", market="us"),
+        price=100.0,
+        trade_date=date(2026, 11, 2),
+    )
+    assert buy is not None
+    # 20 bps total cost on entry -> fill price = 100 * 1.002 = 100.20
+    assert buy["price"] == pytest.approx(100.20)
+
+    # Bar 6 days later triggers time_stop even without stop_loss/take_profit breach
+    with db.session_scope() as session:
+        session.add(
+            StockDaily(
+                code="AAPL",
+                date=date(2026, 11, 9),
+                open=102.0,
+                high=103.0,
+                low=101.0,
+                close=102.0,
+                volume=1_000_000,
+            )
+        )
+    exits = service.check_stops_and_targets()
+    assert len(exits) == 1
+    assert exits[0]["action"] == "time_stop"
+    # 20 bps exit cost -> 102 * 0.998 = 101.796
+    assert exits[0]["price"] == pytest.approx(101.796)
+
+

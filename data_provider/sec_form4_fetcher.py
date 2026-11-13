@@ -562,6 +562,107 @@ class SecForm4Fetcher:
             logger.warning("[sec-form4] Atom feed fetch failed: %s", exc)
             return []
 
+    def _resolve_raw_form4_xml_url(self, filing_url: str) -> Optional[str]:
+        """Resolve raw Form 4 XML URL from an Atom entry link (index page or direct XML)."""
+        clean_url = (filing_url or "").strip()
+        if not clean_url:
+            return None
+        if clean_url.lower().endswith(".xml"):
+            # Strip SEC XSLT render prefix if present so we retrieve raw XML.
+            return re.sub(r"/xsl[^/]+/", "/", clean_url)
+        try:
+            resp = self._get(clean_url, headers=self._headers(), timeout=self.timeout)
+            if resp.status_code != 200:
+                return None
+            # Find XML links on the filing index page; prefer non-XSLT raw XML.
+            matches = re.findall(r'href="([^"]+\.xml)"', resp.text, flags=re.IGNORECASE)
+            raw_candidates = [
+                m for m in matches
+                if "/xsl" not in m.lower() and "primary_doc" not in m.lower()
+            ]
+            chosen = raw_candidates[0] if raw_candidates else (matches[0] if matches else None)
+            if not chosen:
+                return None
+            chosen = re.sub(r"/xsl[^/]+/", "/", chosen)
+            if chosen.startswith("http"):
+                return chosen
+            if chosen.startswith("/"):
+                return f"https://www.sec.gov{chosen}"
+            base = clean_url.rsplit("/", 1)[0]
+            return f"{base}/{chosen}"
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[sec-form4] Failed to resolve XML URL from %s: %s", clean_url, exc)
+            return None
+
+    def fetch_live_purchases(
+        self,
+        *,
+        count: int = 80,
+        max_filings: int = 40,
+        min_value: float = 10_000.0,
+        min_price: float = 2.0,
+        exclude_funds_and_trusts: bool = True,
+        exclude_offerings: bool = True,
+        cluster_window_days: int = 5,
+        classifier: Optional[RoutineClassifier] = None,
+        target_symbols: Optional[Iterable[str]] = None,
+        request_delay_seconds: float = 0.12,
+    ) -> List[InsiderClusterEvent]:
+        """Fetch live SEC EDGAR Form 4 Atom filings, parse raw XMLs, and build purchase events."""
+        import time
+
+        entries = self.fetch_recent_filings(count=count)
+        if not entries:
+            return []
+
+        target_set = {normalize_symbol(s) for s in target_symbols} if target_symbols else None
+        seen_links: Set[str] = set()
+        transactions: List[InsiderTransaction] = []
+
+        for entry in entries:
+            link = str(entry.get("link") or "").strip()
+            if not link or link in seen_links:
+                continue
+            seen_links.add(link)
+            if len(seen_links) > max(1, int(max_filings)):
+                break
+
+            if request_delay_seconds > 0:
+                time.sleep(request_delay_seconds)
+            xml_url = self._resolve_raw_form4_xml_url(link)
+            if not xml_url:
+                continue
+            try:
+                if request_delay_seconds > 0:
+                    time.sleep(request_delay_seconds)
+                resp = self._get(xml_url, headers=self._headers(), timeout=self.timeout)
+                if resp.status_code != 200:
+                    continue
+                acc_match = re.search(r"/(\d{10}-\d{2}-\d{6})", link)
+                acc_num = acc_match.group(1) if acc_match else link.rsplit("/", 1)[-1]
+                filing_dt = _parse_atom_date(entry.get("updated"))
+                parsed = parse_form4_xml(
+                    resp.content,
+                    accession_number=acc_num,
+                    default_filing_date=filing_dt,
+                    min_value=min_value,
+                    min_price=min_price,
+                    exclude_funds_and_trusts=exclude_funds_and_trusts,
+                )
+                for tx in parsed:
+                    if target_set and tx.symbol not in target_set:
+                        continue
+                    transactions.append(tx)
+            except Exception as exc:  # noqa: BLE001 - fail-open per filing
+                logger.debug("[sec-form4] Live XML fetch/parse failed for %s: %s", xml_url, exc)
+
+        return build_purchase_events(
+            transactions,
+            classifier=classifier,
+            window_days=cluster_window_days,
+            exclude_offerings=exclude_offerings,
+        )
+
 
 def quarter_range(start: str, end: str) -> List[str]:
     """Inclusive list of quarters, e.g. quarter_range('2025q3', '2026q1')."""
@@ -754,6 +855,160 @@ def parse_sec_atom_feed(xml_bytes: bytes) -> List[Dict[str, Any]]:
     return entries
 
 
+def _parse_atom_date(updated_str: Optional[str]) -> Optional[date]:
+    if not updated_str:
+        return None
+    m = re.match(r"(\d{4}-\d{2}-\d{2})", str(updated_str).strip())
+    if m:
+        try:
+            return date.fromisoformat(m.group(1))
+        except ValueError:
+            return None
+    return None
+
+
+def _xml_text(root: ET.Element, path: str) -> str:
+    node = root.find(path)
+    return (node.text or "").strip() if (node is not None and node.text) else ""
+
+
+def parse_form4_xml(
+    xml_bytes: bytes,
+    *,
+    accession_number: str = "",
+    default_filing_date: Optional[date] = None,
+    min_value: float = 10_000.0,
+    min_price: float = 2.0,
+    exclude_funds_and_trusts: bool = True,
+) -> List[InsiderTransaction]:
+    """Parse a raw SEC Form 4 XML document into clean open-market purchase transactions."""
+    try:
+        root = ET.fromstring(xml_bytes)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[sec-form4] Malformed Form 4 XML: %s", exc)
+        return []
+
+    doc_type = _xml_text(root, "documentType").upper()
+    if doc_type and doc_type != "4":
+        return []
+
+    symbol = normalize_symbol(_xml_text(root, "issuer/issuerTradingSymbol"))
+    if not symbol:
+        return []
+    company_name = _xml_text(root, "issuer/issuerName") or symbol
+    issuer_cik = _xml_text(root, "issuer/issuerCik").zfill(10) if _xml_text(root, "issuer/issuerCik").isdigit() else _xml_text(root, "issuer/issuerCik")
+
+    is_10b51 = parse_bool_flag(_xml_text(root, "aff10b5One"))
+    remarks = _xml_text(root, "remarks")
+    remarks_offering = bool(_OFFERING_PATTERN.search(remarks))
+
+    filing_date = (
+        default_filing_date
+        or _parse_sec_date(_xml_text(root, "ownerSignature/signatureDate"))
+        or _parse_sec_date(_xml_text(root, "periodOfReport"))
+        or date.today()
+    )
+
+    footnotes: Dict[str, str] = {}
+    for fn in root.findall("footnotes/footnote"):
+        fid = (fn.attrib.get("id") or "").strip()
+        if fid:
+            footnotes[fid] = "".join(fn.itertext()).strip()
+
+    owners: List[Dict[str, Any]] = []
+    for owner_el in root.findall("reportingOwner"):
+        ocik = _xml_text(owner_el, "reportingOwnerId/rptOwnerCik")
+        oname = _xml_text(owner_el, "reportingOwnerId/rptOwnerName") or "Unknown Insider"
+        is_off = parse_bool_flag(_xml_text(owner_el, "reportingOwnerRelationship/isOfficer"))
+        is_dir = parse_bool_flag(_xml_text(owner_el, "reportingOwnerRelationship/isDirector"))
+        is_ten = parse_bool_flag(_xml_text(owner_el, "reportingOwnerRelationship/isTenPercentOwner"))
+        title = _xml_text(owner_el, "reportingOwnerRelationship/officerTitle")
+        if not title:
+            if is_dir:
+                title = "Director"
+            elif is_ten:
+                title = "10% Owner"
+            else:
+                title = "Insider"
+        owners.append({
+            "cik": ocik,
+            "name": oname,
+            "title": title,
+            "is_officer": is_off,
+            "is_director": is_dir,
+            "is_ten_percent": is_ten,
+            "is_c_level": _is_c_level_title(title),
+        })
+
+    primary = owners[0] if owners else {}
+    combined_title = " / ".join(dict.fromkeys(o["title"] for o in owners if o.get("title"))) or "Insider"
+    owner_ciks = tuple(o["cik"] for o in owners if o.get("cik"))
+
+    purchases: List[InsiderTransaction] = []
+    for tx_el in root.findall("nonDerivativeTable/nonDerivativeTransaction"):
+        code = _xml_text(tx_el, "transactionCoding/transactionCode").upper()
+        if code != "P":
+            continue
+        form_type = _xml_text(tx_el, "transactionCoding/transactionFormType").upper()
+        if form_type and form_type != "4":
+            continue
+
+        sec_title = _xml_text(tx_el, "securityTitle/value") or "Common Stock"
+        if _NON_COMMON_PATTERN.search(sec_title):
+            continue
+        if exclude_funds_and_trusts and (
+            _FUND_TRUST_PATTERN.search(company_name) or _FUND_TRUST_PATTERN.search(sec_title)
+        ):
+            continue
+
+        shares = _safe_float(_xml_text(tx_el, "transactionAmounts/transactionShares/value"))
+        price = _safe_float(_xml_text(tx_el, "transactionAmounts/transactionPricePerShare/value"))
+        if shares <= 0 or price < min_price:
+            continue
+        total_value = shares * price
+        if total_value < min_value:
+            continue
+
+        t_date = _parse_sec_date(_xml_text(tx_el, "transactionDate/value")) or filing_date
+        shares_after = _safe_float(_xml_text(tx_el, "postTransactionAmounts/sharesOwnedFollowingTransaction/value"))
+        direct_flag = _xml_text(tx_el, "ownershipNature/directOrIndirectOwnership/value").upper()
+
+        fn_ids = [
+            (fn_ref.attrib.get("id") or "").strip()
+            for fn_ref in tx_el.findall(".//footnoteId")
+        ]
+        is_offering = remarks_offering or any(
+            _OFFERING_PATTERN.search(footnotes.get(fid, "")) for fid in fn_ids if fid
+        )
+
+        purchases.append(InsiderTransaction(
+            accession_number=accession_number or f"live-{symbol}-{t_date.isoformat()}",
+            symbol=symbol,
+            company_name=company_name,
+            filing_date=filing_date,
+            trans_date=t_date,
+            owner_name=primary.get("name", "Unknown Insider"),
+            owner_title=combined_title,
+            is_officer=any(o["is_officer"] for o in owners),
+            is_director=any(o["is_director"] for o in owners),
+            is_ten_percent=any(o["is_ten_percent"] for o in owners),
+            is_c_level=any(o["is_c_level"] for o in owners),
+            is_10b51=is_10b51,
+            trans_code="P",
+            shares=shares,
+            price=price,
+            total_value=total_value,
+            security_title=sec_title,
+            issuer_cik=issuer_cik,
+            owner_ciks=owner_ciks,
+            shares_owned_after=shares_after,
+            is_offering=is_offering,
+            is_direct=(direct_flag != "I"),
+        ))
+
+    return purchases
+
+
 __all__ = [
     "InsiderClusterEvent",
     "InsiderTransaction",
@@ -765,6 +1020,7 @@ __all__ = [
     "cluster_insider_transactions",
     "normalize_symbol",
     "parse_bool_flag",
+    "parse_form4_xml",
     "parse_sec_atom_feed",
     "quarter_range",
     "resolve_sec_user_agent",

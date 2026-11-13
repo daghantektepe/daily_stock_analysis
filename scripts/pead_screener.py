@@ -28,6 +28,16 @@ DEFAULT_US_WATCHLIST = [
     "CAT", "GE", "UNH", "LLY", "JNJ", "ABBV", "MRK", "V", "MA",
 ]
 
+# Liquid US Mid/Small-Cap universe where PEAD alpha historically persists longer
+DEFAULT_US_MIDCAP_WATCHLIST = [
+    "CELH", "ELF", "DUOL", "CAVA", "TOST", "IOT", "GTLB", "DOCN",
+    "DT", "ESTC", "BRZE", "BILL", "FOUR", "EXLS", "MEDP", "HALO",
+    "INSM", "EXEL", "GKOS", "TMDX", "AXNX", "UFPI", "FIX", "EME",
+    "AAON", "MOD", "SPXC", "IESC", "BWXT", "KTOS", "AVAV", "RKLB",
+    "CLS", "FN", "ONTO", "RMBS", "AEIS", "COHR", "LITE", "CRDO",
+    "ALAB", "SOFI", "AFRM", "UPST", "HOOD", "COIN", "RBRK", "S",
+]
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -38,6 +48,12 @@ def main() -> int:
         type=str,
         default="",
         help="Taranacak hisseler (virgülle ayrılmış, örn: NVDA,AAPL,PLTR,AMD). Boş bırakılırsa varsayılan likit ABD hisseleri taranır.",
+    )
+    parser.add_argument(
+        "--universe",
+        choices=("all", "midcap", "megacap"),
+        default="all",
+        help="Varsayılan tarama evreni (--stocks verilmezse): midcap (yüksek PEAD alfa), megacap veya all",
     )
     parser.add_argument(
         "--days",
@@ -71,8 +87,12 @@ def main() -> int:
 
     if args.stocks:
         symbols = [s.strip().upper() for s in args.stocks.split(",") if s.strip()]
-    else:
+    elif args.universe == "midcap":
+        symbols = DEFAULT_US_MIDCAP_WATCHLIST
+    elif args.universe == "megacap":
         symbols = DEFAULT_US_WATCHLIST
+    else:
+        symbols = list(dict.fromkeys(DEFAULT_US_MIDCAP_WATCHLIST + DEFAULT_US_WATCHLIST))
 
     print(f"\n🔍 {len(symbols)} hisse için son {args.days} günün bilanço sürprizleri ve PEAD sürüklenmesi taranıyor...")
     candidates = screen_pead_candidates(

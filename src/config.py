@@ -1183,6 +1183,10 @@ class Config:
     paper_trading_risk_pct: float = 5.0
     paper_trading_atr_stop_mult: float = 2.0
     paper_trading_atr_tp_mult: float = 3.0
+    paper_trading_commission_bps: float = 0.0
+    paper_trading_slippage_bps: float = 0.0
+    paper_trading_vol_target_pct: Optional[float] = None
+    paper_trading_max_holding_days: Optional[int] = None
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
@@ -1190,6 +1194,9 @@ class Config:
     # BIST screener (scripts/bist_screener.py): scan ~800 BIST stocks to pick top N candidates
     bist_screener_enabled: bool = False
     bist_screener_top_n: int = 8
+    # US high-alpha screener (Quant + PEAD 2.0 + Live SEC Form 4)
+    us_screener_enabled: bool = False
+    us_screener_top_n: int = 8
     
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
@@ -2172,6 +2179,38 @@ class Config:
                 field_name='PAPER_TRADING_ATR_TP_MULT',
                 minimum=0.5,
             ),
+            paper_trading_commission_bps=parse_env_float(
+                os.getenv('PAPER_TRADING_COMMISSION_BPS'),
+                0.0,
+                field_name='PAPER_TRADING_COMMISSION_BPS',
+                minimum=0.0,
+            ),
+            paper_trading_slippage_bps=parse_env_float(
+                os.getenv('PAPER_TRADING_SLIPPAGE_BPS'),
+                0.0,
+                field_name='PAPER_TRADING_SLIPPAGE_BPS',
+                minimum=0.0,
+            ),
+            paper_trading_vol_target_pct=(
+                parse_env_float(
+                    os.getenv('PAPER_TRADING_VOL_TARGET_PCT'),
+                    12.0,
+                    field_name='PAPER_TRADING_VOL_TARGET_PCT',
+                    minimum=1.0,
+                )
+                if os.getenv('PAPER_TRADING_VOL_TARGET_PCT')
+                else None
+            ),
+            paper_trading_max_holding_days=(
+                parse_env_int(
+                    os.getenv('PAPER_TRADING_MAX_HOLDING_DAYS'),
+                    20,
+                    field_name='PAPER_TRADING_MAX_HOLDING_DAYS',
+                    minimum=1,
+                )
+                if os.getenv('PAPER_TRADING_MAX_HOLDING_DAYS')
+                else None
+            ),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
                 300,
@@ -2185,6 +2224,14 @@ class Config:
                 os.getenv('BIST_SCREENER_TOP_N'),
                 8,
                 field_name='BIST_SCREENER_TOP_N',
+                minimum=1,
+                maximum=25,
+            ),
+            us_screener_enabled=parse_env_bool(os.getenv('US_SCREENER_ENABLED'), default=False),
+            us_screener_top_n=parse_env_int(
+                os.getenv('US_SCREENER_TOP_N'),
+                8,
+                field_name='US_SCREENER_TOP_N',
                 minimum=1,
                 maximum=25,
             ),

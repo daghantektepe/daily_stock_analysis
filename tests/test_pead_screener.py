@@ -109,3 +109,55 @@ def test_evaluate_pead_for_symbol_mocked() -> None:
     assert "TECH - Test Tech Inc" in report
     assert "+%30.0" in report
     assert "python main.py --stocks TECH" in report
+
+
+def test_resolve_event_day0_bmo_vs_amc() -> None:
+    from src.services.pead_screener import resolve_event_day0
+
+    trading_days = [
+        date(2026, 11, 2),
+        date(2026, 11, 3),
+        date(2026, 11, 4),
+        date(2026, 11, 5),
+    ]
+    # Before market open (08:30) on Nov 3 -> Day 0 is Nov 3
+    d_bmo, _, sess_bmo = resolve_event_day0(pd.Timestamp("2026-11-03 08:30:00"), trading_days)
+    assert d_bmo == date(2026, 11, 3)
+    assert sess_bmo == "BMO"
+
+    # After market close (16:05) on Nov 3 -> Day 0 is Nov 4
+    d_amc, _, sess_amc = resolve_event_day0(pd.Timestamp("2026-11-03 16:05:00"), trading_days)
+    assert d_amc == date(2026, 11, 4)
+    assert sess_amc == "AMC"
+
+
+def test_pead_event_study_offline() -> None:
+    from src.services.pead_event_study import run_pead_event_study
+
+    dates = pd.bdate_range("2026-01-02", periods=90)
+    spy_closes = {d.date(): 100.0 * ((1.0005) ** i) for i, d in enumerate(dates)}
+    stock_closes = {
+        d.date(): (100.0 if i < 20 else 105.0 * ((1.005) ** (i - 20)))
+        for i, d in enumerate(dates)
+    }
+
+    earnings_df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.00],
+            "Reported EPS": [1.25],
+            "Surprise(%)": [25.0],
+        },
+        index=[pd.Timestamp(dates[20].date()) + pd.Timedelta(hours=8)],
+    )
+
+    report = run_pead_event_study(
+        ["BEAT"],
+        min_surprise_pct=5.0,
+        horizons=(("1d", 1), ("5d", 5), ("20d", 20)),
+        earnings_fetcher=lambda sym: earnings_df if sym == "BEAT" else pd.DataFrame(),
+        price_fetcher=lambda sym, s, e: spy_closes if sym == "SPY" else stock_closes,
+    )
+    assert report["evaluated_events"] == 1
+    assert report["horizons"]["20d"]["count"] == 1
+    assert report["horizons"]["20d"]["avg_excess_return_pct"] > 5.0
+

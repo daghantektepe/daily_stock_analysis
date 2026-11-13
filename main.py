@@ -313,6 +313,12 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        '--screen-us',
+        action='store_true',
+        help='ABD yüksek alfa taramasını (Quant + PEAD 2.0 + Form 4) çalıştırıp en iyi adayları seçer'
+    )
+
+    parser.add_argument(
         '--portfolio',
         type=str.lower,
         choices=('futu',),
@@ -763,6 +769,27 @@ def _resolve_bist_screener_codes(config: Config, args: argparse.Namespace) -> Op
     return None
 
 
+def _resolve_us_screener_codes(config: Config, args: argparse.Namespace) -> Optional[List[str]]:
+    """Return screened US stock codes when enabled, or ``None`` to keep STOCK_LIST."""
+    if not (getattr(config, "us_screener_enabled", False) or getattr(args, "screen_us", False)):
+        return None
+    try:
+        from src.services.us_quant_screener import screen_us_alpha_candidates
+
+        top_n = int(getattr(config, "us_screener_top_n", 8) or 8)
+        candidates = screen_us_alpha_candidates(top_n=top_n)
+        if candidates:
+            lines = ["[us-screener] Seçilen ABD Yüksek Alfa Adayları:"]
+            for c in candidates:
+                lines.append(f"  - {c.symbol}: score={c.score:.1f} ({'; '.join(c.reasons[:3])})")
+            logger.info("\n%s", "\n".join(lines))
+            return [c.symbol for c in candidates]
+        logger.warning("[us-screener] Eşiği geçen ABD hissesi bulunamadı; STOCK_LIST kullanılacak.")
+    except Exception as exc:  # noqa: BLE001 - fail-open
+        logger.warning("[us-screener] Tarama hatası, STOCK_LIST kullanılacak: %s", exc)
+    return None
+
+
 def run_full_analysis(
     config: Config,
     args: argparse.Namespace,
@@ -806,9 +833,11 @@ def run_full_analysis(
         # Issue #529: Hot-reload STOCK_LIST from .env on each scheduled run
         if stock_codes is None and portfolio_stock_codes is None:
             config.refresh_stock_list()
-            screened_codes = _resolve_bist_screener_codes(config, args)
-            if screened_codes:
-                stock_codes = screened_codes
+            bist_codes = _resolve_bist_screener_codes(config, args) or []
+            us_codes = _resolve_us_screener_codes(config, args) or []
+            combined_codes = list(dict.fromkeys([*us_codes, *bist_codes]))
+            if combined_codes:
+                stock_codes = combined_codes
 
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list

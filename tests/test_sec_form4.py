@@ -323,3 +323,56 @@ def test_sec_screener_trend_regime_scoring() -> None:
     assert score_up == score_down + 40
     assert any("Trend Onayı" in r for r in reasons_up)
     assert any("Düşüş Trendi" in r for r in reasons_down)
+
+
+def test_parse_form4_xml_open_market_purchase() -> None:
+    from data_provider.sec_form4_fetcher import parse_form4_xml
+
+    xml_text = """<?xml version="1.0"?>
+    <ownershipDocument>
+      <issuer>
+        <issuerCik>0000320193</issuerCik>
+        <issuerName>Apple Inc.</issuerName>
+        <issuerTradingSymbol>AAPL</issuerTradingSymbol>
+      </issuer>
+      <reportingOwner>
+        <reportingOwnerId>
+          <rptOwnerCik>0001214156</rptOwnerCik>
+          <rptOwnerName>Cook Timothy D</rptOwnerName>
+        </reportingOwnerId>
+        <reportingOwnerRelationship>
+          <isDirector>1</isDirector>
+          <isOfficer>1</isOfficer>
+          <officerTitle>Chief Executive Officer</officerTitle>
+        </reportingOwnerRelationship>
+      </reportingOwner>
+      <nonDerivativeTable>
+        <nonDerivativeTransaction>
+          <transactionDate><value>2026-11-05</value></transactionDate>
+          <transactionCoding>
+            <transactionFormType>4</transactionFormType>
+            <transactionCode>P</transactionCode>
+          </transactionCoding>
+          <transactionAmounts>
+            <transactionShares><value>1500</value></transactionShares>
+            <transactionPricePerShare><value>210.00</value></transactionPricePerShare>
+          </transactionAmounts>
+        </nonDerivativeTransaction>
+      </nonDerivativeTable>
+    </ownershipDocument>
+    """
+    txs = parse_form4_xml(
+        xml_text.encode("utf-8"),
+        accession_number="0000320193-26-000001",
+        default_filing_date=date(2026, 11, 6),
+    )
+    assert len(txs) == 1
+    tx = txs[0]
+    assert tx.symbol == "AAPL"
+    assert tx.owner_name == "Cook Timothy D"
+    assert tx.is_c_level is True
+    assert tx.shares == 1500.0
+    assert tx.price == 210.0
+    assert tx.total_value == pytest.approx(315_000.0)
+    assert tx.filing_date == date(2026, 11, 6)
+
