@@ -25,6 +25,8 @@ from api.v1.schemas.stocks import (
     KLineData,
     StockHistoryResponse,
     StockQuote,
+    StockSearchItem,
+    StockSearchResponse,
 )
 from api.v1.schemas.history import WatchlistRequest, WatchlistResponse
 from api.v1.schemas.common import ErrorResponse
@@ -403,6 +405,96 @@ def remove_from_watchlist(
             status_code=500,
             detail={"error": "internal_error", "message": f"从自选删除失败: {str(e)}"},
         )
+
+
+_SEARCH_INDEX_CACHE: list[dict] | None = None
+
+
+def _get_searchable_stock_entries() -> list[dict]:
+    """Load and normalize searchable stock index entries lazily in memory."""
+    global _SEARCH_INDEX_CACHE
+    if _SEARCH_INDEX_CACHE is not None:
+        return _SEARCH_INDEX_CACHE
+
+    import json
+    from src.data.stock_index_loader import find_existing_stock_index_path
+
+    entries: list[dict] = []
+    index_path = find_existing_stock_index_path()
+    if index_path and index_path.is_file():
+        try:
+            with index_path.open("r", encoding="utf-8") as fh:
+                raw_items = json.load(fh)
+            if isinstance(raw_items, list):
+                for item in raw_items:
+                    if not isinstance(item, dict):
+                        continue
+                    canonical = str(item.get("canonicalCode") or "").strip().upper()
+                    display = str(item.get("displayCode") or canonical).strip().upper()
+                    name = str(item.get("nameEn") or item.get("nameZh") or item.get("name") or "").strip()
+                    market = str(item.get("market") or "").strip().upper() or "US"
+                    aliases = item.get("aliases") if isinstance(item.get("aliases"), list) else []
+                    if canonical:
+                        haystack = " ".join([canonical, display, name, *[str(a) for a in aliases]]).upper()
+                        entries.append({
+                            "canonical_code": canonical,
+                            "display_code": display,
+                            "name": name,
+                            "market": market,
+                            "haystack": haystack,
+                        })
+        except Exception as exc:
+            logger.debug("Failed reading stock index JSON for search: %s", exc)
+
+    _SEARCH_INDEX_CACHE = entries
+    return entries
+
+
+@router.get(
+    "/search",
+    response_model=StockSearchResponse,
+    summary="Search stocks across indexed markets",
+    description="Fast server-side symbol and company name lookup across US, BIST (TR), HK, and CN markets.",
+)
+def search_stocks_endpoint(
+    q: str = Query("", description="Ticker or company name query"),
+    market: str = Query("ALL", description="ALL | US | TR | HK | CN"),
+    limit: int = Query(15, ge=1, le=50),
+) -> StockSearchResponse:
+    """Search cached global stock index without downloading the full JSON to the browser."""
+    query_upper = q.strip().upper()
+    market_upper = market.strip().upper()
+    entries = _get_searchable_stock_entries()
+
+    matched: list[tuple[int, dict]] = []
+    for entry in entries:
+        if market_upper != "ALL" and entry["market"] != market_upper:
+            continue
+        if not query_upper:
+            matched.append((2, entry))
+            if len(matched) >= limit:
+                break
+            continue
+        disp = entry["display_code"]
+        can = entry["canonical_code"]
+        if disp == query_upper or can == query_upper:
+            matched.append((0, entry))
+        elif disp.startswith(query_upper) or can.startswith(query_upper):
+            matched.append((1, entry))
+        elif query_upper in entry["haystack"]:
+            matched.append((2, entry))
+
+    matched.sort(key=lambda pair: (pair[0], len(pair[1]["display_code"]), pair[1]["display_code"]))
+    items = [
+        StockSearchItem(
+            canonical_code=entry["canonical_code"],
+            display_code=entry["display_code"],
+            name=entry["name"],
+            market=entry["market"],
+        )
+        for _rank, entry in matched[:limit]
+    ]
+    return StockSearchResponse(query=q.strip(), count=len(items), items=items)
 
 
 @router.get(

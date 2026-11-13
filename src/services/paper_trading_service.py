@@ -791,6 +791,263 @@ class PaperTradingService:
         close = _positive_float(row[0])
         return close, row[1] if close is not None else None
 
+    def _next_manual_signal_id(self) -> int:
+        """Return a negative unique signal_id below -1_000_000 for manual UI orders."""
+        from sqlalchemy import func
+
+        with self.db.session_scope() as session:
+            min_id = session.execute(select(func.min(PaperTradeRecord.signal_id))).scalar_one_or_none()
+        if min_id is None or int(min_id) > -1_000_000:
+            return -1_000_001
+        return int(min_id) - 1
+
+    def place_manual_order(
+        self,
+        *,
+        stock_code: str,
+        action: str,
+        quantity: Optional[float] = None,
+        price: Optional[float] = None,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+        stock_name: Optional[str] = None,
+        market: Optional[str] = None,
+        trade_date: Optional[date] = None,
+    ) -> Dict[str, Any]:
+        """Record an explicit manual simulated order from the Web UI (buy/reduce/sell).
+
+        Unlike ``apply_signal``, manual orders work directly with a unique negative
+        ``signal_id`` (< -1,000,000) and validate open position quantities cleanly.
+        """
+        code = str(stock_code or "").strip().upper()
+        act = str(action or "").strip().lower()
+        if not code:
+            raise ValueError("Stock code is required")
+        if act not in BUY_ACTIONS | SELL_ALL_ACTIONS | REDUCE_ACTIONS:
+            raise ValueError(f"Unsupported paper action: {action}")
+
+        resolved_price = _positive_float(price)
+        effective_date = trade_date or date.today()
+        if resolved_price is None:
+            resolved_price, latest_dt = self._latest_close(code)
+            if trade_date is None and latest_dt is not None:
+                effective_date = latest_dt
+        if resolved_price is None:
+            raise ValueError(f"No valid price supplied or stored in StockDaily for {code}")
+
+        held = self.open_quantity(code)
+        resolved_sl = _positive_float(stop_loss)
+        resolved_tp = _positive_float(take_profit)
+
+        if act in BUY_ACTIONS:
+            if held > _EPS:
+                raise ValueError(f"Open paper position already exists for {code} ({held} shares)")
+            side = "buy"
+            if quantity is not None:
+                qty = _positive_float(quantity)
+                if qty is None:
+                    raise ValueError("Quantity must be greater than 0")
+            else:
+                eff_size = self._vol_scaled_position_size(code, effective_date)
+                plan = compute_atr_risk_plan(
+                    code,
+                    price=resolved_price,
+                    position_size=eff_size,
+                    risk_pct=self.risk_pct,
+                    atr_stop_multiplier=self.atr_stop_mult,
+                    atr_take_profit_multiplier=self.atr_tp_mult,
+                    db_manager=self.db,
+                    as_of_date=effective_date,
+                )
+                qty = float(plan["recommended_quantity"])
+                if qty <= 0:
+                    raise ValueError(f"Position size {eff_size:.2f} below 1 share at price {resolved_price:.4f}")
+                if resolved_sl is None:
+                    resolved_sl = plan["stop_loss"]
+                if resolved_tp is None:
+                    resolved_tp = plan["take_profit"]
+        else:
+            if held <= _EPS:
+                raise ValueError(f"No open paper position to {act} for {code}")
+            side = "sell"
+            if quantity is not None:
+                req_qty = _positive_float(quantity)
+                if req_qty is None:
+                    raise ValueError("Quantity must be greater than 0")
+                qty = min(held, req_qty)
+            elif act in REDUCE_ACTIONS:
+                qty = float(math.floor(held / 2)) or held
+            else:
+                qty = held
+
+        resolved_market = (str(market or "").strip().lower() or _infer_market_from_code(code))
+        record = PaperTradeRecord(
+            signal_id=self._next_manual_signal_id(),
+            stock_code=code,
+            stock_name=(str(stock_name or "").strip() or None),
+            market=resolved_market,
+            currency=_MARKET_CURRENCY.get(resolved_market or "", "USD"),
+            action=act,
+            side=side,
+            quantity=round(float(qty), 4),
+            price=round(float(resolved_price), 6),
+            stop_loss=resolved_sl,
+            take_profit=resolved_tp,
+            trade_date=effective_date,
+        )
+        with self.db.session_scope() as session:
+            session.add(record)
+            session.flush()
+            payload = _trade_to_dict(record)
+        logger.info(
+            "[paper-manual] %s %s x%s @ %s (sl=%s, tp=%s)",
+            side, code, payload["quantity"], payload["price"], resolved_sl, resolved_tp,
+        )
+        return payload
+
+    def update_position_stops(
+        self,
+        stock_code: str,
+        *,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Update active stop-loss and take-profit levels on the latest open buy lot."""
+        code = str(stock_code or "").strip().upper()
+        if not code:
+            raise ValueError("Stock code is required")
+        if self.open_quantity(code) <= _EPS:
+            raise ValueError(f"No open paper position found for {code}")
+
+        sl_val = _positive_float(stop_loss) if stop_loss is not None else None
+        tp_val = _positive_float(take_profit) if take_profit is not None else None
+        if stop_loss is not None and sl_val is None:
+            raise ValueError("stop_loss must be positive")
+        if take_profit is not None and tp_val is None:
+            raise ValueError("take_profit must be positive")
+
+        with self.db.session_scope() as session:
+            row = session.execute(
+                select(PaperTradeRecord)
+                .where(PaperTradeRecord.stock_code == code, PaperTradeRecord.side == "buy")
+                .order_by(desc(PaperTradeRecord.trade_date), desc(PaperTradeRecord.id))
+                .limit(1)
+            ).scalar_one_or_none()
+            if row is None:
+                raise ValueError(f"No buy fill found for {code}")
+            if stop_loss is not None:
+                row.stop_loss = sl_val
+            if take_profit is not None:
+                row.take_profit = tp_val
+            session.flush()
+            return _trade_to_dict(row)
+
+    def get_equity_curve(self, *, days: int = 90) -> Dict[str, Any]:
+        """Build a chronological daily equity/return curve from stored trades and StockDaily."""
+        with self.db.session_scope() as session:
+            trades = session.execute(
+                select(PaperTradeRecord).order_by(PaperTradeRecord.trade_date, PaperTradeRecord.id)
+            ).scalars().all()
+            trade_dicts = [_trade_to_dict(t) for t in trades]
+
+        if not trade_dicts:
+            return {"points": [], "currencies": []}
+
+        codes = sorted({t["stock_code"] for t in trade_dicts if t.get("stock_code")})
+        first_date = _parse_iso_date(trade_dicts[0].get("trade_date")) or date.today()
+        price_by_code_date: Dict[str, Dict[date, float]] = defaultdict(dict)
+        all_dates: set[date] = set()
+
+        with self.db.session_scope() as session:
+            bar_rows = session.execute(
+                select(StockDaily.code, StockDaily.date, StockDaily.close)
+                .where(StockDaily.code.in_(codes), StockDaily.date >= first_date)
+                .order_by(StockDaily.date)
+            ).all()
+        for b_code, b_date, b_close in bar_rows:
+            c_val = _positive_float(b_close)
+            if b_date and c_val is not None:
+                price_by_code_date[str(b_code).upper()][b_date] = c_val
+                all_dates.add(b_date)
+
+        for t in trade_dicts:
+            td = _parse_iso_date(t.get("trade_date"))
+            if td:
+                all_dates.add(td)
+
+        sorted_dates = sorted(all_dates)
+        if days > 0 and len(sorted_dates) > days:
+            sorted_dates = sorted_dates[-days:]
+
+        # Replay fills chronologically up to each date
+        last_known_price: Dict[str, float] = {}
+        qty_by_code: Dict[str, float] = defaultdict(float)
+        cost_by_code: Dict[str, float] = defaultdict(float)
+        realized_total = 0.0
+        cum_bought = 0.0
+        trade_idx = 0
+
+        # Warm up state before sorted_dates[0] if truncated by `days`
+        points: List[Dict[str, Any]] = []
+        for cur_date in sorted_dates:
+            while trade_idx < len(trade_dicts):
+                t = trade_dicts[trade_idx]
+                td = _parse_iso_date(t.get("trade_date")) or first_date
+                if td > cur_date:
+                    break
+                c = t["stock_code"]
+                q = float(t["quantity"] or 0.0)
+                p = float(t["price"] or 0.0)
+                last_known_price[c] = p
+                if t["side"] == "buy":
+                    qty_by_code[c] += q
+                    cost_by_code[c] += q * p
+                    cum_bought += q * p
+                elif qty_by_code[c] > _EPS:
+                    sell_q = min(q, qty_by_code[c])
+                    avg = cost_by_code[c] / qty_by_code[c]
+                    realized_total += sell_q * (p - avg)
+                    cost_by_code[c] = max(0.0, cost_by_code[c] - sell_q * avg)
+                    qty_by_code[c] = max(0.0, qty_by_code[c] - sell_q)
+                trade_idx += 1
+
+            for c in codes:
+                if cur_date in price_by_code_date[c]:
+                    last_known_price[c] = price_by_code_date[c][cur_date]
+
+            open_cost = sum(cost_by_code[c] for c in codes if qty_by_code[c] > _EPS)
+            market_val = sum(
+                qty_by_code[c] * last_known_price.get(c, (cost_by_code[c] / qty_by_code[c]))
+                for c in codes
+                if qty_by_code[c] > _EPS
+            )
+            unrealized = market_val - open_cost
+            total_pnl = realized_total + unrealized
+            ret_pct = (total_pnl / cum_bought * 100.0) if cum_bought > _EPS else 0.0
+            points.append({
+                "date": cur_date.isoformat(),
+                "total_pnl": round(total_pnl, 2),
+                "realized_pnl": round(realized_total, 2),
+                "unrealized_pnl": round(unrealized, 2),
+                "market_value": round(market_val, 2),
+                "capital_deployed": round(cum_bought, 2),
+                "return_pct": round(ret_pct, 2),
+            })
+
+        currencies = sorted({t.get("currency") or "USD" for t in trade_dicts})
+        return {"points": points, "currencies": currencies}
+
+
+def _infer_market_from_code(stock_code: str) -> str:
+    upper = str(stock_code or "").strip().upper()
+    if upper.endswith(".IS"):
+        return "tr"
+    if upper.endswith(".HK") or (upper.startswith("HK") and upper[2:].isdigit()):
+        return "hk"
+    if upper.endswith((".SH", ".SZ", ".SS", ".BJ")) or (upper.isdigit() and len(upper) == 6):
+        return "cn"
+    return "us"
+
 
 def _positive_float(value: Any) -> Optional[float]:
     try:

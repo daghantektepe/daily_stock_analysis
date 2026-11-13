@@ -106,3 +106,20 @@ class StockHistoryResponse(BaseModel):
             "data": []
         }
     })
+
+
+class StockSearchItem(BaseModel):
+    """Lightweight searchable stock entry for server-side Command Palette search."""
+
+    canonical_code: str
+    display_code: str
+    name: str = ""
+    market: str = "US"
+
+
+class StockSearchResponse(BaseModel):
+    """Server-side stock search results."""
+
+    query: str
+    count: int
+    items: List[StockSearchItem] = Field(default_factory=list)

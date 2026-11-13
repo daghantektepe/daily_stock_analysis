@@ -123,6 +123,37 @@ export interface KapAlertListResponse {
   items: KapAlertItem[];
 }
 
+export interface PaperEquityPoint {
+  date: string;
+  total_pnl: number;
+  realized_pnl: number;
+  unrealized_pnl: number;
+  market_value: number;
+  capital_deployed: number;
+  return_pct: number;
+}
+
+export interface PaperEquityCurveResponse {
+  points: PaperEquityPoint[];
+  currencies: string[];
+}
+
+export interface PaperManualOrderPayload {
+  stock_code: string;
+  action: 'buy' | 'reduce' | 'sell';
+  quantity?: number;
+  price?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  stock_name?: string;
+  market?: string;
+}
+
+export interface PaperUpdateStopsPayload {
+  stop_loss?: number;
+  take_profit?: number;
+}
+
 export const paperTradingApi = {
   async getSummary(benchmark = true, outcomes = true): Promise<PaperTradingSummaryResponse> {
     const response = await apiClient.get<PaperTradingSummaryResponse>('/api/v1/paper-trading/summary', {
@@ -142,6 +173,26 @@ export const paperTradingApi = {
     const response = await apiClient.get<KapAlertListResponse>('/api/v1/paper-trading/kap-alerts', {
       params: { limit, live },
     });
+    return response.data;
+  },
+
+  async getEquityCurve(days = 90): Promise<PaperEquityCurveResponse> {
+    const response = await apiClient.get<PaperEquityCurveResponse>('/api/v1/paper-trading/equity-curve', {
+      params: { days },
+    });
+    return response.data;
+  },
+
+  async placeOrder(payload: PaperManualOrderPayload): Promise<PaperTradeItem> {
+    const response = await apiClient.post<PaperTradeItem>('/api/v1/paper-trading/orders', payload);
+    return response.data;
+  },
+
+  async updatePositionStops(stockCode: string, payload: PaperUpdateStopsPayload): Promise<PaperTradeItem> {
+    const response = await apiClient.patch<PaperTradeItem>(
+      `/api/v1/paper-trading/positions/${encodeURIComponent(stockCode)}/stops`,
+      payload,
+    );
     return response.data;
   },
 };

@@ -619,7 +619,8 @@ def screen_us_alpha_candidates(
     # 3. Live SEC Form 4 Cluster Insider Buying Boost
     if include_form4:
         try:
-            from data_provider.sec_form4_fetcher import SecForm4Fetcher, score_insider_event
+            from data_provider.sec_form4_fetcher import SecForm4Fetcher
+            from src.services.sec_form4_screener import score_insider_event
 
             fetcher = SecForm4Fetcher()
             clusters = fetcher.fetch_live_purchases(count=80, max_filings=40)

@@ -4,6 +4,8 @@ import { Menu } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import { Drawer } from '../common/Drawer';
 import { SidebarNav } from './SidebarNav';
+import { CommandPalette } from './CommandPalette';
+import { LiveStatusBar } from './LiveStatusBar';
 import { cn } from '../../utils/cn';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { UiLanguageToggle } from '../i18n/UiLanguageToggle';
@@ -65,9 +67,14 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         </aside>
 
         <main className="min-h-0 min-w-0 flex-1 pt-14 lg:pl-3 lg:pt-0 touch-pan-y">
+          <div className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 lg:px-4">
+            <LiveStatusBar />
+          </div>
           {children ?? <Outlet />}
         </main>
       </div>
+
+      <CommandPalette />
 
       <Drawer
         isOpen={mobileOpen}

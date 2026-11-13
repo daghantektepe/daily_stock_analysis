@@ -3,14 +3,18 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import get_database_manager
 from api.v1.schemas.paper_trading import (
     KapAlertItem,
     KapAlertListResponse,
+    PaperEquityCurveResponse,
+    PaperManualOrderRequest,
+    PaperTrade,
     PaperTradeListResponse,
     PaperTradingSummaryResponse,
+    PaperUpdateStopsRequest,
 )
 from src.services.kap_watch_service import get_recent_kap_and_news_alerts
 from src.services.paper_trading_benchmark import evaluate_signal_outcomes
@@ -50,3 +54,53 @@ def list_kap_and_news_alerts(
     """Recent material KAP disclosures, multi-source confirmed news, and spreading rumor warnings."""
     items = get_recent_kap_and_news_alerts(live_fallback=live, max_items=limit)
     return KapAlertListResponse(items=[KapAlertItem(**item) for item in items])
+
+
+@router.get("/equity-curve", response_model=PaperEquityCurveResponse)
+def get_paper_equity_curve(
+    days: int = Query(90, ge=7, le=365),
+    db_manager: DatabaseManager = Depends(get_database_manager),
+) -> PaperEquityCurveResponse:
+    """Daily cumulative P&L and return % curve computed from simulated trades and StockDaily."""
+    payload = PaperTradingService(db_manager).get_equity_curve(days=days)
+    return PaperEquityCurveResponse(**payload)
+
+
+@router.post("/orders", response_model=PaperTrade)
+def place_manual_paper_order(
+    req: PaperManualOrderRequest,
+    db_manager: DatabaseManager = Depends(get_database_manager),
+) -> PaperTrade:
+    """Record a simulated manual paper order (buy, reduce, or sell) with ATR or explicit stops."""
+    try:
+        trade = PaperTradingService(db_manager).place_manual_order(
+            stock_code=req.stock_code,
+            action=req.action,
+            quantity=req.quantity,
+            price=req.price,
+            stop_loss=req.stop_loss,
+            take_profit=req.take_profit,
+            stock_name=req.stock_name,
+            market=req.market,
+        )
+        return PaperTrade(**trade)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"error": "invalid_paper_order", "message": str(exc)}) from exc
+
+
+@router.patch("/positions/{stock_code}/stops", response_model=PaperTrade)
+def update_paper_position_stops(
+    stock_code: str,
+    req: PaperUpdateStopsRequest,
+    db_manager: DatabaseManager = Depends(get_database_manager),
+) -> PaperTrade:
+    """Update active stop-loss and take-profit targets for an open paper position."""
+    try:
+        trade = PaperTradingService(db_manager).update_position_stops(
+            stock_code,
+            stop_loss=req.stop_loss,
+            take_profit=req.take_profit,
+        )
+        return PaperTrade(**trade)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail={"error": "paper_position_not_found", "message": str(exc)}) from exc

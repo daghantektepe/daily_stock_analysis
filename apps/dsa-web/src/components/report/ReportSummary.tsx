@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AnalysisResult, AnalysisReport } from '../../types/analysis';
 import { ReportOverview } from './ReportOverview';
+import { ReportPriceChart } from './ReportPriceChart';
 import { ReportStrategy } from './ReportStrategy';
 import { ReportNews } from './ReportNews';
 import { ReportDetails } from './ReportDetails';
@@ -57,6 +58,14 @@ export const ReportSummary: React.FC<ReportSummaryProps> = ({
     );
   }
 
+  const parsePriceLevel = (raw?: string | null): number | null => {
+    if (!raw) return null;
+    const match = String(raw).replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+    if (!match) return null;
+    const val = Number(match[0]);
+    return Number.isFinite(val) && val > 0 ? val : null;
+  };
+
   return (
     <div className="space-y-5 pb-8 animate-fade-in">
       {/* 概览区（首屏） */}
@@ -66,6 +75,14 @@ export const ReportSummary: React.FC<ReportSummaryProps> = ({
         details={details}
         isHistory={isHistory}
         watchlist={watchlist}
+      />
+
+      {/* Teknik Fiyat & Kritik Seviye Grafiği */}
+      <ReportPriceChart
+        stockCode={meta.stockCode}
+        stopLoss={parsePriceLevel(strategy?.stopLoss)}
+        takeProfit={parsePriceLevel(strategy?.takeProfit)}
+        idealBuy={parsePriceLevel(strategy?.idealBuy)}
       />
 
       {/* 策略点位区 */}

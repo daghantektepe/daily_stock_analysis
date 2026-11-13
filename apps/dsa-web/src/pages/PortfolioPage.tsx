@@ -80,20 +80,23 @@ type PortfolioSignalLookupResult = {
   error: string | null;
 };
 
-type PortfolioPageLanguage = 'zh' | 'en';
+type PortfolioPageLanguage = 'zh' | 'en' | 'tr';
 
 const PORTFOLIO_LIMITATION_LABELS: Record<string, Record<PortfolioPageLanguage, string>> = {
   realtime_quote_best_effort: {
     zh: '实时行情为尽力获取',
     en: 'Realtime quotes are best-effort',
+    tr: 'Canlı fiyatlar en iyi çabayla alınmaktadır',
   },
   fx_and_cost_basis_partial: {
     zh: '汇率与成本基础为部分口径',
     en: 'FX and cost basis are partial',
+    tr: 'Döviz kuru ve maliyet tabanı kısmidir',
   },
   sector_and_risk_metrics_limited: {
     zh: '行业与风险指标覆盖有限',
     en: 'Sector and risk metrics are limited',
+    tr: 'Sektör ve risk metrikleri sınırlıdır',
   },
 };
 

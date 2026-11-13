@@ -117,3 +117,34 @@ class KapAlertItem(BaseModel):
 
 class KapAlertListResponse(BaseModel):
     items: List[KapAlertItem]
+
+
+class PaperManualOrderRequest(BaseModel):
+    stock_code: str = Field(..., min_length=1, max_length=32)
+    action: str = Field("buy", pattern="^(buy|add|reduce|sell)$")
+    quantity: Optional[float] = Field(None, gt=0)
+    price: Optional[float] = Field(None, gt=0)
+    stop_loss: Optional[float] = Field(None, gt=0)
+    take_profit: Optional[float] = Field(None, gt=0)
+    stock_name: Optional[str] = Field(None, max_length=128)
+    market: Optional[str] = Field(None, max_length=8)
+
+
+class PaperUpdateStopsRequest(BaseModel):
+    stop_loss: Optional[float] = Field(None, gt=0)
+    take_profit: Optional[float] = Field(None, gt=0)
+
+
+class PaperEquityPoint(BaseModel):
+    date: str
+    total_pnl: float
+    realized_pnl: float
+    unrealized_pnl: float
+    market_value: float
+    capital_deployed: float
+    return_pct: float
+
+
+class PaperEquityCurveResponse(BaseModel):
+    points: List[PaperEquityPoint] = Field(default_factory=list)
+    currencies: List[str] = Field(default_factory=list)

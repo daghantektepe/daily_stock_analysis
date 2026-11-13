@@ -60,6 +60,11 @@ describe('UiLanguageContext', () => {
     expect(resolveInitialUiLanguage({
       storage: createStorage(null),
       navigatorLike: { language: 'tr-TR', languages: ['tr-TR'] },
+    })).toBe('tr');
+
+    expect(resolveInitialUiLanguage({
+      storage: createStorage(null),
+      navigatorLike: { language: 'fr-FR', languages: ['fr-FR'] },
     })).toBe('zh');
   });
 
@@ -119,5 +124,9 @@ describe('UiLanguageContext', () => {
     expect(localStorage.getItem(UI_LANGUAGE_STORAGE_KEY)).toBe('en');
     expect(screen.getByRole('button', { name: 'Switch UI language' })).toBeInTheDocument();
     expect(screen.getByText('English')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch UI language' }));
+    expect(localStorage.getItem(UI_LANGUAGE_STORAGE_KEY)).toBe('tr');
+    expect(screen.getByText('Türkçe')).toBeInTheDocument();
   });
 });
