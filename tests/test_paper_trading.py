@@ -17,6 +17,11 @@ from src.storage import DatabaseManager, PortfolioTrade, StockDaily
 def db(tmp_path):
     old_env_file = os.environ.get("ENV_FILE")
     old_database_path = os.environ.get("DATABASE_PATH")
+    saved_paper_env = {
+        k: os.environ.pop(k)
+        for k in list(os.environ.keys())
+        if k.startswith(("PAPER_TRADING_", "ALPACA_"))
+    }
     env_path = tmp_path / ".env"
     db_path = tmp_path / "paper.db"
     env_path.write_text(
@@ -33,6 +38,10 @@ def db(tmp_path):
     finally:
         DatabaseManager.reset_instance()
         Config.reset_instance()
+        for k in list(os.environ.keys()):
+            if k.startswith(("PAPER_TRADING_", "ALPACA_")):
+                os.environ.pop(k, None)
+        os.environ.update(saved_paper_env)
         for key, old in (("ENV_FILE", old_env_file), ("DATABASE_PATH", old_database_path)):
             if old is None:
                 os.environ.pop(key, None)

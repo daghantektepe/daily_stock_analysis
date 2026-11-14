@@ -28,6 +28,7 @@ const isMac = process.platform === 'darwin';
 const appRootDev = path.resolve(__dirname, '..', '..');
 const GITHUB_OWNER = 'ZhuLinsen';
 const GITHUB_REPO = 'daily_stock_analysis';
+const DESKTOP_UPDATER_DISABLED = process.env.DSA_DESKTOP_UPDATER_DISABLED === '1';
 const RELEASES_PAGE_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
 const LATEST_RELEASE_API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 const DEFAULT_REQUEST_TIMEOUT_MS = 5000;
@@ -1808,6 +1809,14 @@ async function performElectronUpdaterCheck({ manual = false } = {}) {
 }
 
 async function performDesktopUpdateCheck({ manual = false, notify = false } = {}) {
+  if (DESKTOP_UPDATER_DISABLED) {
+    return setDesktopUpdateState({
+      status: UPDATE_STATUS.IDLE,
+      currentVersion: resolveDesktopVersion(),
+      checkedAt: new Date().toISOString(),
+      message: manual ? 'Yerel özel derlemede otomatik güncelleme kapalıdır.' : '',
+    });
+  }
   if (canUseElectronAutoUpdater()) {
     return performElectronUpdaterCheck({ manual, notify });
   }

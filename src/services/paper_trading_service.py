@@ -219,21 +219,39 @@ class PaperTradingService:
         slippage_bps: Optional[float] = None,
         vol_target_pct: Optional[float] = None,
         max_holding_days: Optional[int] = None,
+        max_open_positions: Optional[int] = None,
+        max_sector_positions: Optional[int] = None,
+        max_drawdown_pct: Optional[float] = None,
+        market_regime_filter: Optional[bool] = None,
+        quant_gate_enabled: Optional[bool] = None,
+        quant_min_score: Optional[float] = None,
+        live_quotes: Optional[bool] = None,
+        alpaca_client: Optional[Any] = None,
+        alpaca_auto_execute: Optional[bool] = None,
     ) -> None:
         self.db = db_manager or DatabaseManager.get_instance()
-        config = None
-        if (
-            enabled is None
-            or position_size is None
-            or risk_pct is None
-            or atr_stop_mult is None
-            or atr_tp_mult is None
-            or commission_bps is None
-            or slippage_bps is None
-            or vol_target_pct is None
-            or max_holding_days is None
-        ):
-            config = get_config()
+        config = get_config() if any(
+            v is None
+            for v in (
+                enabled,
+                position_size,
+                risk_pct,
+                atr_stop_mult,
+                atr_tp_mult,
+                commission_bps,
+                slippage_bps,
+                vol_target_pct,
+                max_holding_days,
+                max_open_positions,
+                max_sector_positions,
+                max_drawdown_pct,
+                market_regime_filter,
+                quant_gate_enabled,
+                quant_min_score,
+                live_quotes,
+                alpaca_auto_execute,
+            )
+        ) else None
         if enabled is None:
             enabled = bool(getattr(config, "paper_trading_enabled", False))
         if position_size is None:
@@ -254,6 +272,25 @@ class PaperTradingService:
         if max_holding_days is None:
             raw_mhd = getattr(config, "paper_trading_max_holding_days", None)
             max_holding_days = int(raw_mhd) if raw_mhd is not None else None
+        if max_open_positions is None:
+            raw_mop = getattr(config, "paper_trading_max_open_positions", None)
+            max_open_positions = int(raw_mop) if raw_mop is not None else None
+        if max_sector_positions is None:
+            raw_msp = getattr(config, "paper_trading_max_sector_positions", None)
+            max_sector_positions = int(raw_msp) if raw_msp is not None else None
+        if max_drawdown_pct is None:
+            raw_mdd = getattr(config, "paper_trading_max_drawdown_pct", None)
+            max_drawdown_pct = float(raw_mdd) if raw_mdd is not None else None
+        if market_regime_filter is None:
+            market_regime_filter = bool(getattr(config, "paper_trading_market_regime_filter", False))
+        if quant_gate_enabled is None:
+            quant_gate_enabled = bool(getattr(config, "paper_trading_quant_gate_enabled", False))
+        if quant_min_score is None:
+            quant_min_score = float(getattr(config, "paper_trading_quant_min_score", 40.0) or 40.0)
+        if live_quotes is None:
+            live_quotes = bool(getattr(config, "paper_trading_live_quotes", False))
+        if alpaca_auto_execute is None:
+            alpaca_auto_execute = bool(getattr(config, "alpaca_auto_execute", False))
 
         self.enabled = bool(enabled)
         self.position_size = float(position_size)
@@ -264,6 +301,17 @@ class PaperTradingService:
         self.slippage_bps = max(0.0, float(slippage_bps))
         self.vol_target_pct = float(vol_target_pct) if (vol_target_pct and float(vol_target_pct) > 0) else None
         self.max_holding_days = int(max_holding_days) if (max_holding_days and int(max_holding_days) > 0) else None
+        self.max_open_positions = int(max_open_positions) if (max_open_positions and int(max_open_positions) > 0) else None
+        self.max_sector_positions = (
+            int(max_sector_positions) if (max_sector_positions and int(max_sector_positions) > 0) else None
+        )
+        self.max_drawdown_pct = float(max_drawdown_pct) if (max_drawdown_pct and float(max_drawdown_pct) > 0) else None
+        self.market_regime_filter = bool(market_regime_filter)
+        self.quant_gate_enabled = bool(quant_gate_enabled)
+        self.quant_min_score = float(quant_min_score)
+        self.live_quotes = bool(live_quotes)
+        self.alpaca_client = alpaca_client
+        self.alpaca_auto_execute = bool(alpaca_auto_execute)
 
     def recommend_position(
         self,
@@ -502,6 +550,48 @@ class PaperTradingService:
                 return None
             side = "buy"
             effective_pos_size = self._vol_scaled_position_size(stock_code, effective_date)
+
+            if any(
+                [
+                    self.max_open_positions is not None,
+                    self.max_sector_positions is not None,
+                    self.max_drawdown_pct is not None,
+                    self.market_regime_filter,
+                    self.quant_gate_enabled,
+                ]
+            ):
+                from src.services.quant_risk_gate import evaluate_entry_risk_gate
+
+                open_snapshot, ledger_trades, ledger_marks = self._open_snapshot_for_risk_gate()
+                ledger_marks[stock_code] = fill_price
+                gate = evaluate_entry_risk_gate(
+                    stock_code=stock_code,
+                    signal=signal,
+                    open_positions=open_snapshot,
+                    trades=ledger_trades,
+                    mark_prices=ledger_marks,
+                    db_manager=self.db,
+                    as_of_date=effective_date,
+                    position_size_budget=self.position_size,
+                    max_open_positions=self.max_open_positions,
+                    max_sector_positions=self.max_sector_positions,
+                    max_drawdown_pct=self.max_drawdown_pct,
+                    market_regime_filter=self.market_regime_filter,
+                    quant_gate_enabled=self.quant_gate_enabled,
+                    quant_min_score=self.quant_min_score,
+                    allow_remote=self.live_quotes,
+                )
+                if not gate.allowed:
+                    logger.info(
+                        "[paper] risk gate blocked BUY %s (signal %s): %s",
+                        stock_code,
+                        signal_id,
+                        "; ".join(gate.blocked_reasons),
+                    )
+                    return None
+                if gate.position_scale < 1.0:
+                    effective_pos_size = round(effective_pos_size * gate.position_scale, 2)
+
             plan = compute_atr_risk_plan(
                 stock_code,
                 price=fill_price,
@@ -570,7 +660,68 @@ class PaperTradingService:
             "[paper] %s %s x%s @ %s (signal %s, stop=%s, tp=%s)",
             side, stock_code, quantity, fill_price, signal_id, stop_loss, take_profit,
         )
+        self._maybe_mirror_to_alpaca(
+            stock_code=stock_code,
+            side=side,
+            quantity=quantity,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            signal_id=signal_id,
+        )
         return payload
+
+    def _open_snapshot_for_risk_gate(self) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, float]]:
+        with self.db.session_scope() as session:
+            trades = session.execute(
+                select(PaperTradeRecord).order_by(PaperTradeRecord.trade_date, PaperTradeRecord.id)
+            ).scalars().all()
+            trade_dicts = [_trade_to_dict(row) for row in trades]
+        held_qty: Dict[str, float] = defaultdict(float)
+        last_price: Dict[str, float] = {}
+        for t in trade_dicts:
+            code = t["stock_code"]
+            last_price[code] = float(t["price"])
+            held_qty[code] += float(t["quantity"]) if t["side"] == "buy" else -float(t["quantity"])
+        open_positions = [
+            {"stock_code": code, "quantity": qty}
+            for code, qty in held_qty.items()
+            if qty > _EPS
+        ]
+        marks: Dict[str, float] = {}
+        for p in open_positions:
+            c = p["stock_code"]
+            lc, _ = self._latest_close(c)
+            marks[c] = lc if lc is not None else last_price.get(c, 0.0)
+        return open_positions, trade_dicts, marks
+
+    def _maybe_mirror_to_alpaca(
+        self,
+        *,
+        stock_code: str,
+        side: str,
+        quantity: float,
+        stop_loss: Optional[float],
+        take_profit: Optional[float],
+        signal_id: int,
+    ) -> None:
+        if not self.alpaca_auto_execute:
+            return
+        try:
+            from src.brokers.alpaca import AlpacaClient
+
+            client = self.alpaca_client or AlpacaClient()
+            if not client.is_configured() or not client.is_us_equity_symbol(stock_code):
+                return
+            client.submit_order(
+                symbol=stock_code,
+                qty=quantity,
+                side=side,
+                stop_loss=stop_loss if side == "buy" else None,
+                take_profit=take_profit if side == "buy" else None,
+                client_order_id=f"dsa-sig-{signal_id}",
+            )
+        except Exception as exc:
+            logger.warning("[paper->alpaca] mirror failed for %s (%s): %s", stock_code, side, exc)
 
     def _vol_scaled_position_size(self, stock_code: str, as_of_date: date) -> float:
         """Apply Barroso-Santa-Clara volatility scaling when ``vol_target_pct`` is set."""
@@ -629,6 +780,7 @@ class PaperTradingService:
         *,
         include_benchmarks: bool = False,
         benchmark_history: Optional[Any] = None,
+        live_quotes: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Positions, realized/unrealized P&L and win rate, grouped per currency.
 
@@ -637,6 +789,7 @@ class PaperTradingService:
         ``include_benchmarks`` adds per-market index-shadow and USD-based returns
         (``benchmarks``; Borsa Istanbul vs BIST 100 / USD-TRY), fetched fail-open.
         """
+        use_live_quotes = self.live_quotes if live_quotes is None else bool(live_quotes)
         self.check_stops_and_targets()
 
         with self.db.session_scope() as session:
@@ -690,6 +843,13 @@ class PaperTradingService:
                 book["take_profit"] = None
             closed_results.append(pnl)
 
+        open_codes = [b["stock_code"] for b in books.values() if b["quantity"] > _EPS]
+        fetched_quotes: Dict[str, tuple[float, date]] = {}
+        if use_live_quotes and open_codes:
+            from src.services.quant_risk_gate import fetch_live_quotes
+
+            fetched_quotes = fetch_live_quotes(open_codes, alpaca_client=self.alpaca_client)
+
         positions: List[Dict[str, Any]] = []
         totals: Dict[str, Dict[str, float]] = defaultdict(
             lambda: {"cost": 0.0, "market_value": 0.0, "realized_pnl": 0.0, "unrealized_pnl": 0.0}
@@ -700,6 +860,9 @@ class PaperTradingService:
             if book["quantity"] <= _EPS:
                 continue
             last_close, last_date = self._latest_close(book["stock_code"])
+            live_entry = fetched_quotes.get(book["stock_code"])
+            if live_entry is not None and (last_date is None or live_entry[1] >= last_date):
+                last_close, last_date = live_entry[0], live_entry[1]
             avg_cost = book["cost"] / book["quantity"]
             mark = last_close if last_close is not None else avg_cost
             market_value = mark * book["quantity"]
@@ -747,19 +910,47 @@ class PaperTradingService:
         positions.sort(key=lambda item: item["stock_code"])
 
         wins = sum(1 for pnl in closed_results if pnl > 0)
+        mark_prices_map = {
+            position["stock_code"]: (
+                position["last_close"] if position["last_close"] is not None else position["avg_cost"]
+            )
+            for position in positions
+        }
         benchmarks: Dict[str, Any] = {}
         if include_benchmarks and trade_dicts:
             from src.services.paper_trading_benchmark import compute_benchmarks, yfinance_history
 
-            mark_prices = {
-                position["stock_code"]: (
-                    position["last_close"] if position["last_close"] is not None else position["avg_cost"]
-                )
-                for position in positions
-            }
             benchmarks = compute_benchmarks(
-                trade_dicts, mark_prices=mark_prices, history=benchmark_history or yfinance_history,
+                trade_dicts, mark_prices=mark_prices_map, history=benchmark_history or yfinance_history,
             )
+
+        from src.services.quant_risk_gate import compute_portfolio_drawdown_pct, evaluate_market_regime
+
+        dd_pct = compute_portfolio_drawdown_pct(
+            trade_dicts,
+            mark_prices=mark_prices_map,
+            equity_base=self.position_size * max(1, int(self.max_open_positions or 4)),
+        )
+        regime_snap = (
+            evaluate_market_regime(db_manager=self.db, allow_remote=use_live_quotes)
+            if (self.market_regime_filter or use_live_quotes)
+            else None
+        )
+        risk_status = {
+            "max_open_positions": self.max_open_positions,
+            "max_sector_positions": self.max_sector_positions,
+            "max_drawdown_pct": self.max_drawdown_pct,
+            "current_drawdown_pct": dd_pct,
+            "circuit_breaker_triggered": bool(
+                self.max_drawdown_pct is not None and dd_pct is not None and dd_pct >= self.max_drawdown_pct
+            ),
+            "market_regime_filter": self.market_regime_filter,
+            "quant_gate_enabled": self.quant_gate_enabled,
+            "quant_min_score": self.quant_min_score,
+            "live_quotes_applied": bool(fetched_quotes),
+            "market_regime": regime_snap.to_dict() if regime_snap is not None else None,
+        }
+
         return {
             "enabled": self.enabled,
             "position_size": self.position_size,
@@ -776,6 +967,7 @@ class PaperTradingService:
                 for currency, values in sorted(totals.items())
             },
             "benchmarks": benchmarks,
+            "risk_status": risk_status,
         }
 
     def _latest_close(self, stock_code: str) -> tuple[Optional[float], Optional[date]]:

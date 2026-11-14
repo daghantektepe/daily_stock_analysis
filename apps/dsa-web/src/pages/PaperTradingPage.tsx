@@ -24,6 +24,7 @@ import {
 import { getParsedApiError, type ParsedApiError } from '../api/error';
 import {
   paperTradingApi,
+  type AlpacaStatusResponse,
   type KapAlertItem,
   type PaperEquityPoint,
   type PaperManualOrderPayload,
@@ -107,6 +108,7 @@ type PendingTradeConfirm = {
 
 const PaperTradingPage: React.FC = () => {
   const [summary, setSummary] = useState<PaperTradingSummaryResponse | null>(null);
+  const [alpacaStatus, setAlpacaStatus] = useState<AlpacaStatusResponse | null>(null);
   const [trades, setTrades] = useState<PaperTradeItem[]>([]);
   const [kapAlerts, setKapAlerts] = useState<KapAlertItem[]>([]);
   const [equityPoints, setEquityPoints] = useState<PaperEquityPoint[]>([]);
@@ -139,13 +141,15 @@ const PaperTradingPage: React.FC = () => {
     }
     setError(null);
     try {
-      const [summaryRes, tradesRes, alertsRes, equityRes] = await Promise.all([
+      const [summaryRes, tradesRes, alertsRes, equityRes, alpacaRes] = await Promise.all([
         paperTradingApi.getSummary(true, true),
         paperTradingApi.listTrades(100),
         paperTradingApi.listKapAlerts(30, true),
         paperTradingApi.getEquityCurve(90).catch(() => ({ points: [], currencies: [] })),
+        paperTradingApi.getAlpacaStatus().catch(() => null),
       ]);
       setSummary(summaryRes);
+      setAlpacaStatus(alpacaRes);
       setTrades(tradesRes.items || []);
       setKapAlerts(alertsRes.items || []);
       setEquityPoints(equityRes.points || []);
@@ -376,6 +380,74 @@ const PaperTradingPage: React.FC = () => {
           </form>
         </SectionCard>
       ) : null}
+
+      {/* Risk Guardrails & Broker Bridge Strip */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <SectionCard
+          title="Risk Kalkanı & ABD Piyasa Rejimi"
+          subtitle="Kantitatif giriş kapısı, sektör/pozisyon limitleri ve drawdown devre kesici"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Badge
+              variant={
+                summary?.risk_status?.market_regime?.regime === 'risk_off'
+                  ? 'danger'
+                  : summary?.risk_status?.market_regime?.regime === 'caution'
+                    ? 'warning'
+                    : 'success'
+              }
+            >
+              Rejim: {(summary?.risk_status?.market_regime?.regime ?? (summary?.risk_status?.market_regime_filter ? 'kontrol ediliyor' : 'serbest')).toUpperCase()}
+            </Badge>
+            <Badge variant={summary?.risk_status?.circuit_breaker_triggered ? 'danger' : 'info'}>
+              Drawdown: {summary?.risk_status?.current_drawdown_pct != null ? `%${summary.risk_status.current_drawdown_pct.toFixed(2)}` : '%0.00'}
+              {summary?.risk_status?.max_drawdown_pct != null ? ` / Maks %${summary.risk_status.max_drawdown_pct}` : ''}
+            </Badge>
+            <Badge variant="default">
+              Pozisyon Limiti: {summary?.open_position_count ?? 0}/{summary?.risk_status?.max_open_positions ?? '∞'}
+            </Badge>
+            <Badge variant="default">
+              Sektör Tavanı: {summary?.risk_status?.max_sector_positions ?? '∞'}
+            </Badge>
+            <Badge variant={summary?.risk_status?.quant_gate_enabled ? 'success' : 'default'}>
+              Quant Kapı: {summary?.risk_status?.quant_gate_enabled ? `Aktif (≥${summary.risk_status.quant_min_score ?? 40})` : 'Kapalı'}
+            </Badge>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Alpaca US Broker Köprüsü"
+          subtitle="Gerçek ABD piyasa defteri, bracket stop/kâr-al ve emir yönlendirme"
+        >
+          {alpacaStatus?.configured ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={alpacaStatus.paper ? 'info' : 'danger'}>
+                  {alpacaStatus.paper ? 'PAPER MOD' : 'CANLI HESAP'}
+                </Badge>
+                <Badge variant={alpacaStatus.clock?.is_open ? 'success' : 'default'}>
+                  Piyasa: {alpacaStatus.clock?.is_open ? 'Açık' : 'Kapalı'}
+                </Badge>
+                <Badge variant={alpacaStatus.auto_execute ? 'warning' : 'default'}>
+                  Oto-Emir: {alpacaStatus.auto_execute ? 'Açık' : 'Manuel'}
+                </Badge>
+              </div>
+              {alpacaStatus.account ? (
+                <span className="font-mono text-foreground">
+                  Özsermaye: ${fmtNumber(alpacaStatus.account.equity)} | Nakit: ${fmtNumber(alpacaStatus.account.cash)}
+                </span>
+              ) : alpacaStatus.error ? (
+                <span className="text-danger">{alpacaStatus.error}</span>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-xs text-secondary-text">
+              Bağlı değil. Ücretsiz ABD Paper Trading için <code>.env</code> dosyasına <code>ALPACA_API_KEY</code> ve{' '}
+              <code>ALPACA_SECRET_KEY</code> ekleyebilirsin.
+            </p>
+          )}
+        </SectionCard>
+      </div>
 
       {/* Top KPI Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">

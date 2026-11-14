@@ -65,6 +65,65 @@ export interface SignalOutcomesSummary {
   by_action?: Record<string, SignalOutcomeBucket>;
 }
 
+export interface MarketRegimeInfo {
+  regime: 'risk_on' | 'caution' | 'risk_off' | 'neutral';
+  position_scale: number;
+  spy_close?: number | null;
+  spy_sma50?: number | null;
+  spy_sma200?: number | null;
+  vix_level?: number | null;
+  reasons?: string[];
+}
+
+export interface PaperRiskStatus {
+  max_open_positions?: number | null;
+  max_sector_positions?: number | null;
+  max_drawdown_pct?: number | null;
+  current_drawdown_pct?: number | null;
+  circuit_breaker_triggered?: boolean;
+  market_regime_filter?: boolean;
+  quant_gate_enabled?: boolean;
+  quant_min_score?: number;
+  live_quotes_applied?: boolean;
+  market_regime?: MarketRegimeInfo | null;
+}
+
+export interface AlpacaStatusResponse {
+  configured: boolean;
+  paper: boolean;
+  auto_execute: boolean;
+  account?: {
+    status?: string;
+    currency?: string;
+    cash?: number;
+    buying_power?: number;
+    equity?: number;
+    portfolio_value?: number;
+  } | null;
+  clock?: {
+    is_open?: boolean;
+    next_open?: string | null;
+    next_close?: string | null;
+  } | null;
+  positions: Array<{
+    symbol: string;
+    qty: number;
+    avg_entry_price: number;
+    current_price: number;
+    unrealized_pl: number;
+    unrealized_plpc?: number | null;
+  }>;
+  open_orders: Array<{
+    id?: string;
+    symbol: string;
+    side?: string;
+    qty: number;
+    type?: string;
+    status?: string;
+  }>;
+  error?: string | null;
+}
+
 export interface PaperTradingSummaryResponse {
   enabled: boolean;
   position_size: number;
@@ -79,6 +138,7 @@ export interface PaperTradingSummaryResponse {
   totals_by_currency: Record<string, PaperCurrencyTotals>;
   benchmarks: Record<string, PaperBenchmarkItem>;
   signal_outcomes?: SignalOutcomesSummary;
+  risk_status?: PaperRiskStatus;
 }
 
 export interface PaperTradeItem {
@@ -193,6 +253,11 @@ export const paperTradingApi = {
       `/api/v1/paper-trading/positions/${encodeURIComponent(stockCode)}/stops`,
       payload,
     );
+    return response.data;
+  },
+
+  async getAlpacaStatus(): Promise<AlpacaStatusResponse> {
+    const response = await apiClient.get<AlpacaStatusResponse>('/api/v1/paper-trading/alpaca/status');
     return response.data;
   },
 };

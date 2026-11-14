@@ -1187,6 +1187,18 @@ class Config:
     paper_trading_slippage_bps: float = 0.0
     paper_trading_vol_target_pct: Optional[float] = None
     paper_trading_max_holding_days: Optional[int] = None
+    paper_trading_max_open_positions: Optional[int] = None
+    paper_trading_max_sector_positions: Optional[int] = None
+    paper_trading_max_drawdown_pct: Optional[float] = None
+    paper_trading_market_regime_filter: bool = False
+    paper_trading_quant_gate_enabled: bool = False
+    paper_trading_quant_min_score: float = 40.0
+    paper_trading_live_quotes: bool = False
+    # Alpaca US equity broker (defaults strictly to paper endpoint)
+    alpaca_api_key: Optional[str] = None
+    alpaca_secret_key: Optional[str] = None
+    alpaca_paper: bool = True
+    alpaca_auto_execute: bool = False
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
@@ -2211,6 +2223,55 @@ class Config:
                 if os.getenv('PAPER_TRADING_MAX_HOLDING_DAYS')
                 else None
             ),
+            paper_trading_max_open_positions=(
+                parse_env_int(
+                    os.getenv('PAPER_TRADING_MAX_OPEN_POSITIONS'),
+                    8,
+                    field_name='PAPER_TRADING_MAX_OPEN_POSITIONS',
+                    minimum=1,
+                )
+                if os.getenv('PAPER_TRADING_MAX_OPEN_POSITIONS')
+                else None
+            ),
+            paper_trading_max_sector_positions=(
+                parse_env_int(
+                    os.getenv('PAPER_TRADING_MAX_SECTOR_POSITIONS'),
+                    2,
+                    field_name='PAPER_TRADING_MAX_SECTOR_POSITIONS',
+                    minimum=1,
+                )
+                if os.getenv('PAPER_TRADING_MAX_SECTOR_POSITIONS')
+                else None
+            ),
+            paper_trading_max_drawdown_pct=(
+                parse_env_float(
+                    os.getenv('PAPER_TRADING_MAX_DRAWDOWN_PCT'),
+                    10.0,
+                    field_name='PAPER_TRADING_MAX_DRAWDOWN_PCT',
+                    minimum=1.0,
+                )
+                if os.getenv('PAPER_TRADING_MAX_DRAWDOWN_PCT')
+                else None
+            ),
+            paper_trading_market_regime_filter=parse_env_bool(
+                os.getenv('PAPER_TRADING_MARKET_REGIME_FILTER'), default=False
+            ),
+            paper_trading_quant_gate_enabled=parse_env_bool(
+                os.getenv('PAPER_TRADING_QUANT_GATE_ENABLED'), default=False
+            ),
+            paper_trading_quant_min_score=parse_env_float(
+                os.getenv('PAPER_TRADING_QUANT_MIN_SCORE'),
+                40.0,
+                field_name='PAPER_TRADING_QUANT_MIN_SCORE',
+                minimum=0.0,
+            ),
+            paper_trading_live_quotes=parse_env_bool(
+                os.getenv('PAPER_TRADING_LIVE_QUOTES'), default=False
+            ),
+            alpaca_api_key=(os.getenv('ALPACA_API_KEY') or '').strip() or None,
+            alpaca_secret_key=(os.getenv('ALPACA_SECRET_KEY') or '').strip() or None,
+            alpaca_paper=parse_env_bool(os.getenv('ALPACA_PAPER'), default=True),
+            alpaca_auto_execute=parse_env_bool(os.getenv('ALPACA_AUTO_EXECUTE'), default=False),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
                 300,

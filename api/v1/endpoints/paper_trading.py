@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import get_database_manager
 from api.v1.schemas.paper_trading import (
+    AlpacaOrderRequest,
+    AlpacaStatusResponse,
     KapAlertItem,
     KapAlertListResponse,
     PaperEquityCurveResponse,
@@ -16,6 +18,8 @@ from api.v1.schemas.paper_trading import (
     PaperTradingSummaryResponse,
     PaperUpdateStopsRequest,
 )
+from src.brokers.alpaca import AlpacaBrokerError, AlpacaClient
+from src.config import get_config
 from src.services.kap_watch_service import get_recent_kap_and_news_alerts
 from src.services.paper_trading_benchmark import evaluate_signal_outcomes
 from src.services.paper_trading_service import PaperTradingService
@@ -104,3 +108,74 @@ def update_paper_position_stops(
         return PaperTrade(**trade)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail={"error": "paper_position_not_found", "message": str(exc)}) from exc
+
+
+@router.get("/alpaca/status", response_model=AlpacaStatusResponse)
+def get_alpaca_broker_status() -> AlpacaStatusResponse:
+    """Return Alpaca paper/live connection status, account summary, open positions and orders."""
+    cfg = get_config()
+    client = AlpacaClient()
+    if not client.is_configured():
+        return AlpacaStatusResponse(
+            configured=False,
+            paper=bool(getattr(cfg, "alpaca_paper", True)),
+            auto_execute=bool(getattr(cfg, "alpaca_auto_execute", False)),
+        )
+    try:
+        return AlpacaStatusResponse(
+            configured=True,
+            paper=client.paper,
+            auto_execute=bool(getattr(cfg, "alpaca_auto_execute", False)),
+            account=client.get_account(),
+            clock=client.get_market_clock(),
+            positions=client.list_positions(),
+            open_orders=client.list_orders(status="open"),
+        )
+    except AlpacaBrokerError as exc:
+        return AlpacaStatusResponse(
+            configured=True,
+            paper=client.paper,
+            auto_execute=bool(getattr(cfg, "alpaca_auto_execute", False)),
+            error=str(exc),
+        )
+
+
+@router.post("/alpaca/orders")
+def submit_alpaca_broker_order(req: AlpacaOrderRequest):
+    """Submit an explicit US equity order (optionally bracketed) to Alpaca Paper/Live API."""
+    client = AlpacaClient()
+    try:
+        return client.submit_order(
+            symbol=req.symbol,
+            qty=req.qty,
+            side=req.side,
+            order_type=req.order_type,
+            time_in_force=req.time_in_force,
+            limit_price=req.limit_price,
+            stop_loss=req.stop_loss,
+            take_profit=req.take_profit,
+        )
+    except AlpacaBrokerError as exc:
+        status = exc.status_code if exc.status_code and 400 <= exc.status_code < 500 else 502
+        raise HTTPException(status_code=status, detail={"error": "alpaca_order_failed", "message": str(exc)}) from exc
+
+
+@router.delete("/alpaca/orders/{order_id}")
+def cancel_alpaca_broker_order(order_id: str):
+    """Cancel an open Alpaca order by ID."""
+    client = AlpacaClient()
+    try:
+        return client.cancel_order(order_id)
+    except AlpacaBrokerError as exc:
+        raise HTTPException(status_code=502, detail={"error": "alpaca_cancel_failed", "message": str(exc)}) from exc
+
+
+@router.delete("/alpaca/positions/{symbol}")
+def close_alpaca_broker_position(symbol: str):
+    """Liquidate an open Alpaca US equity position."""
+    client = AlpacaClient()
+    try:
+        return client.close_position(symbol)
+    except AlpacaBrokerError as exc:
+        raise HTTPException(status_code=502, detail={"error": "alpaca_close_failed", "message": str(exc)}) from exc
+

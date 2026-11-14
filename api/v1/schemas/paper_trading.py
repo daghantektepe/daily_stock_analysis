@@ -75,6 +75,10 @@ class PaperTradingSummaryResponse(BaseModel):
         default_factory=dict,
         description="Optional DecisionSignal 1/3/5/10d outcome hit rate summary",
     )
+    risk_status: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Portfolio guardrails, drawdown circuit breaker, and US market regime status",
+    )
 
 
 class PaperTrade(BaseModel):
@@ -148,3 +152,26 @@ class PaperEquityPoint(BaseModel):
 class PaperEquityCurveResponse(BaseModel):
     points: List[PaperEquityPoint] = Field(default_factory=list)
     currencies: List[str] = Field(default_factory=list)
+
+
+class AlpacaOrderRequest(BaseModel):
+    symbol: str = Field(..., min_length=1, max_length=16)
+    qty: float = Field(..., gt=0)
+    side: str = Field("buy", pattern="^(buy|sell)$")
+    order_type: str = Field("market", pattern="^(market|limit)$")
+    time_in_force: str = Field("day", pattern="^(day|gtc)$")
+    limit_price: Optional[float] = Field(None, gt=0)
+    stop_loss: Optional[float] = Field(None, gt=0)
+    take_profit: Optional[float] = Field(None, gt=0)
+
+
+class AlpacaStatusResponse(BaseModel):
+    configured: bool
+    paper: bool = True
+    auto_execute: bool = False
+    account: Optional[Dict[str, Any]] = None
+    clock: Optional[Dict[str, Any]] = None
+    positions: List[Dict[str, Any]] = Field(default_factory=list)
+    open_orders: List[Dict[str, Any]] = Field(default_factory=list)
+    error: Optional[str] = None
+
