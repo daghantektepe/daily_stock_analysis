@@ -750,6 +750,31 @@ def _run_auto_weekly_performance_report(
         logger.warning("Haftalık performans / sinyal isabet hesabı hatası (yoksayıldı): %s", exc)
 
 
+def _run_crypto_trend_paper_step(
+    config: Config,
+    *,
+    notifier: Any = None,
+    send_notification: bool = False,
+) -> None:
+    """Advance the crypto trend paper book after the daily run (opt-in, fail-open)."""
+    if not getattr(config, "crypto_trend_enabled", False):
+        return
+    try:
+        from src.services.crypto_trend_strategy import TrendConfig, current_targets, load_daily_closes
+        from src.services.strategy_paper_book import StrategyPaperBook, format_book_report
+
+        trend = TrendConfig(assets=tuple(config.crypto_trend_assets))
+        prices = load_daily_closes(trend.assets)
+        book = StrategyPaperBook(config=trend, initial_capital=float(config.crypto_trend_capital))
+        step = book.step(prices)
+        report = format_book_report(book.summary(), current_targets(prices, trend))
+        logger.info("\n%s", report)
+        if send_notification and notifier is not None and step["new_trades"]:
+            notifier.send(report, dedup_key=f"crypto-trend:{book.state.get('last_date')}")
+    except Exception as exc:  # noqa: BLE001 - optional sidecar, fail-open
+        logger.warning("Kripto trend sanal portföy adımı hatası (yoksayıldı): %s", exc)
+
+
 def _resolve_bist_screener_codes(config: Config, args: argparse.Namespace) -> Optional[List[str]]:
     """Return screened BIST stock codes when enabled, or ``None`` to keep STOCK_LIST."""
     if not (getattr(config, "bist_screener_enabled", False) or getattr(args, "screen_bist", False)):
@@ -1146,6 +1171,11 @@ def run_full_analysis(
         # === Auto backtest ===
         _run_auto_backtest(config)
         _run_auto_weekly_performance_report(
+            config,
+            notifier=pipeline.notifier,
+            send_notification=not args.no_notify and not args.dry_run,
+        )
+        _run_crypto_trend_paper_step(
             config,
             notifier=pipeline.notifier,
             send_notification=not args.no_notify and not args.dry_run,

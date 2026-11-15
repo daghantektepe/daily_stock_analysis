@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增加密货币趋势策略（`src/services/crypto_trend_strategy.py`，`scripts/crypto_trend.py backtest|signal|paper`）：BTC / ETH 每个币种按 50/100/150/200/250 日均线拆成等额子仓位，收盘价高于对应均线持币、低于持现金（信号变化才交易，按单边成本计费），提供参数稳健性表、样本外区间与逐年对比；回测同一规则驱动的模拟盘 `StrategyPaperBook`（`data/strategy_paper/crypto_trend.json`，补跑天数标记为 late），`CRYPTO_TREND_ENABLED` 开启后每日分析结束推进模拟盘、仓位变化时推送，并并入每周绩效报告（无股票模拟交易时也会发送）
 - [改进] 事件研究统计口径收紧（Form 4 / PEAD / KAP）：按日历月聚类计算 t 统计量（同月事件不再视为独立样本），所有分组与期限一并做 Holm 多重检验校正，且需覆盖至少 12 个月才标记显著；Form 4 与 PEAD 同时对比 SPY 与小盘 IWM 并以更难跑赢者计算净超额收益；Form 4 研究中停牌 / 退市股票按最后收盘价退出而非被丢弃，并给出缺失事件按 -30% 计的幸存者偏差敏感度；KAP 研究对同一股票同一事件类型在最长期限内的重复公告（如每日回购公告）只计一次
 - [修复] `scripts/sec_form4_study.py` 默认评估全部事件（原默认仅取最早的 60 条），`--limit` 改为跨期等距抽样
 - [新功能] 新增 `scripts/pead_study.py`：在 S&P 400 / S&P 600 成分股（可随机抽样或自定义文件）上运行 PEAD 历史事件研究并输出土耳其语报告，避免使用按近期表现挑选的观察列表造成的前视偏差

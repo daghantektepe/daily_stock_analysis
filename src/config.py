@@ -1201,6 +1201,10 @@ class Config:
     alpaca_auto_execute: bool = False
     # Second switch for real-money orders (ALPACA_PAPER=false alone only allows read-only calls)
     alpaca_live_trading_confirmed: bool = False
+    # Crypto trend strategy paper book (scripts/crypto_trend.py)
+    crypto_trend_enabled: bool = False
+    crypto_trend_assets: List[str] = field(default_factory=lambda: ["BTC-USD", "ETH-USD"])
+    crypto_trend_capital: float = 10000.0
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
@@ -2275,6 +2279,15 @@ class Config:
             alpaca_paper=parse_env_bool(os.getenv('ALPACA_PAPER'), default=True),
             alpaca_auto_execute=parse_env_bool(os.getenv('ALPACA_AUTO_EXECUTE'), default=False),
             alpaca_live_trading_confirmed=parse_env_bool(os.getenv('ALPACA_LIVE_TRADING_CONFIRMED'), default=False),
+            crypto_trend_enabled=parse_env_bool(os.getenv('CRYPTO_TREND_ENABLED'), default=False),
+            crypto_trend_assets=[
+                item.strip().upper()
+                for item in (os.getenv('CRYPTO_TREND_ASSETS') or 'BTC-USD,ETH-USD').split(',')
+                if item.strip()
+            ] or ["BTC-USD", "ETH-USD"],
+            crypto_trend_capital=parse_env_float(
+                os.getenv('CRYPTO_TREND_CAPITAL'), 10000.0, field_name='CRYPTO_TREND_CAPITAL', minimum=100.0,
+            ),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
                 300,

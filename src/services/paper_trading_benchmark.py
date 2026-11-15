@@ -393,6 +393,26 @@ def _save_weekly_state(path: Path, state: Dict[str, Any]) -> None:
     os.replace(tmp_name, path)
 
 
+def _crypto_trend_weekly_text() -> str:
+    """Crypto trend paper book summary for the weekly report ("" when disabled / not started)."""
+    try:
+        from src.config import get_config
+
+        config = get_config()
+        if not getattr(config, "crypto_trend_enabled", False):
+            return ""
+        from src.services.crypto_trend_strategy import TrendConfig
+        from src.services.strategy_paper_book import StrategyPaperBook, format_book_report
+
+        book = StrategyPaperBook(config=TrendConfig(assets=tuple(config.crypto_trend_assets)),
+                                 initial_capital=float(config.crypto_trend_capital))
+        summary = book.summary()
+        return format_book_report(summary) if summary.get("days") else ""
+    except Exception as exc:  # noqa: BLE001 - optional section, fail-open
+        logger.info("[weekly-report] crypto trend section skipped: %s", exc)
+        return ""
+
+
 def maybe_send_weekly_performance_report(
     *,
     notifier: Any = None,
@@ -429,9 +449,13 @@ def maybe_send_weekly_performance_report(
             include_benchmarks=True,
             benchmark_history=history,
         )
-        if summary.get("trade_count", 0) == 0 and int(outcomes.get("total") or 0) == 0:
+        crypto_text = _crypto_trend_weekly_text()
+        stock_activity = summary.get("trade_count", 0) or int(outcomes.get("total") or 0)
+        if not stock_activity and not crypto_text:
             return False
-        text = format_paper_trading_report(summary, outcome_stats=outcomes)
+        text = format_paper_trading_report(summary, outcome_stats=outcomes) if stock_activity else ""
+        if crypto_text:
+            text = f"{text}\n\n{crypto_text}" if text else crypto_text
         if notifier is None:
             from src.notification import NotificationService
 

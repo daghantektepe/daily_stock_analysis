@@ -374,6 +374,50 @@ python scripts/pead_study.py --universe smid --sample 400
 
 Çıktıyı buraya yapıştırırsan birlikte yorumlarız. Bir strateji maliyet sonrası zor kıyasta anlamlı pozitif değilse sanal işleme bile alınmaz.
 
+### 7.2 Kripto trend stratejisi (BTC / ETH, sanal)
+
+Kural basit ve tahmin yapmaz: her coin için sermaye beş parçaya bölünür. Her parça, coin 50 / 100 / 150 / 200 / 250 günlük ortalamalardan kendisininkinin üstündeyse coin'de, altındaysa nakitte durur. Amaç yarını bilmek değil, BTC ve ETH'nin −%70 ile −%90 arası büyük çöküşlerinin büyük kısmını nakitte geçirmektir.
+
+Tek bir "en iyi" ortalama yerine beşinin birlikte kullanılması bilinçli bir tercih: geçmişe en iyi uyan parametreyi seçmek, gelecekte tutmayan bir kural üretir.
+
+Geçmiş test (Yahoo Finance günlük kapanış, işlem başına %0,15 maliyet, BTC + ETH eşit ağırlık):
+
+| Dönem | Strateji: yıllık / en büyük düşüş / Sharpe | Al-tut: yıllık / en büyük düşüş / Sharpe |
+|---|---|---|
+| 2018 – Kasım 2026 | %41 / −%50 / 1,02 | %24 / −%77 / 0,67 |
+| 2022 – Kasım 2026 (örneklem dışı) | %17 / −%31 / 0,65 | −%2 / −%69 / 0,24 |
+
+Beş ortalamanın her biri tek başına da al-tut'u geçiyor; maliyet %0,5'e çıksa bile yıllık %35. Bilmen gerekenler:
+
+- Güçlü boğa yıllarında geride kalır: 2020'de strateji +%190, al-tut +%338.
+- Çöküşlerde korur: 2022'de strateji −%27, al-tut −%66.
+- En büyük düşüş hâlâ −%50 civarı. Bu risk küçülmez, yalnızca al-tut'tan daha sığdır.
+- Geçmiş sonuç geleceği garanti etmez.
+
+Komutlar:
+
+```bash
+python scripts/crypto_trend.py backtest
+```
+
+```bash
+python scripts/crypto_trend.py signal
+```
+
+```bash
+python scripts/crypto_trend.py paper --notify
+```
+
+Günlük analizden sonra kendiliğinden ilerlemesi için `.env`:
+
+```env
+CRYPTO_TREND_ENABLED=true
+CRYPTO_TREND_ASSETS=BTC-USD,ETH-USD
+CRYPTO_TREND_CAPITAL=10000
+```
+
+Sanal defter `data/strategy_paper/crypto_trend.json` dosyasında tutulur ve geçmiş testle aynı kodu kullanır, yani ikisinin sonuçları birebir karşılaştırılabilir. Pozisyon değişince Telegram'a mesaj gelir; özet haftalık rapora da eklenir. Bilgisayar kapalıyken geçen günler sonradan işlenir ve raporda "sonradan işlendi" olarak ayrıca gösterilir.
+
 ## 8. Sonraki adımlar
 
 - 2–3 gün klasik modla çalıştırıp Türkçe raporları değerlendir; sorunlu ifadeleri not al (prompt iyileştirmesi için).
