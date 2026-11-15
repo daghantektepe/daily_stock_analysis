@@ -63,8 +63,8 @@ def main() -> int:
     parser.add_argument(
         "--limit",
         type=int,
-        default=60,
-        help="Maximum events to evaluate per run (default: 60)",
+        default=0,
+        help="Maximum events to evaluate, sampled evenly across time (default: 0 = all events)",
     )
     parser.add_argument(
         "--benchmark",
@@ -117,13 +117,16 @@ def main() -> int:
         return 1
 
     all_events.sort(key=lambda e: e.filing_date)
-    logger.info("Running event study on %d total events (limit %d) vs %s ...", len(all_events), args.limit, args.benchmark)
+    if args.limit and len(all_events) > args.limit:
+        # Even sample across the whole period: truncating would keep only the oldest month.
+        step = len(all_events) / float(args.limit)
+        all_events = [all_events[int(i * step)] for i in range(args.limit)]
+    logger.info("Running event study on %d events vs %s (+ IWM small-cap check) ...", len(all_events), args.benchmark)
 
     results = run_sec_form4_event_study(
         all_events,
         benchmark_symbol=args.benchmark,
         min_value=args.min_value,
-        max_events=args.limit,
         estimated_slippage_pct=args.slippage,
     )
 

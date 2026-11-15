@@ -36,7 +36,12 @@ class AlpacaClient:
         paper: Optional[bool] = None,
         session: Optional[requests.Session] = None,
         timeout: float = 10.0,
+        live_trading_confirmed: Optional[bool] = None,
     ) -> None:
+        if live_trading_confirmed is None:
+            live_trading_confirmed = bool(getattr(get_config(), "alpaca_live_trading_confirmed", False))
+        # Real-money orders need a second, explicit switch on top of ALPACA_PAPER=false.
+        self.live_trading_confirmed = bool(live_trading_confirmed)
         if api_key is None or secret_key is None or paper is None:
             cfg = get_config()
             if api_key is None:
@@ -81,6 +86,11 @@ class AlpacaClient:
     ) -> Any:
         if not self.is_configured():
             raise AlpacaBrokerError("Alpaca API credentials are not configured (ALPACA_API_KEY / ALPACA_SECRET_KEY).")
+        if not self.paper and not data_api and method.upper() != "GET" and not self.live_trading_confirmed:
+            raise AlpacaBrokerError(
+                "Real-money Alpaca order blocked: ALPACA_PAPER=false needs ALPACA_LIVE_TRADING_CONFIRMED=true. "
+                "Keep paper trading until the strategy has passed its paper-trading test."
+            )
         root = self.data_url if data_api else self.base_url
         url = f"{root}{path}"
         resp = self.session.request(

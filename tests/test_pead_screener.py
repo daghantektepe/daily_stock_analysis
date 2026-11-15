@@ -161,3 +161,30 @@ def test_pead_event_study_offline() -> None:
     assert report["horizons"]["20d"]["count"] == 1
     assert report["horizons"]["20d"]["avg_excess_return_pct"] > 5.0
 
+
+
+def test_pead_study_uses_small_cap_benchmark_and_never_claims_one_event() -> None:
+    from src.services.pead_event_study import format_pead_study_report, run_pead_event_study
+
+    dates = pd.bdate_range("2026-01-02", periods=90)
+    spy = {d.date(): 100.0 * (1.0005 ** i) for i, d in enumerate(dates)}
+    iwm = {d.date(): 100.0 * (1.003 ** i) for i, d in enumerate(dates)}
+    stock = {d.date(): (100.0 if i < 20 else 105.0 * (1.005 ** (i - 20))) for i, d in enumerate(dates)}
+    earnings_df = pd.DataFrame(
+        {"EPS Estimate": [1.00], "Reported EPS": [1.25], "Surprise(%)": [25.0]},
+        index=[pd.Timestamp(dates[20].date()) + pd.Timedelta(hours=8)],
+    )
+    prices = {"SPY": spy, "IWM": iwm, "BEAT": stock}
+    result = run_pead_event_study(
+        ["BEAT"], horizons=(("20d", 20),),
+        earnings_fetcher=lambda sym: earnings_df,
+        price_fetcher=lambda sym, s, e: prices[sym],
+    )
+    cell = result["horizons"]["20d"]
+    assert result["secondary_benchmark_symbol"] == "IWM"
+    assert cell["avg_excess_vs_secondary_pct"] < cell["avg_excess_return_pct"]
+    assert cell["conservative_excess_pct"] == cell["avg_excess_vs_secondary_pct"]
+    assert cell["is_significant"] is False and cell["months"] == 1
+    text = format_pead_study_report(result)
+    assert "tesadüften ayırt edilemiyor" in text
+    assert "anlamlı pozitif sürüklenme bulunamadı" in text

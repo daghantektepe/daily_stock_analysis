@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] 事件研究统计口径收紧（Form 4 / PEAD / KAP）：按日历月聚类计算 t 统计量（同月事件不再视为独立样本），所有分组与期限一并做 Holm 多重检验校正，且需覆盖至少 12 个月才标记显著；Form 4 与 PEAD 同时对比 SPY 与小盘 IWM 并以更难跑赢者计算净超额收益；Form 4 研究中停牌 / 退市股票按最后收盘价退出而非被丢弃，并给出缺失事件按 -30% 计的幸存者偏差敏感度；KAP 研究对同一股票同一事件类型在最长期限内的重复公告（如每日回购公告）只计一次
+- [修复] `scripts/sec_form4_study.py` 默认评估全部事件（原默认仅取最早的 60 条），`--limit` 改为跨期等距抽样
+- [新功能] 新增 `scripts/pead_study.py`：在 S&P 400 / S&P 600 成分股（可随机抽样或自定义文件）上运行 PEAD 历史事件研究并输出土耳其语报告，避免使用按近期表现挑选的观察列表造成的前视偏差
+- [改进] Alpaca 实盘二次确认：`ALPACA_PAPER=false` 时，只有 `ALPACA_LIVE_TRADING_CONFIRMED=true` 才允许下单、撤单与平仓，否则仅允许只读查询；`.env.example` 补充 Alpaca 配置说明
+- [测试] `test_sector_concentration_uses_unclassified_for_non_cn` 不再在测试中联网查询美股行业，新增全球行业映射用例
 - [新功能] WebUI 新增「Sanal İşlem / KAP」（`/paper-trading`）页面与 `GET /api/v1/paper-trading/kap-alerts` 接口：集中展示模拟交易持仓、ATR 止损/止盈水平、BIST 100 与美元（USD/TRY）基准对比、1/3/5/10 日信号准确率以及近期 KAP 重要公告、多源证实新闻与传闻预警
 - [新功能] `scripts/kap_watch.py`（`KapWatchService`）新增多源新闻与扩散传闻监控（`KAP_WATCH_NEWS_ENABLED=true` / `--no-news`）：除官方 KAP 公告外，对至少 2 家独立媒体共同报道的证实催化新闻（`CONFIRMED` / `OFFICIAL`）以及在至少 2 家媒体扩散的传闻（`RUMOR`，明确标注无官方证实）发送盘中提醒，并将最近预警持久化至 `data/kap_watch_state.json`
 - [新功能] 模拟交易新增 ATR 波动率仓位管理与止损/止盈自动执行（`PAPER_TRADING_RISK_PCT` / `PAPER_TRADING_ATR_STOP_MULT` / `PAPER_TRADING_ATR_TP_MULT`）：根据 14 日 ATR（或信号止损价）计算建议止损（默认 `2×ATR`）、止盈（默认 `3×ATR`）并按单笔风险预算自动缩减高波动标的建仓股数；持仓期间后续日线最低/最高价或最新价触及止损/止盈线时自动记入 `stop_loss` / `take_profit` 平仓记录

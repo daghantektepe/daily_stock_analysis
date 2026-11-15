@@ -345,6 +345,35 @@ python scripts/kap_event_study.py --days 365
 4. **Kıyasla:** Stratejin BIST 100'ü ve doları geçemiyorsa, TL bazlı nominal kâr yanıltıcıdır. Yüksek enflasyonda bu çok olasıdır. Rapordaki "fark" ve "dolar bazında" satırlarına bak.
 5. **Gerçek paraya geçersen küçük başla.** Pozisyon büyüklüğünü ve zarar kes seviyesini önceden belirle. Tek bir habere ya da söylentiye dayanarak işlem yapma.
 
+### 7.1 ABD stratejilerini geçmiş veriyle sına (kendi bilgisayarında)
+
+Bu testler SEC ve Yahoo'dan veri çeker; bulut sunucularından genelde engellenir, ev bağlantısında çalışır. Önce `.env` dosyasına SEC'in istediği iletişim bilgisini ekle (yalnızca sec.gov'a gönderilir):
+
+```env
+SEC_EDGAR_USER_AGENT=DailyStockAnalysis/1.0 (contact: senin@epostan.com)
+```
+
+Yönetici alımları (Form 4), 2023 başından bugüne, tüm olaylar:
+
+```bash
+python scripts/sec_form4_study.py --quarters 2023q1..2026q3 --min-value 50000
+```
+
+Bilanço sonrası sürüklenme (PEAD), S&P 400 ve S&P 600 hisselerinden rastgele 400 tanesi:
+
+```bash
+python scripts/pead_study.py --universe smid --sample 400
+```
+
+İlk çalıştırma fiyatları indirdiği için uzun sürebilir (10–40 dk); fiyatlar `data/cache` altına kaydedilir, sonraki çalıştırmalar hızlıdır. Raporu okurken:
+
+- **Fazla getiri iki endekse göre ölçülür:** S&P 500 (SPY) ve küçük şirketler (IWM). Kararlar zor olana, yani düşük çıkana göre verilir.
+- **"✅ anlamlı"** yalnızca şu durumda yazar: aynı aydaki olaylar tek gözlem sayıldıktan ve tüm alt gruplar birlikte çoklu test düzeltmesinden (Holm) geçtikten sonra da sonuç tesadüften ayrılıyorsa, ve en az 12 aya yayılıyorsa. Bu çıtanın altındaki "iyi görünen" sonuçlar karar için yeterli değildir.
+- **Borsadan çıkan hisseler** son fiyatından çıkış yapar. Fiyatı hiç bulunamayan olaylar için rapor, bunların %-30 kaybettiği varsayımıyla düzeltilmiş ortalamayı da gösterir.
+- PEAD testi bilerek bugünün kazananlarından seçilmiş izleme listelerini değil endeks bileşenlerini kullanır; aksi halde sonuç geriye bakarak seçim yüzünden şişer.
+
+Çıktıyı buraya yapıştırırsan birlikte yorumlarız. Bir strateji maliyet sonrası zor kıyasta anlamlı pozitif değilse sanal işleme bile alınmaz.
+
 ## 8. Sonraki adımlar
 
 - 2–3 gün klasik modla çalıştırıp Türkçe raporları değerlendir; sorunlu ifadeleri not al (prompt iyileştirmesi için).

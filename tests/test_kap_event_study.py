@@ -159,3 +159,38 @@ def test_kap_fetcher_chunks_long_ranges_and_fetches_market_disclosures() -> None
     assert market_map["THYAO.IS"][0]["tags"] == ["buyback"]
     assert post_Windows[-1][0] == "IGS" and post_Windows[-1][1] == []
 
+
+
+def test_repeat_filings_within_horizon_count_once_and_stats_are_clustered() -> None:
+    trading_days = _build_trading_days(date(2026, 6, 1), 80)
+    closes = {day: 100.0 + i * 0.1 for i, day in enumerate(trading_days)}
+    index = {day: 10000.0 for day in trading_days}
+
+    def fake_history(symbol, start, end):
+        source = index if symbol == "XU100.IS" else closes
+        return {d: v for d, v in source.items() if start <= d <= end}
+
+    class _Fetcher:
+        def get_recent_disclosures(self, code, **_kwargs):
+            # Ten daily buyback notices for one programme, then a new one 40 sessions later.
+            days = trading_days[2:12] + [trading_days[52]]
+            return [
+                {
+                    "index": 100 + i,
+                    "published_at": datetime.combine(day, datetime.min.time()).replace(hour=11),
+                    "published_date": day.isoformat(),
+                    "title": "Günlük Pay Geri Alım İşlemleri",
+                    "tags": ["buyback"],
+                }
+                for i, day in enumerate(days)
+            ]
+
+    study = run_kap_event_study(
+        ["GARAN.IS"], days=120, fetcher=_Fetcher(), history=fake_history, today=trading_days[-1],
+    )
+    buyback = next(bucket for bucket in study["by_tag"] if bucket["tag"] == "buyback")
+    assert buyback["event_count"] == 2
+    assert study["repeat_filings_skipped"] == 9
+    cell = buyback["horizons"]["20d"]
+    assert cell["months"] <= 2 and cell["is_significant"] is False
+    assert "tekrar atlandı" in format_kap_event_study_report(study)

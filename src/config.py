@@ -1199,6 +1199,8 @@ class Config:
     alpaca_secret_key: Optional[str] = None
     alpaca_paper: bool = True
     alpaca_auto_execute: bool = False
+    # Second switch for real-money orders (ALPACA_PAPER=false alone only allows read-only calls)
+    alpaca_live_trading_confirmed: bool = False
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
@@ -2272,6 +2274,7 @@ class Config:
             alpaca_secret_key=(os.getenv('ALPACA_SECRET_KEY') or '').strip() or None,
             alpaca_paper=parse_env_bool(os.getenv('ALPACA_PAPER'), default=True),
             alpaca_auto_execute=parse_env_bool(os.getenv('ALPACA_AUTO_EXECUTE'), default=False),
+            alpaca_live_trading_confirmed=parse_env_bool(os.getenv('ALPACA_LIVE_TRADING_CONFIRMED'), default=False),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),
                 300,

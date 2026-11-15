@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
+from src.services.event_study_stats import clustered_test, mark_significance
 from src.services.pead_screener import resolve_event_day0
 from src.services.sec_form4_study import (
     DEFAULT_BENCHMARK_SYMBOL,
@@ -62,6 +63,7 @@ def run_pead_event_study(
     earnings_fetcher: Optional[Callable[[str], Optional[pd.DataFrame]]] = None,
     price_fetcher: Optional[Callable[[str, date, date], Dict[date, float]]] = None,
     volume_fetcher: Optional[Callable[[str, date, date], Dict[date, float]]] = None,
+    secondary_benchmark_symbol: Optional[str] = "IWM",
 ) -> Dict[str, Any]:
     """Run an offline/online historical PEAD event study across ``symbols``.
 
@@ -138,6 +140,10 @@ def run_pead_event_study(
 
     bench_closes = px_fn(benchmark_symbol, fetch_start, fetch_end)
     bench_series = _PriceCalendar(bench_closes)
+    second_series: Optional[_PriceCalendar] = None
+    if secondary_benchmark_symbol and secondary_benchmark_symbol != benchmark_symbol:
+        second_closes = px_fn(secondary_benchmark_symbol, fetch_start, fetch_end)
+        second_series = _PriceCalendar(second_closes) if second_closes else None
 
     series_cache: Dict[str, _PriceCalendar] = {}
     vol_cache: Dict[str, Dict[date, float]] = {}
@@ -196,6 +202,13 @@ def run_pead_event_study(
                 "excess_return_pct": round(excess, 2),
                 "beat_benchmark": excess > 0,
             }
+            if second_series is not None:
+                second_entry = second_series.closes.get(day0)
+                _, second_exit = second_series.close_after_n_bars(day0, n_bars)
+                if second_entry and second_exit:
+                    horizon_results[h_key]["excess_vs_secondary_pct"] = round(
+                        stock_ret - (second_exit / second_entry - 1.0) * 100.0, 2
+                    )
 
         if horizon_results:
             outcomes.append(PeadEventOutcome(
@@ -211,10 +224,11 @@ def run_pead_event_study(
             ))
 
     h_keys = [h[0] for h in horizons]
-    return {
+    result = {
         "total_events": len(raw_events),
         "evaluated_events": len(outcomes),
         "benchmark_symbol": benchmark_symbol,
+        "secondary_benchmark_symbol": secondary_benchmark_symbol if second_series is not None else None,
         "estimated_slippage_pct": estimated_slippage_pct,
         "horizons": _aggregate_pead_metrics(outcomes, h_keys, estimated_slippage_pct),
         "segments": {
@@ -239,6 +253,18 @@ def run_pead_event_study(
             },
         },
     }
+    # Holm correction across every reported cell (overall + segments).
+    cells: Dict[str, Dict[str, Any]] = {
+        f"all:{key}": cell for key, cell in result["horizons"].items() if cell.get("count")
+    }
+    for group, members in result["segments"].items():
+        for member, per_horizon in members.items():
+            for key, cell in per_horizon.items():
+                if cell.get("count"):
+                    cells[f"{group}.{member}:{key}"] = cell
+    mark_significance(cells)
+    result["tests_corrected"] = len(cells)
+    return result
 
 
 def _aggregate_pead_metrics(
@@ -246,35 +272,112 @@ def _aggregate_pead_metrics(
     horizon_keys: Sequence[str],
     slippage_pct: float = 0.25,
 ) -> Dict[str, Dict[str, Any]]:
+    """Per-horizon drift with calendar-month clustered statistics.
+
+    ``net_excess_return_pct`` uses the harder of the primary / small-cap
+    benchmark minus slippage; ``is_significant`` is set by :func:`mark_significance`.
+    """
     summary: Dict[str, Dict[str, Any]] = {}
     for h_key in horizon_keys:
-        valid = [o.horizons[h_key] for o in outcomes if h_key in o.horizons]
-        if not valid:
+        rows = [(o.entry_date, o.horizons[h_key]) for o in outcomes if h_key in o.horizons]
+        if not rows:
             summary[h_key] = {"count": 0}
             continue
-        excess_vals = [v["excess_return_pct"] for v in valid]
-        net_excess_vals = [x - slippage_pct for x in excess_vals]
-        stock_stats = compute_sample_statistics([v["stock_return_pct"] for v in valid])
-        excess_stats = compute_sample_statistics(excess_vals)
-        net_stats = compute_sample_statistics(net_excess_vals)
-        n = len(valid)
+        n = len(rows)
+        primary = clustered_test((day, v["excess_return_pct"]) for day, v in rows)
+        second_rows = [(day, v["excess_vs_secondary_pct"]) for day, v in rows if "excess_vs_secondary_pct" in v]
+        secondary = clustered_test(second_rows) if len(second_rows) == n else None
+        test = primary if secondary is None or primary["monthly_mean"] <= secondary["monthly_mean"] else secondary
+        conservative = min(primary["mean"], secondary["mean"]) if secondary else primary["mean"]
+        stock_stats = compute_sample_statistics([v["stock_return_pct"] for _, v in rows])
+        naive = compute_sample_statistics([v["excess_return_pct"] for _, v in rows])
         summary[h_key] = {
             "count": n,
+            "months": test["months"],
             "avg_stock_return_pct": stock_stats["mean"],
-            "avg_excess_return_pct": excess_stats["mean"],
-            "net_excess_return_pct": net_stats["mean"],
-            "median_excess_return_pct": excess_stats["median"],
-            "win_rate_pct": round(sum(1 for v in valid if v["stock_return_pct"] > 0) / n * 100.0, 1),
-            "beat_benchmark_rate_pct": round(sum(1 for v in valid if v["beat_benchmark"]) / n * 100.0, 1),
-            "t_stat": excess_stats["t_stat"],
-            "net_t_stat": net_stats["t_stat"],
-            "is_significant": excess_stats["is_significant"],
+            "avg_excess_return_pct": primary["mean"],
+            "avg_excess_vs_secondary_pct": secondary["mean"] if secondary else None,
+            "conservative_excess_pct": round(conservative, 2),
+            "net_excess_return_pct": round(conservative - slippage_pct, 2),
+            "median_excess_return_pct": primary["median"],
+            "win_rate_pct": round(sum(1 for _, v in rows if v["stock_return_pct"] > 0) / n * 100.0, 1),
+            "beat_benchmark_rate_pct": round(sum(1 for _, v in rows if v["beat_benchmark"]) / n * 100.0, 1),
+            "t_stat": test["t_stat"],
+            "t_stat_naive": naive["t_stat"],
+            "net_t_stat": naive["t_stat"],
+            "p_value": test["p_value"],
+            "p_holm": test["p_value"],
+            "is_significant": False,
         }
     return summary
+
+
+_PEAD_SEGMENT_LABELS = {
+    "surprise_bucket": {
+        "strong_beat_10pct_plus": "Güçlü sürpriz (≥%10)",
+        "positive_beat": "Beklentiyi aşan",
+        "negative_miss": "Beklentinin altında",
+    },
+    "trend": {"uptrend": "SMA200 üstü", "downtrend": "SMA200 altı"},
+}
+
+
+def _pead_cell_line(label: str, cell: Dict[str, Any], second: Optional[str]) -> str:
+    if not cell.get("count"):
+        return f"• {label}: veri yok"
+    second_text = (
+        f", {second}'ye göre %{cell['avg_excess_vs_secondary_pct']:+.2f}"
+        if second and cell.get("avg_excess_vs_secondary_pct") is not None else ""
+    )
+    verdict = "✅ anlamlı" if cell.get("is_significant") else "tesadüften ayırt edilemiyor"
+    return (
+        f"• {label}: fazla getiri %{cell.get('avg_excess_return_pct', 0.0):+.2f}{second_text} | "
+        f"net (zor kıyas, maliyet sonrası) %{cell.get('net_excess_return_pct', 0.0):+.2f} | "
+        f"endeksi geçen %{cell.get('beat_benchmark_rate_pct', 0.0):.0f} | n={cell['count']}, "
+        f"{cell.get('months', 0)} ay, t={cell.get('t_stat', 0.0):.2f}, p_holm={cell.get('p_holm', 1.0):.3f} → {verdict}"
+    )
+
+
+def format_pead_study_report(result: Dict[str, Any]) -> str:
+    """Turkish text report for :func:`run_pead_event_study` results."""
+    bench = result.get("benchmark_symbol", "SPY")
+    second = result.get("secondary_benchmark_symbol")
+    lines = [
+        "📈 Bilanço Sonrası Sürüklenme (PEAD) Geçmiş Testi",
+        "=" * 60,
+        f"Olay: {result.get('total_events', 0)} bilanço | değerlendirilen: {result.get('evaluated_events', 0)} | "
+        f"kıyas: {bench}" + (f" + {second}" if second else "")
+        + f" | kayma/komisyon: %{result.get('estimated_slippage_pct', 0.0):.2f}",
+        "Giriş: açıklama tepkisinin gerçekleştiği günün kapanışı (ilk gün sıçraması hariç, yalnızca sonraki sürüklenme).",
+        f"İstatistik: ay bazlı t; {result.get('tests_corrected', 0)} test birlikte Holm düzeltmesinden geçer.",
+        "",
+        "Tüm olaylar:",
+    ]
+    for key, cell in (result.get("horizons") or {}).items():
+        lines.append(_pead_cell_line(key, cell, second))
+    for group, members in (result.get("segments") or {}).items():
+        for member, per_horizon in members.items():
+            label = _PEAD_SEGMENT_LABELS.get(group, {}).get(member, member)
+            lines.append("")
+            lines.append(f"{label}:")
+            for key, cell in per_horizon.items():
+                lines.append(_pead_cell_line(key, cell, second))
+    significant = [
+        f"{key}" for key, cell in (result.get("horizons") or {}).items()
+        if cell.get("is_significant") and cell.get("net_excess_return_pct", 0) > 0
+    ]
+    lines.append("")
+    lines.append(
+        "Sonuç: maliyet sonrası pozitif ve anlamlı ufuk: " + ", ".join(significant) if significant
+        else "Sonuç: maliyet sonrası anlamlı pozitif sürüklenme bulunamadı; bu strateji şu haliyle kanıtlanmadı."
+    )
+    lines.append("Not: yfinance yalnızca son ~3 yılın bilanço tarihlerini verir; geçmiş getiri geleceği garanti etmez.")
+    return "\n".join(lines)
 
 
 __all__ = [
     "DEFAULT_PEAD_HORIZONS",
     "PeadEventOutcome",
+    "format_pead_study_report",
     "run_pead_event_study",
 ]

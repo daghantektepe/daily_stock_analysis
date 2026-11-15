@@ -279,3 +279,31 @@ def test_alpaca_client_and_auto_mirror_and_api(db, tmp_path, monkeypatch) -> Non
     )
     assert ord_res.status_code == 200
     assert ord_res.json()["id"] == "ord-123"
+
+
+def test_live_orders_need_explicit_confirmation() -> None:
+    import pytest
+
+    from src.brokers.alpaca import AlpacaBrokerError, AlpacaClient
+
+    calls = []
+
+    class _Session:
+        def request(self, **kwargs):
+            calls.append(kwargs["method"])
+            response = type("R", (), {"status_code": 200, "text": "{}", "json": lambda self: {}})()
+            return response
+
+    live = AlpacaClient(api_key="AK", secret_key="SK", paper=False, session=_Session(),
+                        live_trading_confirmed=False)
+    with pytest.raises(AlpacaBrokerError, match="ALPACA_LIVE_TRADING_CONFIRMED"):
+        live.submit_order(symbol="AAPL", qty=1, side="buy")
+    with pytest.raises(AlpacaBrokerError):
+        live.close_position("AAPL")
+    live.get_account()  # read-only calls stay allowed
+    assert calls == ["GET"]
+
+    confirmed = AlpacaClient(api_key="AK", secret_key="SK", paper=False, session=_Session(),
+                             live_trading_confirmed=True)
+    confirmed.close_position("AAPL")
+    assert calls[-1] == "DELETE"

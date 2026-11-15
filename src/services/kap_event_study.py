@@ -27,6 +27,7 @@ import statistics
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from src.services.event_study_stats import clustered_test, mark_significance
 from src.services.kap_watch_service import MATERIAL_TAGS, _TAG_LABELS_TR
 from src.services.market_symbol_utils import is_tr_suffix_symbol
 from src.services.paper_trading_benchmark import BENCHMARKS, HistoryProvider, _Series, yfinance_history
@@ -83,7 +84,17 @@ def _summarize_bucket(
         n = len(stock_rets)
         wins = sum(1 for r in stock_rets if r > 0)
         beat_idx = sum(1 for r in excess_rets if r > 0)
+        clustered = clustered_test(
+            (date.fromisoformat(e["entry_date"]), e["horizons"][key]["excess_return_pct"])
+            for e in events
+            if key in e.get("horizons", {}) and e["horizons"][key].get("excess_return_pct") is not None
+        )
         horizon_stats[key] = {
+            "months": clustered["months"],
+            "t_stat": clustered["t_stat"],
+            "p_value": clustered["p_value"],
+            "p_holm": clustered["p_value"],
+            "is_significant": False,
             "horizon_days": int(h),
             "sample_size": n,
             "avg_return_pct": round(sum(stock_rets) / n, 2) if n else None,
@@ -143,6 +154,11 @@ def run_kap_event_study(
     all_events: List[Dict[str, Any]] = []
     seen_stock_tag_entry: set = set()
     seen_stock_any_entry: set = set()
+    # Repeat filings about one event (e.g. daily buyback notices) would be counted
+    # many times; keep only the first (stock, tag) event within the longest horizon.
+    cooldown_bars = max(clean_horizons)
+    last_tag_index: Dict[Tuple[str, str], int] = {}
+    repeat_filings_skipped = 0
 
     for code in bist_stocks:
         try:
@@ -239,6 +255,11 @@ def run_kap_event_study(
                 if dedup_key in seen_stock_tag_entry:
                     continue
                 seen_stock_tag_entry.add(dedup_key)
+                previous = last_tag_index.get((code, tag))
+                if previous is not None and i0 - previous < cooldown_bars:
+                    repeat_filings_skipped += 1
+                    continue
+                last_tag_index[(code, tag)] = i0
                 events_by_tag.setdefault(tag, []).append(event_record)
 
     by_tag = [
@@ -257,16 +278,25 @@ def run_kap_event_study(
             bucket["tag"],
         )
     )
+    overall = _summarize_bucket("all", all_events, clean_horizons)
+    cells = {f"all:{key}": cell for key, cell in overall["horizons"].items() if cell.get("sample_size")}
+    for bucket in by_tag:
+        for key, cell in bucket["horizons"].items():
+            if cell.get("sample_size"):
+                cells[f"{bucket['tag']}:{key}"] = cell
+    mark_significance(cells)
     return {
         "benchmark": tr_spec["index"],
         "benchmark_name": tr_spec["index_name"],
+        "repeat_filings_skipped": repeat_filings_skipped,
+        "tests_corrected": len(cells),
         "days": lookback_days,
         "horizons": list(clean_horizons),
         "after_hours_cutoff_hour": int(after_hours_cutoff_hour),
         "stock_count": len(bist_stocks),
         "stocks": bist_stocks,
         "event_count": len(all_events),
-        "overall": _summarize_bucket("all", all_events, clean_horizons),
+        "overall": overall,
         "by_tag": by_tag,
         "events": all_events,
     }
@@ -289,6 +319,9 @@ def format_kap_event_study_report(study: Dict[str, Any]) -> str:
         f"📊 KAP Olay Etkisi Analizi (son {days} gün, {bench_name} kıyasıyla)",
         f"İncelenen hisse: {study.get('stock_count', 0)} | Tekil olay: {study.get('event_count', 0)} | "
         f"Giriş: bildirim sonrası ilk kapanış ({cutoff:02d}:00 sonrası -> ertesi işlem günü)",
+        f"Aynı olayın tekrar bildirimleri (ör. günlük geri alım) bir kez sayıldı: {study.get('repeat_filings_skipped', 0)} "
+        f"tekrar atlandı. İstatistik: ay bazlı t, {study.get('tests_corrected', 0)} test Holm düzeltmeli; "
+        "✅ = düzeltmeden sonra da anlamlı.",
     ]
     by_tag = study.get("by_tag") or []
     if not by_tag:
@@ -308,10 +341,12 @@ def format_kap_event_study_report(study: Dict[str, Any]) -> str:
             if n <= 0:
                 continue
             h_days = h_stats.get("horizon_days") or h_key.rstrip("d")
+            mark = " ✅" if h_stats.get("is_significant") else ""
             horizon_parts.append(
                 f"{h_days}g: ort. {_pct(h_stats.get('avg_return_pct'))}, "
-                f"{bench_name} fark {_pct(h_stats.get('avg_excess_return_pct'))}, "
-                f"endeksi geçen {_rate(h_stats.get('beat_index_rate_pct'))} (n={n})"
+                f"{bench_name} fark {_pct(h_stats.get('avg_excess_return_pct'))}{mark}, "
+                f"endeksi geçen {_rate(h_stats.get('beat_index_rate_pct'))} "
+                f"(n={n}, {h_stats.get('months', 0)} ay, t={h_stats.get('t_stat', 0.0):.1f})"
             )
         if horizon_parts:
             lines.append("  " + " | ".join(horizon_parts))

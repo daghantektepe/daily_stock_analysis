@@ -470,7 +470,9 @@ class PortfolioPr2TestCase(unittest.TestCase):
         self.assertIn("AAPL", positions)
         self.assertAlmostEqual(positions["AAPL"]["market_value_base"], 700.0, places=6)
 
-    def test_sector_concentration_uses_unclassified_for_non_cn(self) -> None:
+    @patch.object(PortfolioRiskService, "_fetch_global_sector", return_value=None)
+    def test_sector_concentration_uses_unclassified_for_non_cn(self, _mock_sector) -> None:
+        """Non-CN symbols fall back to UNCLASSIFIED when the global sector lookup has no answer (offline)."""
         us_account = self.service.create_account(name="US", broker="Demo", market="us", base_currency="USD")
         us_id = us_account["id"]
         self.service.record_cash_ledger(
@@ -496,6 +498,22 @@ class PortfolioPr2TestCase(unittest.TestCase):
         sectors = report["sector_concentration"]["top_sectors"]
         self.assertTrue(len(sectors) >= 1)
         self.assertEqual(sectors[0]["sector"], "UNCLASSIFIED")
+
+    @patch.object(PortfolioRiskService, "_fetch_global_sector", return_value="Technology")
+    def test_sector_concentration_uses_global_sector_for_us(self, mock_sector) -> None:
+        us_account = self.service.create_account(name="US2", broker="Demo", market="us", base_currency="USD")
+        us_id = us_account["id"]
+        self.service.record_cash_ledger(
+            account_id=us_id, event_date=date(2026, 1, 1), direction="in", amount=100.0, currency="USD",
+        )
+        self.service.record_trade(
+            account_id=us_id, symbol="AAPL", trade_date=date(2026, 1, 1), side="buy", quantity=1, price=100,
+            market="us", currency="USD",
+        )
+        self._save_close("AAPL", date(2026, 1, 1), 100.0)
+        report = self.risk_service.get_risk_report(account_id=us_id, as_of=date(2026, 1, 1), cost_method="fifo")
+        self.assertEqual(report["sector_concentration"]["top_sectors"][0]["sector"], "Technology")
+        mock_sector.assert_called()
 
     @patch.object(PortfolioRiskService, "_fetch_belong_boards", return_value=[{"name": "白酒", "type": "行业"}])
     def test_sector_concentration_cn_board_mapping(self, _mock_fetch) -> None:

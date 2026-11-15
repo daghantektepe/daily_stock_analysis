@@ -230,7 +230,7 @@ def test_sec_form4_event_study_with_statistics_and_dynamic_conclusions() -> None
 
     report = format_sec_form4_study_report(results)
     assert "Alfa: +%10.00" in report
-    assert "Net: %+9.50" in report
+    assert "Net, zor kıyas: %+9.50" in report
     assert "VERİYE DAYALI BULGULAR VE ANALİZ:" in report
     # Sample size is 1 (< 30), so a sample size warning must be rendered!
     assert "Örneklem uyarısı" in report

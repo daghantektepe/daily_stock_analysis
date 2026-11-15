@@ -38,10 +38,13 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from data_provider.sec_form4_fetcher import InsiderClusterEvent
+from src.services.event_study_stats import clustered_test, delisting_sensitivity, mark_significance
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_BENCHMARK_SYMBOL = "SPY"
+# Insider-buying alpha concentrates in small caps; compare against small caps too.
+DEFAULT_SECONDARY_BENCHMARK_SYMBOL = "IWM"
 DEFAULT_HORIZONS: Tuple[Tuple[str, int, str], ...] = (
     ("21d", 21, "1 Ay (21 İş Günü)"),
     ("63d", 63, "3 Ay (63 İş Günü)"),
@@ -229,8 +232,16 @@ def run_sec_form4_event_study(
     min_value: float = 20_000.0,
     max_events: Optional[int] = None,
     estimated_slippage_pct: float = 0.5,
+    secondary_benchmark_symbol: Optional[str] = DEFAULT_SECONDARY_BENCHMARK_SYMBOL,
 ) -> Dict[str, Any]:
-    """Calculate forward returns vs. benchmark for a sequence of Form 4 events."""
+    """Calculate forward returns vs. benchmark for a sequence of Form 4 events.
+
+    Rigor rules: a stock that stops trading before the horizon exits at its last
+    close (``delisted``) instead of being dropped; excess returns are measured
+    against both the primary and the small-cap benchmark and the lower of the two
+    is used for conclusions; significance uses calendar-month clustered t-stats
+    with a Holm correction across every reported cell.
+    """
     filtered_events = [e for e in events if e.total_value >= min_value]
     if max_events is not None and len(filtered_events) > max_events:
         filtered_events = filtered_events[:max_events]
@@ -254,6 +265,10 @@ def run_sec_form4_event_study(
     bench_start = min_date - timedelta(days=320)
     bench_closes = history(benchmark_symbol, bench_start, study_end_date)
     bench_cal = _PriceCalendar(bench_closes)
+    second_cal: Optional[_PriceCalendar] = None
+    if secondary_benchmark_symbol and secondary_benchmark_symbol != benchmark_symbol:
+        second_closes = history(secondary_benchmark_symbol, bench_start, study_end_date)
+        second_cal = _PriceCalendar(second_closes) if second_closes else None
 
     # 2. Parallel pre-fetch of unique stock price series
     outcomes: List[Form4EventOutcome] = []
@@ -301,10 +316,18 @@ def run_sec_form4_event_study(
         else:
             trend_regime = "unclassified"
 
+        second_entry = second_cal.next_trading_day_close(event.filing_date)[1] if second_cal else None
         horizon_results: Dict[str, Dict[str, Any]] = {}
         for h_key, n_bars, h_label in horizons:
             stock_exit_date, stock_exit_price = stock_cal.close_after_n_bars(entry_date, n_bars)
             bench_exit_date, bench_exit_price = bench_cal.close_after_n_bars(entry_date, n_bars)
+            delisted = False
+            if stock_exit_price is None and bench_exit_date is not None and stock_cal.dates:
+                # The market reached the horizon but the stock stopped trading:
+                # exit at its last close instead of silently dropping the loser.
+                last_day = stock_cal.dates[-1]
+                if entry_date < last_day < bench_exit_date:
+                    stock_exit_date, stock_exit_price, delisted = last_day, stock_cal.closes[last_day], True
 
             if (
                 stock_exit_price is not None
@@ -314,7 +337,7 @@ def run_sec_form4_event_study(
                 stock_ret = (stock_exit_price / entry_price - 1.0) * 100.0
                 bench_ret = (bench_exit_price / bench_entry - 1.0) * 100.0
                 excess = stock_ret - bench_ret
-                horizon_results[h_key] = {
+                result = {
                     "label": h_label,
                     "n_bars": n_bars,
                     "exit_date": stock_exit_date.isoformat(),
@@ -322,7 +345,14 @@ def run_sec_form4_event_study(
                     "benchmark_return_pct": round(bench_ret, 2),
                     "excess_return_pct": round(excess, 2),
                     "beat_benchmark": excess > 0,
+                    "delisted": delisted,
                 }
+                if second_cal is not None and second_entry:
+                    _, second_exit = second_cal.close_after_n_bars(entry_date, n_bars)
+                    if second_exit:
+                        second_ret = (second_exit / second_entry - 1.0) * 100.0
+                        result["excess_vs_secondary_pct"] = round(stock_ret - second_ret, 2)
+                horizon_results[h_key] = result
 
         if horizon_results:
             outcomes.append(Form4EventOutcome(
@@ -373,12 +403,31 @@ def run_sec_form4_event_study(
         },
     }
 
+    # Holm correction across every cell reported together (overall + all segments).
+    cells: Dict[str, Dict[str, Any]] = {}
+    for h_key, cell in horizon_aggregates.items():
+        if cell.get("count"):
+            cells[f"all:{h_key}"] = cell
+    for group, members in segments.items():
+        for member, per_horizon in members.items():
+            for h_key, cell in per_horizon.items():
+                if cell.get("count"):
+                    cells[f"{group}.{member}:{h_key}"] = cell
+    mark_significance(cells)
+    missing_events = len(filtered_events) - len(outcomes)
+    for h_key, cell in horizon_aggregates.items():
+        if cell.get("count"):
+            observed = [o.horizons[h_key]["excess_return_pct"] for o in outcomes if h_key in o.horizons]
+            cell["delisting_adjusted_excess_pct"] = delisting_sensitivity(observed, missing_events)
+
     return {
         "total_events": len(filtered_events),
         "evaluated_events": len(outcomes),
-        "missing_events": len(filtered_events) - len(outcomes),
+        "missing_events": missing_events,
         "missing_symbols": sorted(missing_symbols),
         "benchmark_symbol": benchmark_symbol,
+        "secondary_benchmark_symbol": secondary_benchmark_symbol if second_cal is not None else None,
+        "tests_corrected": len(cells),
         "estimated_slippage_pct": estimated_slippage_pct,
         "horizons": horizon_aggregates,
         "segments": segments,
@@ -404,41 +453,72 @@ def _aggregate_horizon_metrics(
     horizon_keys: Sequence[str],
     slippage_pct: float = 0.5,
 ) -> Dict[str, Dict[str, Any]]:
-    """Aggregate stock returns, benchmark returns, excess alpha and statistical metrics."""
+    """Aggregate returns per horizon with calendar-month clustered statistics.
+
+    ``conservative_excess_pct`` is the lower of the excess returns against the
+    primary and secondary (small-cap) benchmark; ``net_excess_return_pct`` is
+    that minus estimated slippage. ``is_significant`` is set later by
+    :func:`mark_significance` (Holm across all cells).
+    """
     summary: Dict[str, Dict[str, Any]] = {}
     for h_key in horizon_keys:
-        valid = [o.horizons[h_key] for o in outcomes if h_key in o.horizons]
-        count = len(valid)
+        rows = [(o.entry_date, o.horizons[h_key]) for o in outcomes if h_key in o.horizons]
+        count = len(rows)
         if count == 0:
             summary[h_key] = {"count": 0}
             continue
-
-        stock_rets = [item["stock_return_pct"] for item in valid]
-        bench_rets = [item["benchmark_return_pct"] for item in valid]
-        excess_rets = [item["excess_return_pct"] for item in valid]
-        beats = sum(1 for item in valid if item["beat_benchmark"])
-
-        stats_excess = compute_sample_statistics(excess_rets)
-        stats_stock = compute_sample_statistics(stock_rets)
-        stats_bench = compute_sample_statistics(bench_rets)
-
-        net_mean_excess = round(stats_excess["mean"] - slippage_pct, 2)
+        stock_rets = [item["stock_return_pct"] for _, item in rows]
+        bench_rets = [item["benchmark_return_pct"] for _, item in rows]
+        primary = clustered_test((day, item["excess_return_pct"]) for day, item in rows)
+        secondary_rows = [(day, item["excess_vs_secondary_pct"]) for day, item in rows
+                          if "excess_vs_secondary_pct" in item]
+        secondary = clustered_test(secondary_rows) if len(secondary_rows) == count else None
+        # Conclusions rest on the benchmark that is harder to beat.
+        test = primary if secondary is None or primary["monthly_mean"] <= secondary["monthly_mean"] else secondary
+        conservative = min(primary["mean"], secondary["mean"]) if secondary else primary["mean"]
+        naive = compute_sample_statistics([item["excess_return_pct"] for _, item in rows])
+        beats = sum(1 for _, item in rows if item["beat_benchmark"])
         summary[h_key] = {
             "count": count,
-            "avg_stock_return_pct": stats_stock["mean"],
-            "median_stock_return_pct": stats_stock["median"],
-            "avg_benchmark_return_pct": stats_bench["mean"],
-            "median_benchmark_return_pct": stats_bench["median"],
-            "avg_excess_return_pct": stats_excess["mean"],
-            "median_excess_return_pct": stats_excess["median"],
-            "net_excess_return_pct": net_mean_excess,
-            "stdev_excess_pct": stats_excess["stdev"],
-            "t_stat": stats_excess["t_stat"],
-            "is_significant": stats_excess["is_significant"],
+            "months": test["months"],
+            "delisted_count": sum(1 for _, item in rows if item.get("delisted")),
+            "avg_stock_return_pct": compute_sample_statistics(stock_rets)["mean"],
+            "median_stock_return_pct": compute_sample_statistics(stock_rets)["median"],
+            "avg_benchmark_return_pct": compute_sample_statistics(bench_rets)["mean"],
+            "median_benchmark_return_pct": compute_sample_statistics(bench_rets)["median"],
+            "avg_excess_return_pct": primary["mean"],
+            "median_excess_return_pct": primary["median"],
+            "avg_excess_vs_secondary_pct": secondary["mean"] if secondary else None,
+            "conservative_excess_pct": round(conservative, 2),
+            "net_excess_return_pct": round(conservative - slippage_pct, 2),
+            "stdev_excess_pct": naive["stdev"],
+            "t_stat": test["t_stat"],
+            "t_stat_naive": naive["t_stat"],
+            "p_value": test["p_value"],
+            "p_holm": test["p_value"],
+            "is_significant": False,
             "win_rate_pct": round((beats / count) * 100.0, 1),
             "win_count": beats,
         }
     return summary
+
+
+def _compare_segments(name: str, left_label: str, left: Dict[str, Any],
+                      right_label: str, right: Dict[str, Any]) -> Optional[str]:
+    """Describe a segment difference without claiming more than the data supports."""
+    if left.get("count", 0) < 3 or right.get("count", 0) < 3:
+        return None
+    left_exc = left.get("conservative_excess_pct", left.get("avg_excess_return_pct", 0.0))
+    right_exc = right.get("conservative_excess_pct", right.get("avg_excess_return_pct", 0.0))
+    diff = left_exc - right_exc
+    if abs(diff) <= 1.0:
+        return f"⚖️ {name}: {left_label} %{left_exc:+.2f} vs {right_label} %{right_exc:+.2f} — belirgin fark yok."
+    better_label, better = (left_label, left) if diff > 0 else (right_label, right)
+    if better.get("is_significant"):
+        return (f"✅ {name}: {better_label} daha iyi ({left_label} %{left_exc:+.2f} vs {right_label} %{right_exc:+.2f}) "
+                f"ve bu grup çoklu test düzeltmesinden sonra da anlamlı (p_holm={better.get('p_holm', 1.0):.3f}).")
+    return (f"🟡 {name}: {left_label} %{left_exc:+.2f} vs {right_label} %{right_exc:+.2f}; fark var ama "
+            f"istatistiksel olarak kanıtlanmadı (p_holm={better.get('p_holm', 1.0):.3f}). Karar için yeterli değil.")
 
 
 def _generate_dynamic_conclusions(results: Dict[str, Any]) -> List[str]:
@@ -462,98 +542,44 @@ def _generate_dynamic_conclusions(results: Dict[str, Any]) -> List[str]:
             f"Bu şirketler çoğunlukla iflas/satın alma riski taşıyan mikro ölçekli hisselerdir."
         )
 
-    # 2. Overall Performance & Significance
+    # 2. Overall Performance & Significance (clustered by month, Holm-corrected)
     d21 = h_data.get("21d", {})
     if d21.get("count", 0) > 0:
-        exc_mean = d21.get("avg_excess_return_pct", 0.0)
-        exc_med = d21.get("median_excess_return_pct", 0.0)
-        t_stat = d21.get("t_stat", 0.0)
-        sig = d21.get("is_significant", False)
-        net_exc = d21.get("net_excess_return_pct", 0.0)
-
-        sig_text = "istatistiksel olarak anlamlıdır (p < 0.05)" if sig else "istatistiksel olarak tesadüften ayırt edilemez (|t| < 1.96)"
-        conclusions.append(
-            f"📊 1 Aylık Alfa: Ortalama %{exc_mean:+.2f} (Medyan: %{exc_med:+.2f}), t={t_stat:.2f} ({sig_text}). "
-            f"Tahmini kayma/komisyon sonrası net alfa: %{net_exc:+.2f}."
+        second = results.get("secondary_benchmark_symbol")
+        vs_second = d21.get("avg_excess_vs_secondary_pct")
+        second_text = f", {second}'ye göre %{vs_second:+.2f}" if second and vs_second is not None else ""
+        sig_text = (
+            "çoklu test düzeltmesinden sonra anlamlı" if d21.get("is_significant")
+            else "tesadüften ayırt edilemiyor"
         )
-
-    # 3. Cluster vs. Single Insider Hypothesis Check
-    clust = seg.get("cluster_vs_single", {})
-    c_21 = clust.get("cluster", {}).get("21d", {})
-    s_21 = clust.get("single", {}).get("21d", {})
-    if c_21.get("count", 0) >= 3 and s_21.get("count", 0) >= 3:
-        c_exc = c_21.get("avg_excess_return_pct", 0.0)
-        s_exc = s_21.get("avg_excess_return_pct", 0.0)
-        diff = c_exc - s_exc
-        if diff > 1.0:
+        conclusions.append(
+            f"📊 1 Aylık fazla getiri: {bench}'ye göre %{d21.get('avg_excess_return_pct', 0.0):+.2f}{second_text} "
+            f"(medyan %{d21.get('median_excess_return_pct', 0.0):+.2f}). Ay bazlı t={d21.get('t_stat', 0.0):.2f}, "
+            f"{d21.get('months', 0)} ay, p_holm={d21.get('p_holm', 1.0):.3f} → {sig_text}. "
+            f"Zor kıyasa göre, maliyet sonrası net: %{d21.get('net_excess_return_pct', 0.0):+.2f}."
+        )
+        adjusted = d21.get("delisting_adjusted_excess_pct")
+        if missing > 0 and adjusted is not None:
             conclusions.append(
-                f"✅ Küme alımı hipotezi DOĞRULANDI: Çoklu yönetici alımı (%{c_exc:+.2f}), "
-                f"tek yönetici alımına göre (%{s_exc:+.2f}) %{diff:.2f} daha fazla aşırı getiri sağladı."
-            )
-        elif diff < -1.0:
-            conclusions.append(
-                f"❌ Küme alımı hipotezi BU DÖNEMDE ÇALIŞMADI: Çoklu yönetici alımı (%{c_exc:+.2f}), "
-                f"tek yöneticiye kıyasla (%{s_exc:+.2f}) %{abs(diff):.2f} daha zayıf kaldı."
-            )
-        else:
-            conclusions.append(
-                f"⚖️ Küme alımı ile tek alım arasında belirgin getiri farkı gözlenmedi (Küme: %{c_exc:+.2f} vs Tek: %{s_exc:+.2f})."
+                f"🧮 Hayatta kalma duyarlılığı: fiyatı bulunamayan {missing} olay %-30 kaybetmiş sayılırsa "
+                f"1 aylık ortalama fazla getiri %{adjusted:+.2f} olur."
             )
 
-    # 4. C-Suite Conviction Hypothesis Check
-    role = seg.get("role", {})
-    cs_21 = role.get("c_suite", {}).get("21d", {})
-    bo_21 = role.get("board_other", {}).get("21d", {})
-    if cs_21.get("count", 0) >= 3 and bo_21.get("count", 0) >= 3:
-        cs_exc = cs_21.get("avg_excess_return_pct", 0.0)
-        bo_exc = bo_21.get("avg_excess_return_pct", 0.0)
-        diff_r = cs_exc - bo_exc
-        if diff_r > 1.0:
-            conclusions.append(
-                f"✅ C-Suite hipotezi DOĞRULANDI: CEO/CFO/Başkan alımları (%{cs_exc:+.2f}), "
-                f"yönetim kurulu/diğer alımlardan (%{bo_exc:+.2f}) %{diff_r:.2f} daha yüksek getiri üretti."
-            )
-        else:
-            conclusions.append(
-                f"ℹ️ C-Suite alımları (%{cs_exc:+.2f}) ile diğer alımlar (%{bo_exc:+.2f}) benzer performans sergiledi."
-            )
-
-    # 5. Opportunistic vs Routine / 10b5-1 Check
-    opp = seg.get("opportunistic", {})
-    non_10b = opp.get("non_10b51", {}).get("21d", {})
-    rule_10b = opp.get("rule_10b51", {}).get("21d", {})
-    if non_10b.get("count", 0) >= 3 and rule_10b.get("count", 0) >= 3:
-        n_exc = non_10b.get("avg_excess_return_pct", 0.0)
-        r_exc = rule_10b.get("avg_excess_return_pct", 0.0)
-        diff_opp = n_exc - r_exc
-        if diff_opp > 1.0:
-            conclusions.append(
-                f"✅ Fırsatçı alım avantajı DOĞRULANDI: 10b5-1 plansız alımlar (%{n_exc:+.2f}), "
-                f"otomatik 10b5-1 program alımlarına kıyasla (%{r_exc:+.2f}) %{diff_opp:.2f} daha karlı oldu."
-            )
-        else:
-            conclusions.append(
-                f"ℹ️ 10b5-1 planlı alımlar (%{r_exc:+.2f}) ile plansız alımlar (%{n_exc:+.2f}) arasında fark tespit edilemedi."
-            )
-
-    # 6. Trend / Momentum Confluence Check (SMA 200)
-    trend_seg = seg.get("trend", {})
-    up_21 = trend_seg.get("uptrend", {}).get("21d", {})
-    down_21 = trend_seg.get("downtrend", {}).get("21d", {})
-    if up_21.get("count", 0) >= 3 and down_21.get("count", 0) >= 3:
-        up_exc = up_21.get("avg_excess_return_pct", 0.0)
-        down_exc = down_21.get("avg_excess_return_pct", 0.0)
-        diff_trend = up_exc - down_exc
-        if diff_trend > 1.0:
-            conclusions.append(
-                f"📈 Trend Kesişimi KANITI: 200 günlük hareketli ortalamanın üzerindeki alımlar (%{up_exc:+.2f}), "
-                f"düşüş trendindeki alımlara göre (%{down_exc:+.2f}) %{diff_trend:.2f} daha yüksek alfa üretti. "
-                f"Düşüş trendindeki yönetici alımları değer tuzağıdır; momentum onayı zorunludur."
-            )
-        else:
-            conclusions.append(
-                f"ℹ️ Trend durumuna göre belirgin getiri farkı oluşmadı (Yükseliş: %{up_exc:+.2f} vs Düşüş: %{down_exc:+.2f})."
-            )
+    comparisons = (
+        ("Küme alımı", "cluster_vs_single", ("Küme", "cluster"), ("Tek", "single")),
+        ("Rol", "role", ("C-Suite", "c_suite"), ("Kurul/Diğer", "board_other")),
+        ("10b5-1", "opportunistic", ("Plansız", "non_10b51"), ("10b5-1 planlı", "rule_10b51")),
+        ("CMP sınıfı", "opportunistic", ("Fırsatçı", "cmp_opportunistic"), ("Rutin", "cmp_routine")),
+        ("Trend", "trend", ("SMA200 üstü", "uptrend"), ("SMA200 altı", "downtrend")),
+    )
+    for name, group, (left_label, left_key), (right_label, right_key) in comparisons:
+        members = seg.get(group, {})
+        line = _compare_segments(
+            name, left_label, members.get(left_key, {}).get("21d", {}),
+            right_label, members.get(right_key, {}).get("21d", {}),
+        )
+        if line:
+            conclusions.append(line)
 
     return conclusions
 
@@ -571,8 +597,14 @@ def format_sec_form4_study_report(results: Dict[str, Any]) -> str:
         "🏛️ ABD Yönetici Alımları (SEC Form 4) Geçmiş Etki ve Alfa Raporu",
         "=" * 66,
         f"Örneklem: {total} incelenen alım olayı | {evaluated} tamamlanan getiri penceresi (%{survival_pct:.1f} kapsama)",
-        f"Kıyas Endeksi: {bench} | Varsayılan Alış-Satış Kayması/Komisyon: %{slip:.2f}",
+        f"Kıyas Endeksi: {bench}"
+        + (f" + küçük şirket kıyası {results['secondary_benchmark_symbol']} (sonuçlar zor olana göre)"
+           if results.get("secondary_benchmark_symbol") else "")
+        + f" | Varsayılan Alış-Satış Kayması/Komisyon: %{slip:.2f}",
         "Kural: Bildirimin ertesi işlem günü kapanışında alım; önceden bilme yanılgısı (lookahead) sıfırdır.",
+        "İstatistik: aynı aydaki olaylar tek gözlem sayılır (ay bazlı t); "
+        f"{results.get('tests_corrected', 0)} test birlikte Holm düzeltmesinden geçer. "
+        "Borsadan çıkan hisseler son fiyatından çıkış yapar.",
         "",
         "📊 1. GENEL PERFORMANS (Tüm Yönetici Alımları)",
         "-" * 66,
@@ -592,13 +624,16 @@ def format_sec_form4_study_report(results: Dict[str, Any]) -> str:
         med_exc = data.get("median_excess_return_pct", 0.0)
         net_exc = data.get("net_excess_return_pct", 0.0)
         t_stat = data.get("t_stat", 0.0)
-        sig = " (p<0.05)" if data.get("is_significant") else ""
+        sig = " ✅anlamlı" if data.get("is_significant") else ""
         win = data.get("win_rate_pct", 0.0)
         sign = "+" if exc >= 0 else ""
+        second = data.get("avg_excess_vs_secondary_pct")
+        second_text = f" | {results.get('secondary_benchmark_symbol')}'ye göre %{second:+.2f}" if second is not None else ""
         lines.append(
             f"• {label:<22}: Hisse %{stk:+.2f} (Medyan %{med_stk:+.2f}) | {bench} %{b_ret:+.2f} | "
-            f"Alfa: {sign}%{exc:.2f} (Net: %{net_exc:+.2f}) | Medyan Alfa: %{med_exc:+.2f} | "
-            f"t={t_stat:.2f}{sig} | Kazanma: %{win:.1f} ({cnt} işlem)"
+            f"Alfa: {sign}%{exc:.2f}{second_text} (Net, zor kıyas: %{net_exc:+.2f}) | Medyan Alfa: %{med_exc:+.2f} | "
+            f"ay bazlı t={t_stat:.2f}, {data.get('months', 0)} ay, p_holm={data.get('p_holm', 1.0):.3f}{sig} | "
+            f"Kazanma: %{win:.1f} ({cnt} işlem, {data.get('delisted_count', 0)} borsadan çıkan)"
         )
 
     # Segments
