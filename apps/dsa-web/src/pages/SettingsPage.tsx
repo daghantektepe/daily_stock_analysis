@@ -564,7 +564,7 @@ function formatSchedulerTimestamp(value: string | null | undefined, language: Ui
     return value;
   }
 
-  return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'zh-CN', {
+  return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'tr-TR', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -1397,7 +1397,7 @@ const SettingsPage: React.FC = () => {
   const settingsPanelDiagnosticHint = isDesktopRuntime
     ? uiLanguage === 'en'
       ? <>Check and provide the desktop log <code>desktop.log</code>, plus the release version, Windows version, and trigger path.</>
-      : <>请查看并提供桌面端日志 <code>desktop.log</code>，同时补充 release 版本、Windows 版本和触发入口。</>
+      : <>Masaüstü günlüğünü (<code>desktop_exe.log</code>) ve Windows sürüm bilgisini kontrol edin.</>
     : t('settings.diagnosticHintWeb');
   const activeCategoryTitle = getCategoryTitle(activeCategory as SystemConfigCategory, t('settings.activePanelTitle'), uiLanguage);
   const activeCategoryDescription = getCategoryDescription(activeCategory as SystemConfigCategory, '', uiLanguage);

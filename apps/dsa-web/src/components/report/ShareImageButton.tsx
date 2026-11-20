@@ -38,7 +38,7 @@ const downloadBlob = (blob: Blob, filename: string): void => {
 export const ShareImageButton: React.FC<ShareImageButtonProps> = ({
   recordId,
   reportTitle,
-  reportLanguage = 'zh',
+  reportLanguage = 'tr',
   className = '',
 }) => {
   const desktopRuntime = typeof window !== 'undefined' ? (window as DesktopWindow).dsaDesktop : undefined;

@@ -388,7 +388,7 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
   recordId,
   content: providedContent,
   payload: providedPayload,
-  reportLanguage = 'zh',
+  reportLanguage = 'tr',
   className = '',
   onOpenRunFlow,
 }) => {

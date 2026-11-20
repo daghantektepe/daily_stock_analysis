@@ -69,7 +69,7 @@ def _screening_task_not_found(task_id: str) -> HTTPException:
     return api_error(
         404,
         "screening_screen_task_not_found",
-        f"选股任务 {task_id} 不存在或已过期",
+        f"Tarama görevi {task_id} bulunamadı veya süresi doldu",
     )
 
 
@@ -144,7 +144,7 @@ def screening_start_screen_task(
         task_queue.update_task_progress(
             task_id,
             20,
-            "正在执行选股，外部数据源较慢时会持续后台运行",
+            "Hisse tarama çalışıyor; dış veri kaynakları yavaşsa arka planda devam edecektir",
         )
 
         def report_progress(progress: int, message: str) -> None:
@@ -160,7 +160,7 @@ def screening_start_screen_task(
         task_queue.update_task_progress(
             task_id,
             98,
-            f"选股已完成，正在整理 {result.get('candidate_count', 0)} 条候选",
+            f"Tarama tamamlandı, {result.get('candidate_count', 0)} aday düzenleniyor",
         )
         return result
 
@@ -169,7 +169,7 @@ def screening_start_screen_task(
         stock_code="screening_screen",
         stock_name=f"{request.strategy} / {request.market}",
         report_type="screening_screen",
-        message="选股任务已提交",
+        message="Tarama görevi gönderildi",
         task_id=task_id,
         trace_id=task_id,
     )
@@ -177,7 +177,7 @@ def screening_start_screen_task(
         task_id=task.task_id,
         trace_id=task.trace_id or task.task_id,
         status=task.status.value if isinstance(task.status, QueueTaskStatus) else str(task.status),
-        message=task.message or "选股任务已提交",
+        message=task.message or "Tarama görevi gönderildi",
         strategy=request.strategy,
         market=request.market,
         max_results=request.max_results,

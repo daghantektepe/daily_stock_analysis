@@ -164,7 +164,7 @@ def _run_market_review_background(
         )
         report = run_market_review(**review_kwargs)
         if not report:
-            raise RuntimeError("大盘复盘未返回可持久化报告")
+            raise RuntimeError("Piyasa incelemesi kaydedilebilir bir rapor döndürmedi")
         if hasattr(report, "report"):
             return {
                 "result": report.report,
@@ -209,7 +209,7 @@ def _extract_guardrail_reason(raw_result: Any) -> Optional[str]:
 
 
 def _invalid_analysis_input_error() -> HTTPException:
-    return api_error(400, "validation_error", "请输入有效的股票代码或股票名称")
+    return api_error(400, "validation_error", "Lütfen geçerli bir hisse kodu veya adı girin")
 
 
 def _is_obviously_invalid_analysis_input(text: str) -> bool:
@@ -310,7 +310,7 @@ def trigger_analysis(
         stock_codes.extend(request.stock_codes)
 
     if not stock_codes:
-        raise api_error(400, "validation_error", "必须提供 stock_code 或 stock_codes 参数")
+        raise api_error(400, "validation_error", "stock_code veya stock_codes parametresi gereklidir")
 
     # Normalize and de-duplicate inputs while preserving compatibility.
     resolved = [_resolve_and_normalize_input(c) for c in stock_codes]
@@ -331,10 +331,10 @@ def trigger_analysis(
     # Limit the number of stocks in a single request to prevent DoS
     MAX_BATCH_SIZE = 50
     if len(stock_codes) > MAX_BATCH_SIZE:
-        raise api_error(400, "validation_error", f"单次分析请求最多支持 {MAX_BATCH_SIZE} 只股票")
+        raise api_error(400, "validation_error", f"Tek analiz isteğinde en fazla {MAX_BATCH_SIZE} hisse desteklenir")
 
     if not stock_codes:
-        raise api_error(400, "validation_error", "股票代码不能为空或仅包含空白字符")
+        raise api_error(400, "validation_error", "Hisse kodu boş olamaz")
 
     # Sync mode only supports single-stock analysis.
     if not request.async_mode:
@@ -342,7 +342,7 @@ def trigger_analysis(
             raise api_error(
                 400,
                 "validation_error",
-                "同步模式仅支持单只股票分析，请使用 async_mode=true 进行批量分析",
+                "Eşzamanlı mod yalnızca tek hisseyi destekler; toplu analiz için async_mode=true kullanın",
             )
         return _handle_sync_analysis(stock_codes[0], request)
 
@@ -396,7 +396,7 @@ def _handle_async_analysis_batch(
             trace_id=_get_task_trace_id(task),
             stock_code=task.stock_code,
             status="pending",
-            message=f"分析任务已加入队列: {task.stock_code}",
+            message=f"Analiz görevi kuyruğa alındı: {task.stock_code}",
             analysis_phase=task.analysis_phase,
         )
         for task in accepted_tasks
@@ -442,7 +442,7 @@ def _handle_async_analysis_batch(
     batch_response = BatchTaskAcceptedResponse(
         accepted=accepted,
         duplicates=duplicates,
-        message=f"已提交 {len(accepted)} 个任务，{len(duplicates)} 个重复跳过",
+        message=f"{len(accepted)} görev kuyruğa alındı, {len(duplicates)} yinelenen atlandı",
     )
     return JSONResponse(
         status_code=202,
@@ -478,7 +478,7 @@ def _handle_sync_analysis(
         )
 
         if result is None:
-            error_message = service.last_error or f"分析股票 {stock_code} 失败"
+            error_message = service.last_error or f"{stock_code} analizi başarısız oldu"
             raise api_error(500, "analysis_failed", error_message)
 
         # 构建报告结构
@@ -511,7 +511,7 @@ def _handle_sync_analysis(
         raise
     except Exception as e:
         logger.error(f"分析失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"分析过程发生错误: {str(e)}")
+        raise api_error(500, "internal_error", f"Analiz sırasında hata oluştu: {str(e)}")
 
 
 # ============================================================
@@ -544,7 +544,7 @@ def trigger_market_review(
 
     lock_token = _try_acquire_market_review_lock(runtime_config)
     if lock_token is None:
-        raise api_error(409, "duplicate_market_review", "大盘复盘正在执行中，请稍后再试")
+        raise api_error(409, "duplicate_market_review", "Piyasa incelemesi zaten çalışıyor, lütfen daha sonra tekrar deneyin")
 
     try:
         task_id = uuid.uuid4().hex
@@ -564,8 +564,8 @@ def trigger_market_review(
                 query_id=task_id,
             ),
             stock_code="market_review",
-            stock_name="大盘复盘",
-            message="大盘复盘任务已提交",
+            stock_name="Piyasa İncelemesi",
+            message="Piyasa incelemesi görevi gönderildi",
             task_id=task_id,
             region=effective_region,
         )
@@ -575,7 +575,7 @@ def trigger_market_review(
 
     return MarketReviewAccepted(
         status="accepted",
-        message="大盘复盘任务已提交，完成后会保存报告并按配置推送通知",
+        message="Piyasa incelemesi görevi gönderildi; tamamlandığında rapor kaydedilecektir",
         send_notification=request.send_notification,
         region=effective_region,
         task_id=task.task_id,
@@ -816,9 +816,9 @@ def get_task_run_flow(task_id: str) -> RunFlowSnapshot:
             return history_snapshot
     except Exception as e:
         logger.error(f"查询任务运行流失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"查询任务运行流失败: {str(e)}")
+        raise api_error(500, "internal_error", f"Görev akışı sorgulanamadı: {str(e)}")
 
-    raise api_error(404, "not_found", f"任务 {task_id} 不存在或已过期")
+    raise api_error(404, "not_found", f"Görev {task_id} bulunamadı veya süresi doldu")
 
 
 def _safe_task_flow_text(value: Any, *, max_length: int) -> Optional[str]:
@@ -1267,10 +1267,10 @@ def get_analysis_status(task_id: str) -> TaskStatus:
 
     except Exception as e:
         logger.error(f"查询任务状态失败: {e}", exc_info=True)
-        raise api_error(500, "internal_error", f"查询任务状态失败: {str(e)}")
+        raise api_error(500, "internal_error", f"Görev durumu sorgulanamadı: {str(e)}")
 
     # 3. 任务不存在
-    raise api_error(404, "not_found", f"任务 {task_id} 不存在或已过期")
+    raise api_error(404, "not_found", f"Görev {task_id} bulunamadı veya süresi doldu")
 
 
 # ============================================================

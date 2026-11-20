@@ -81,7 +81,7 @@ def run_backtest(
         logger.error(f"回测执行失败: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail={"error": "internal_error", "message": f"回测执行失败: {str(exc)}"},
+            detail={"error": "internal_error", "message": f"Geriye dönük test çalıştırılamadı: {str(exc)}"},
         )
 
 
@@ -136,7 +136,7 @@ def get_backtest_results(
         logger.error(f"查询回测结果失败: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail={"error": "internal_error", "message": f"查询回测结果失败: {str(exc)}"},
+            detail={"error": "internal_error", "message": f"Geriye dönük test sonuçları alınamadı: {str(exc)}"},
         )
 
 
@@ -172,7 +172,7 @@ def get_overall_performance(
         if summary is None:
             raise HTTPException(
                 status_code=404,
-                detail={"error": "not_found", "message": "未找到整体回测汇总"},
+                detail={"error": "not_found", "message": "Genel geriye dönük test özeti bulunamadı"},
             )
         return PerformanceMetrics(**summary)
     except ValueError as exc:
@@ -186,7 +186,7 @@ def get_overall_performance(
         logger.error(f"查询整体表现失败: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail={"error": "internal_error", "message": f"查询整体表现失败: {str(exc)}"},
+            detail={"error": "internal_error", "message": f"Genel performans özeti alınamadı: {str(exc)}"},
         )
 
 
@@ -223,7 +223,7 @@ def get_stock_performance(
         if summary is None:
             raise HTTPException(
                 status_code=404,
-                detail={"error": "not_found", "message": f"未找到 {code} 的回测汇总"},
+                detail={"error": "not_found", "message": f"{code} için geriye dönük test özeti bulunamadı"},
             )
         return PerformanceMetrics(**summary)
     except ValueError as exc:
@@ -237,5 +237,5 @@ def get_stock_performance(
         logger.error(f"查询单股表现失败: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail={"error": "internal_error", "message": f"查询单股表现失败: {str(exc)}"},
+            detail={"error": "internal_error", "message": f"Hisse performansı alınamadı: {str(exc)}"},
         )

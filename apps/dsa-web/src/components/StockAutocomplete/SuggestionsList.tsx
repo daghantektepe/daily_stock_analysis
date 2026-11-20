@@ -77,15 +77,15 @@ export function SuggestionsList({
 }
 
 const MARKET_BADGE_CONFIG = {
-  CN: { label: 'A股', className: 'border-danger/25 bg-danger/10 text-danger' },
-  HK: { label: '港股', className: 'border-success/25 bg-success/10 text-success' },
-  US: { label: '美股', className: 'border-cyan/25 bg-cyan/10 text-cyan' },
-  JP: { label: '日股', className: 'border-indigo-500/25 bg-indigo-500/10 text-indigo-500' },
-  KR: { label: '韩股', className: 'border-rose-500/25 bg-rose-500/10 text-rose-500' },
+  CN: { label: 'Çin (A)', className: 'border-danger/25 bg-danger/10 text-danger' },
+  HK: { label: 'HK', className: 'border-success/25 bg-success/10 text-success' },
+  US: { label: 'ABD', className: 'border-cyan/25 bg-cyan/10 text-cyan' },
+  JP: { label: 'Japonya', className: 'border-indigo-500/25 bg-indigo-500/10 text-indigo-500' },
+  KR: { label: 'Kore', className: 'border-rose-500/25 bg-rose-500/10 text-rose-500' },
   TR: { label: 'BIST', className: 'border-red-600/25 bg-red-600/10 text-red-600' },
-  INDEX: { label: '指数', className: 'border-purple/25 bg-purple/10 text-purple' },
+  INDEX: { label: 'Endeks', className: 'border-purple/25 bg-purple/10 text-purple' },
   ETF: { label: 'ETF', className: 'border-warning/25 bg-warning/10 text-warning' },
-  BSE: { label: '北交所', className: 'border-orange-500/25 bg-orange-500/10 text-orange-500' },
+  BSE: { label: 'BSE', className: 'border-orange-500/25 bg-orange-500/10 text-orange-500' },
 } as const;
 
 function MarketBadge({ market }: { market: string }) {
@@ -104,10 +104,10 @@ function MarketBadge({ market }: { market: string }) {
 
 function MatchTypeBadge({ matchType }: { matchType: string }) {
   const configMap = {
-    exact: { label: '精确', className: 'border-cyan/25 bg-cyan/10 text-cyan' },
-    prefix: { label: '前缀', className: 'border-purple/25 bg-purple/10 text-purple' },
-    contains: { label: '包含', className: 'border-warning/25 bg-warning/10 text-warning' },
-    fuzzy: { label: '模糊', className: 'border-border/55 bg-elevated/75 text-muted-text' },
+    exact: { label: 'Tam', className: 'border-cyan/25 bg-cyan/10 text-cyan' },
+    prefix: { label: 'Önek', className: 'border-purple/25 bg-purple/10 text-purple' },
+    contains: { label: 'İçerir', className: 'border-warning/25 bg-warning/10 text-warning' },
+    fuzzy: { label: 'Benzer', className: 'border-border/55 bg-elevated/75 text-muted-text' },
   };
 
   const config = configMap[matchType as keyof typeof configMap] || configMap.fuzzy;

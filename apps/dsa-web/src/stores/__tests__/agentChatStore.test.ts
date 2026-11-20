@@ -362,7 +362,7 @@ describe('agentChatStore.startStream', () => {
     const state = useAgentChatStore.getState();
     expect(state.messages).toHaveLength(1);
     expect(state.chatError).toMatchObject({
-      title: '请求未被接受',
+      title: 'İstek Kabul Edilmedi',
       rawMessage: 'Agent stream emitted accepted more than once.',
     });
   });
@@ -384,7 +384,7 @@ describe('agentChatStore.startStream', () => {
     expect(state.messages).toEqual([]);
     expect(state.sessions).toEqual([]);
     expect(state.chatError).toMatchObject({
-      title: '请求未被接受',
+      title: 'İstek Kabul Edilmedi',
       rawMessage: 'Agent stream emitted done before accepted.',
     });
   });
@@ -434,7 +434,7 @@ describe('agentChatStore.startStream', () => {
       skills: ['bull_trend', 'ma_golden_cross'],
       skill: 'bull_trend',
       skillNames: ['趋势分析', '均线金叉'],
-      skillName: '趋势分析、均线金叉',
+      skillName: '趋势分析, 均线金叉',
     });
     expect(state.messages[1]).toMatchObject({
       role: 'assistant',
@@ -442,7 +442,7 @@ describe('agentChatStore.startStream', () => {
       skills: ['bull_trend', 'ma_golden_cross'],
       skill: 'bull_trend',
       skillNames: ['趋势分析', '均线金叉'],
-      skillName: '趋势分析、均线金叉',
+      skillName: '趋势分析, 均线金叉',
     });
   });
 
@@ -463,8 +463,8 @@ describe('agentChatStore.startStream', () => {
     const state = useAgentChatStore.getState();
     expect(state.messages).toHaveLength(1);
     expect(state.chatError).toMatchObject({
-      title: '回复未完整返回',
-      message: 'Agent 流式响应在完成前中断，请重试。',
+      title: 'Yanıt Tamamlanamadı',
+      message: 'Ajan akış yanıtı tamamlanmadan kesildi, lütfen tekrar deneyin.',
       category: 'upstream_network',
     });
   });
@@ -484,7 +484,7 @@ describe('agentChatStore.startStream', () => {
     });
 
     expect(useAgentChatStore.getState().chatError).toMatchObject({
-      title: '系统没有配置可用的 LLM 模型',
+      title: 'Kullanılabilir LLM Modeli Yapılandırılmamış',
       category: 'llm_not_configured',
       rawMessage: 'Agent LLM: no effective primary model configured',
     });
@@ -505,7 +505,7 @@ describe('agentChatStore.startStream', () => {
     });
 
     expect(useAgentChatStore.getState().chatError).toMatchObject({
-      title: '连接上游服务超时',
+      title: 'Üst Servis Bağlantı Zaman Aşımı',
       category: 'upstream_timeout',
       rawMessage: 'connect timeout while calling upstream provider',
     });
@@ -526,8 +526,8 @@ describe('agentChatStore.startStream', () => {
     });
 
     const error = useAgentChatStore.getState().chatError;
-    expect(error?.message).toContain('Codex Agent');
-    expect(error?.message).toContain('Agent 设置');
+    expect(error?.message).toContain('Codex Ajan');
+    expect(error?.message).toContain('Ajan ayarlarındaki');
     expect(error?.message).not.toContain('API Key');
   });
 });

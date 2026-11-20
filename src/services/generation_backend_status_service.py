@@ -344,7 +344,7 @@ class GenerationBackendStatusService:
         return {
             "success": True,
             "mode": request.mode,
-            "message": "生成后端冒烟测试通过",
+            "message": "Üretim arka ucu bağlantı testi başarılı",
             "status": status,
         }
 

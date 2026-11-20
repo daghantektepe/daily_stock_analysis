@@ -150,8 +150,13 @@ const isExpandableNode = (node: RunFlowNode): boolean => node.metadata?.topology
 
 const getEdgeLabel = (label: string | null | undefined, t: RunFlowT): string | null => {
   if (!label) return null;
-  if (label === '调用') return t('runFlow.edgeLabel.invoke');
-  if (label === '详情') return t('runFlow.edgeLabel.details');
+  if (label === '调用' || label === 'Çağır') return t('runFlow.edgeLabel.invoke');
+  if (label === '详情' || label === 'Detay') return t('runFlow.edgeLabel.details');
+  if (label === '降级') return 'Yedek';
+  if (label === '重试') return 'Tekrar';
+  if (label === '生成') return 'Üret';
+  if (label === '保存') return 'Kaydet';
+  if (label === '通知') return 'Bildirim';
   return label;
 };
 

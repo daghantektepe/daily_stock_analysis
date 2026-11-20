@@ -45,7 +45,7 @@ function FallbackInput({
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = '输入股票代码或名称',
+  placeholder = 'Hisse kodu veya adı girin',
   ariaLabel,
   className,
 }: StockAutocompleteProps) {
@@ -107,7 +107,7 @@ function StockAutocompleteInner({
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = '输入股票代码或名称',
+  placeholder = 'Hisse kodu veya adı girin',
   ariaLabel,
   className,
 }: StockAutocompleteProps) {

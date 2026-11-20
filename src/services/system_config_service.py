@@ -520,8 +520,8 @@ class SystemConfigService:
         channel: str,
         items: Sequence[Dict[str, str]],
         mask_token: str = "******",
-        title: str = "DSA 通知测试",
-        content: str = "这是一条来自 DSA Web 设置页的通知测试消息。",
+        title: str = "DSA Bildirim Testi",
+        content: str = "Bu, DSA Ayarlar sayfasından gönderilen bir test bildirimidir.",
         timeout_seconds: float = 20.0,
     ) -> Dict[str, Any]:
         """Send one real notification test without persisting submitted values."""
@@ -537,7 +537,7 @@ class SystemConfigService:
         if missing:
             return self._build_notification_test_result(
                 success=False,
-                message=f"通知渠道配置不完整，缺少: {', '.join(missing)}",
+                message=f"Bildirim kanalı eksik yapılandırılmış, eksik alanlar: {', '.join(missing)}",
                 error_code="config_missing",
                 stage="config_validation",
                 retryable=False,
@@ -574,7 +574,7 @@ class SystemConfigService:
             error_code, retryable = self._classify_notification_exception(exc)
             return self._build_notification_test_result(
                 success=False,
-                message=f"通知测试异常: {exc}",
+                message=f"Bildirim testi hatası: {exc}",
                 error_code=error_code,
                 stage="notification_send",
                 retryable=retryable,
@@ -2152,7 +2152,7 @@ class SystemConfigService:
             )
             warnings.append(
                 (
-                    "新闻窗口已按策略计算："
+                    "Haber penceresi stratejiye göre hesaplandı: "
                     f"NEWS_STRATEGY_PROFILE={profile}, "
                     f"NEWS_MAX_AGE_DAYS={max_age}, "
                     f"effective_days={effective_days} "
@@ -2168,15 +2168,15 @@ class SystemConfigService:
             if reload_now:
                 warnings.append(
                     (
-                        f"MAX_WORKERS={max_workers} 已保存。任务队列空闲时会自动应用；"
-                        "若当前存在运行中任务，将在队列空闲后生效。"
+                        f"MAX_WORKERS={max_workers} kaydedildi. Görev kuyruğu boşaldığında uygulanır; "
+                        "aktif görevler varsa tamamlandıktan sonra devreye girer."
                     )
                 )
             else:
                 warnings.append(
                     (
-                        f"MAX_WORKERS={max_workers} 已写入 .env，但本次未触发运行时重载"
-                        "（reload_now=false）；重载后才会应用。"
+                        f"MAX_WORKERS={max_workers} .env dosyasına yazıldı ancak çalışma zamanı yeniden yüklenmedi"
+                        " (reload_now=false); yeniden yüklemeden sonra uygulanır."
                     )
                 )
 
@@ -2186,9 +2186,9 @@ class SystemConfigService:
         if startup_only_run_keys:
             warnings.append(
                 (
-                    f"{', '.join(sorted(startup_only_run_keys))} 已写入 .env。"
-                    "它属于启动期单次运行配置：当前已运行的 WebUI/API 进程不会因为本次保存立即触发分析；"
-                    "请重启当前进程后，在非 schedule 模式下按新值生效。"
+                    f"{', '.join(sorted(startup_only_run_keys))} .env dosyasına yazıldı. "
+                    "Başlangıç ayarıdır; mevcut WebUI/API süreci yeniden başlatıldığında etkinleşir. "
+                    "Değişikliğin geçerli olması için uygulamayı yeniden başlatın."
                 )
             )
 
@@ -2198,9 +2198,9 @@ class SystemConfigService:
         if startup_only_schedule_keys:
             warnings.append(
                 (
-                    f"{', '.join(sorted(startup_only_schedule_keys))} 已写入 .env。"
-                    "这些属于启动期调度模式配置：当前已运行的 WebUI/API 进程不会因为本次保存启动、"
-                    "停止或重建 scheduler；请重启当前进程，并以 schedule 模式重新启动后生效。"
+                    f"{', '.join(sorted(startup_only_schedule_keys))} .env dosyasına yazıldı. "
+                    "Zamanlayıcı başlangıç ayarıdır; değişikliklerin geçerli olması için "
+                    "uygulamayı yeniden başlatın."
                 )
             )
 
@@ -2208,9 +2208,9 @@ class SystemConfigService:
             schedule_enabled = (current_map.get("SCHEDULE_ENABLED", "false") or "false").strip().lower()
             warnings.append(
                 (
-                    f"SCHEDULE_ENABLED={schedule_enabled} 已写入 .env。"
-                    "如果当前进程是 WebUI/API/Desktop 长运行进程，runtime scheduler 会按新配置启停；"
-                    "CLI schedule 模式仍按启动参数和配置运行。"
+                    f"SCHEDULE_ENABLED={schedule_enabled} .env dosyasına yazıldı. "
+                    "Çalışan zamanlayıcı yeni ayara göre güncellenir; "
+                    "CLI zamanlayıcı modu kendi başlangıç parametreleriyle çalışır."
                 )
             )
 
@@ -2220,9 +2220,9 @@ class SystemConfigService:
             effective = schedule_times or schedule_time
             warnings.append(
                 (
-                    f"SCHEDULE_TIMES={effective} 已写入 .env。"
-                    "有效时间点会去重、排序；为空时继续使用 SCHEDULE_TIME。"
-                    "如果当前进程存在 runtime scheduler，会按新时间重建 daily jobs。"
+                    f"SCHEDULE_TIMES={effective} .env dosyasına yazıldı. "
+                    "Geçerli saatler sıralanır; boşsa SCHEDULE_TIME kullanılır. "
+                    "Aktif zamanlayıcı varsa günlük görevler yeni saatlere göre yeniden oluşturulur."
                 )
             )
 
@@ -2230,9 +2230,9 @@ class SystemConfigService:
             schedule_time = (current_map.get("SCHEDULE_TIME", "") or "").strip() or "18:00"
             warnings.append(
                 (
-                    f"SCHEDULE_TIME={schedule_time} 已写入 .env。"
-                    "如果当前进程已经以 schedule 模式运行，scheduler 会在下一轮检查中自动重建 daily job；"
-                    "如果当前进程未以 schedule 模式运行，本次保存不会启动 scheduler。"
+                    f"SCHEDULE_TIME={schedule_time} .env dosyasına yazıldı. "
+                    "Zamanlayıcı çalışıyorsa sonraki döngüde güncellenir; "
+                    "çalışmıyorsa bu kayıt zamanlayıcıyı otomatik başlatmaz."
                 )
             )
 
@@ -2243,9 +2243,9 @@ class SystemConfigService:
         if startup_only_bind_keys:
             warnings.append(
                 (
-                    f"{', '.join(sorted(startup_only_bind_keys))} 已写入 .env。"
-                    "这些属于启动期监听配置：当前已运行的 WebUI/API 进程不会因为本次保存重新绑定监听地址或端口；"
-                    "请重启当前进程、Docker 容器或服务管理器后生效。"
+                    f"{', '.join(sorted(startup_only_bind_keys))} .env dosyasına yazıldı. "
+                    "Dinleme adresi/port değişikliği çalışan sunucuda anında uygulanmaz; "
+                    "uygulamayı yeniden başlattığınızda geçerli olur."
                 )
             )
 
@@ -2259,9 +2259,9 @@ class SystemConfigService:
     ) -> List[str]:
         """Explain when save payload clears stale runtime model references."""
         runtime_labels = {
-            "LITELLM_MODEL": "主模型",
-            "AGENT_LITELLM_MODEL": "Agent 主模型",
-            "VISION_MODEL": "Vision 模型",
+            "LITELLM_MODEL": "Ana Model",
+            "AGENT_LITELLM_MODEL": "Ajan Ana Modeli",
+            "VISION_MODEL": "Vision Modeli",
         }
         cleared_labels: List[str] = []
         for key, label in runtime_labels.items():
@@ -2287,13 +2287,13 @@ class SystemConfigService:
 
         cleaned_targets = list(cleared_labels)
         if removed_fallbacks:
-            cleaned_targets.append("备选模型中的失效项")
+            cleaned_targets.append("geçersiz yedek model girdileri")
 
         cleaned_text = " / ".join(cleaned_targets)
         warning = (
-            f"检测到已同步清理失效的运行时模型引用：{cleaned_text}。"
-            "如需恢复，请先补回对应渠道模型列表后重新选择；"
-            "也可用桌面端导出备份或手动 .env 还原之前的 LLM_* / "
+            f"Geçersiz çalışma zamanı model referansları temizlendi: {cleaned_text}. "
+            "Geri yüklemek için ilgili kanalın model listesini ekleyip yeniden seçin; "
+            "veya .env yedeğinizden önceki LLM_* / "
             "LITELLM_MODEL / AGENT_LITELLM_MODEL / VISION_MODEL / LLM_TEMPERATURE。"
         )
         return [warning]
@@ -2319,11 +2319,11 @@ class SystemConfigService:
 
         return [
             (
-                "检测到已清理 Hermes Phase 3 不支持的配置项："
+                "Desteklenmeyen Hermes ayarları temizlendi: "
                 f"{', '.join(cleared)}。"
-                "Hermes reserved channel 只支持单个 LLM_HERMES_API_KEY，不支持多 Key 或额外 Header；"
-                "如需恢复旧值，请从 .env 备份、Git 历史或桌面端导出备份手动还原，"
-                "但非空 LLM_HERMES_API_KEYS / LLM_HERMES_EXTRA_HEADERS 仍会被后端校验拒绝。"
+                "Hermes kanalı yalnızca tek bir LLM_HERMES_API_KEY destekler; "
+                "eski değerleri geri yüklemek için .env yedeğini kullanabilirsiniz, "
+                "ancak çoklu anahtar/ek başlıklar doğrulamada reddedilir."
             )
         ]
 
@@ -2344,7 +2344,7 @@ class SystemConfigService:
         """Parse raw `.env` text into update items without expanding app templates."""
         normalized_content = content.replace("\ufeff", "")
         if not normalized_content.strip():
-            raise ConfigImportError("未识别到有效 .env 配置")
+            raise ConfigImportError("Geçerli bir .env yapılandırması algılanamadı")
 
         from dotenv import dotenv_values
 
@@ -2361,7 +2361,7 @@ class SystemConfigService:
             )
 
         if not updates:
-            raise ConfigImportError("未识别到有效 .env 配置")
+            raise ConfigImportError("Geçerli bir .env yapılandırması algılanamadı")
 
         return updates
 
@@ -2955,14 +2955,14 @@ class SystemConfigService:
             ntfy_server_url, ntfy_topic = resolve_ntfy_endpoint(ntfy_url)
             if ntfy_server_url and ntfy_topic:
                 return None
-            return "NTFY_URL 必须包含 topic path，例如 https://ntfy.sh/my-topic。"
+            return "NTFY_URL bir konu yolu içermelidir, örn. https://ntfy.sh/my-topic."
         if channel == "gotify":
             gotify_url = (effective_map.get("GOTIFY_URL") or "").strip()
             if not gotify_url:
                 return None
             if resolve_gotify_message_endpoint(gotify_url):
                 return None
-            return "GOTIFY_URL 必须是 Gotify server base URL，不包含 /message。"
+            return "GOTIFY_URL, /message olmadan Gotify sunucu temel URL adresi olmalıdır."
         return None
 
     def _build_notification_test_config(self, effective_map: Dict[str, str]) -> Config:
@@ -3033,11 +3033,11 @@ class SystemConfigService:
             total_count = len(attempts)
             success = success_count > 0
             if success_count == total_count and total_count > 0:
-                message = f"自定义 Webhook 通知测试成功（{success_count}/{total_count}）"
+                message = f"Özel Webhook testi başarılı ({success_count}/{total_count})"
             elif success_count > 0:
-                message = f"自定义 Webhook 通知测试部分成功（{success_count}/{total_count}）"
+                message = f"Özel Webhook testi kısmen başarılı ({success_count}/{total_count})"
             else:
-                message = f"自定义 Webhook 通知测试失败（{success_count}/{total_count}）"
+                message = f"Özel Webhook testi başarısız ({success_count}/{total_count})"
             return self._build_notification_test_result(
                 success=success,
                 message=message,
@@ -3069,7 +3069,7 @@ class SystemConfigService:
         attempt = {
             "channel": channel,
             "success": ok,
-            "message": "通知测试发送成功" if ok else "通知测试发送失败",
+            "message": "Test bildirimi gönderildi" if ok else "Test bildirimi gönderilemedi",
             "target": target,
             "error_code": None if ok else "send_failed",
             "stage": "notification_send",
@@ -3078,7 +3078,7 @@ class SystemConfigService:
         }
         return self._build_notification_test_result(
             success=ok,
-            message=f"{channel} 通知测试成功" if ok else f"{channel} 通知测试失败",
+            message=f"{channel} test bildirimi başarılı" if ok else f"{channel} test bildirimi başarısız",
             error_code=None if ok else "send_failed",
             stage="notification_send",
             retryable=False,
@@ -3548,12 +3548,12 @@ class SystemConfigService:
                 return explicit_model, "explicit"
             has_direct_source = self._has_setup_runtime_source_for_model(explicit_model, effective_map)
             if yaml_models and explicit_model not in set(yaml_models):
-                return "", "主模型未出现在当前 LiteLLM YAML model_list 中"
+                return "", "Ana model mevcut LiteLLM YAML model_list içinde bulunamadı"
             if channel_models and explicit_model not in set(channel_models):
-                return "", "主模型未出现在当前启用渠道模型列表中"
+                return "", "Ana model etkin kanalların model listesinde bulunamadı"
             if yaml_models or channel_models or has_direct_source:
                 return explicit_model, "explicit"
-            return "", "主模型缺少可用渠道或匹配的 API Key"
+            return "", "Ana model için uygun kanal veya API anahtarı eksik"
 
         if yaml_models:
             return yaml_models[0], "yaml"
@@ -3564,7 +3564,7 @@ class SystemConfigService:
         if legacy_model:
             return legacy_model, "legacy"
 
-        return "", "尚未检测到主模型配置"
+        return "", "Ana model yapılandırması algılanmadı"
 
     def _build_setup_primary_llm_check(self, effective_map: Dict[str, str]) -> Dict[str, Any]:
         generation_backend = normalize_backend_id(
@@ -3576,56 +3576,56 @@ class SystemConfigService:
             if shutil.which(preset.executable):
                 return self._setup_check(
                     "llm_primary",
-                    "LLM 主渠道",
+                    "Ana LLM Kanalı",
                     "ai_model",
                     True,
                     "configured",
-                    f"已启用 {preset.display_name} 本地生成 Backend（experimental/limited）。",
+                    f"{preset.display_name} yerel üretim arka ucu etkin.",
                 )
             return self._setup_check(
                 "llm_primary",
-                "LLM 主渠道",
+                "Ana LLM Kanalı",
                 "ai_model",
                 True,
                 "needs_action",
                 (
-                    "已选择 codex_cli，但 DSA 后端进程当前 PATH 中找不到 codex 可执行文件。"
+                    "codex_cli seçili ancak sunucu PATH ortamında codex komutu bulunamadı."
                     if generation_backend == CODEX_CLI_BACKEND_ID
-                    else f"已选择 {generation_backend}，但未找到 {preset.executable} 可执行文件。"
+                    else f"{generation_backend} seçili ancak {preset.executable} çalıştırılabilir dosyası bulunamadı."
                 ),
                 (
-                    "请确认 Codex CLI 已安装到后端 PATH 可见目录；桌面端请完全退出并重开。"
-                    "打开 Codex CLI 交互窗口不会改变已运行后端的 PATH；若找到后仍失败，再检查 Codex CLI 登录态，"
-                    "或将 GENERATION_BACKEND 设回 litellm。"
+                    "Codex CLI kurulumunu ve PATH ayarını doğrulayıp uygulamayı yeniden başlatın. "
+                    "Sorun devam ederse Codex CLI oturum durumunu kontrol edin "
+                    "veya GENERATION_BACKEND değerini litellm olarak ayarlayın."
                     if generation_backend == CODEX_CLI_BACKEND_ID
-                    else "请先安装并登录对应 CLI，或将 GENERATION_BACKEND 设回 litellm。"
+                    else "İlgili CLI aracını kurup giriş yapın veya GENERATION_BACKEND değerini litellm yapın."
                 ),
             )
 
         model, source = self._resolve_setup_primary_model(effective_map)
         if model:
             source_label = {
-                "explicit": "显式主模型",
+                "explicit": "Açık Ana Model",
                 "yaml": "LiteLLM YAML",
-                "channel": "LLM 渠道",
+                "channel": "LLM Kanalı",
                 "legacy": "legacy provider",
             }.get(source, source)
             return self._setup_check(
                 "llm_primary",
-                "LLM 主渠道",
+                "Ana LLM Kanalı",
                 "ai_model",
                 True,
                 "configured",
-                f"已检测到 {source_label}: {model}",
+                f"{source_label} algılandı: {model}",
             )
         return self._setup_check(
             "llm_primary",
-            "LLM 主渠道",
+            "Ana LLM Kanalı",
             "ai_model",
             True,
             "needs_action",
             source,
-            "请配置 LITELLM_MODEL、LLM_CHANNELS、LITELLM_CONFIG 或 legacy provider API Key。",
+            "Lütfen LITELLM_MODEL, LLM_CHANNELS, LITELLM_CONFIG veya sağlayıcı API anahtarını yapılandırın.",
         )
 
     def _build_setup_agent_llm_check(
@@ -3644,12 +3644,12 @@ class SystemConfigService:
         if agent_backend in GENERATION_ONLY_BACKEND_IDS:
             return self._setup_check(
                 "llm_agent",
-                "Agent 渠道",
+                "Ajan Kanalı",
                 "agent",
                 True,
                 "needs_action",
-                f"Agent 工具调用暂不支持 {agent_backend} text-only backend。",
-                "请将 AGENT_GENERATION_BACKEND 设为 auto 或 litellm，并配置 LiteLLM 工具调用渠道。",
+                f"Ajan araç çağrısı {agent_backend} metin-yalnız arka ucunu desteklemiyor. ",
+                "AGENT_GENERATION_BACKEND değerini auto veya litellm yapıp bir LLM kanalı yapılandırın.",
             )
 
         agent_model_raw = (effective_map.get("AGENT_LITELLM_MODEL") or "").strip()
@@ -3662,70 +3662,70 @@ class SystemConfigService:
                     if litellm_model in hermes_routes and litellm_model not in non_hermes_routes:
                         return self._setup_check(
                             "llm_agent",
-                            "Agent 渠道",
+                            "Ajan Kanalı",
                             "agent",
                             True,
                             "needs_action",
-                            "普通分析使用 Codex CLI；但当前 LiteLLM Agent 路径继承的是 Hermes-only 模型，"
-                            "Hermes Phase 3 不支持 Agent 工具调用。",
-                            "如需使用 Ask-Stock Agent，请配置非 Hermes 的 AGENT_LITELLM_MODEL，"
-                            "或配置包含非 Hermes deployment 的 mixed Agent route。",
+                            "Standart analiz Codex CLI kullanıyor; Ajan yolu yalnızca Hermes modelini devraldı. "
+                            "Hermes Phase 3 araç çağrısını desteklemez.",
+                            "Ajan Sohbeti için non-Hermes bir AGENT_LITELLM_MODEL yapılandırın "
+                            "veya non-Hermes dağıtım içeren bir rota ekleyin.",
                         )
                     return self._setup_check(
                         "llm_agent",
-                        "Agent 渠道",
+                        "Ajan Kanalı",
                         "agent",
                         True,
                         "configured",
-                        f"普通分析使用 Codex CLI；Agent 工具调用仍使用 LiteLLM 主模型: {litellm_model}",
+                        f"Standart analiz Codex CLI, Ajan araç çağrıları LiteLLM modeli kullanıyor: {litellm_model}",
                     )
                 if agent_backend == LITELLM_BACKEND_ID:
                     return self._setup_check(
                         "llm_agent",
-                        "Agent 渠道",
+                        "Ajan Kanalı",
                         "agent",
                         True,
                         "needs_action",
-                        "AGENT_GENERATION_BACKEND 已选择 litellm，但未检测到可用 LiteLLM 模型配置。",
-                        "如需使用 Ask-Stock Agent，请配置 AGENT_LITELLM_MODEL、LITELLM_MODEL、LLM_CHANNELS 或 LITELLM_CONFIG。",
+                        "AGENT_GENERATION_BACKEND litellm olarak seçili ancak kullanılabilir LiteLLM modeli bulunamadı.",
+                        "Ajan Sohbeti için AGENT_LITELLM_MODEL, LITELLM_MODEL veya LLM_CHANNELS yapılandırın.",
                     )
                 return self._setup_check(
                     "llm_agent",
-                    "Agent 渠道",
+                    "Ajan Kanalı",
                     "agent",
                     True,
                     "needs_action",
-                    "Agent 工具调用需要 LiteLLM 模型配置；local CLI 主生成方式不会被自动继承。",
-                    "如需使用 Ask-Stock Agent，请配置 LiteLLM 模型，或将 AGENT_GENERATION_BACKEND 固定为 litellm 后补齐模型配置。",
+                    "Ajan araç çağrısı için LiteLLM modeli gerekir; yerel CLI otomatik devralınmaz.",
+                    "Ajan Sohbeti için bir LiteLLM modeli yapılandırın veya CLI MCP köprüsünü kullanın.",
                 )
             if primary_check["status"] == "configured":
                 primary_model, _source = self._resolve_setup_primary_model(effective_map)
                 if primary_model in hermes_routes and primary_model not in non_hermes_routes:
                     return self._setup_check(
                         "llm_agent",
-                        "Agent 渠道",
+                        "Ajan Kanalı",
                         "agent",
                         True,
                         "needs_action",
-                        "Hermes Phase 3 不支持 Agent 工具调用，且当前继承的主模型没有非 Hermes deployment。",
-                        "请选择非 Hermes Agent 模型，或配置包含非 Hermes deployment 的 mixed Agent route。",
+                        "Hermes Phase 3 Ajan araç çağrısını desteklemiyor.",
+                        "Lütfen non-Hermes bir Ajan modeli seçin.",
                     )
                 return self._setup_check(
                     "llm_agent",
-                    "Agent 渠道",
+                    "Ajan Kanalı",
                     "agent",
                     True,
                     "inherited",
-                    "未单独配置 Agent 主模型，将继承 LLM 主渠道。",
+                    "Ayrı Ajan modeli ayarlı değil; ana LLM kanalı devralınacak.",
                 )
             return self._setup_check(
                 "llm_agent",
-                "Agent 渠道",
+                "Ajan Kanalı",
                 "agent",
                 True,
                 "needs_action",
-                "Agent 未配置独立模型，且 LLM 主渠道尚不可用。",
-                "请先补齐 LLM 主渠道配置。",
+                "Ajan için ayrı model ayarlı değil ve ana LLM kanalı hazır değil.",
+                "Önce ana LLM kanalını yapılandırın.",
             )
 
         configured_models = set(
@@ -3736,22 +3736,22 @@ class SystemConfigService:
         if agent_model in hermes_routes and agent_model not in non_hermes_routes:
             return self._setup_check(
                 "llm_agent",
-                "Agent 渠道",
+                "Ajan Kanalı",
                 "agent",
                 True,
                 "needs_action",
-                f"Agent 主模型 {agent_model} 只有 Hermes deployment，Phase 3 不支持 Agent 工具调用。",
-                "请选择非 Hermes Agent 模型，或配置 mixed route 中的非 Hermes deployment。",
+                f"Ajan modeli {agent_model} yalnızca Hermes dağıtımına sahip; araç çağrısı desteklenmiyor.",
+                "Lütfen non-Hermes bir Ajan modeli seçin.",
             )
-        configured_agent_message = f"已配置 Agent 主模型: {agent_model}"
+        configured_agent_message = f"Ajan ana modeli yapılandırıldı: {agent_model}"
         if generation_backend == CODEX_CLI_BACKEND_ID:
             configured_agent_message = (
-                f"普通分析使用 Codex CLI；Agent 工具调用仍使用 LiteLLM 主模型: {agent_model}"
+                f"Standart analiz Codex CLI, Ajan araç çağrıları LiteLLM kullanıyor: {agent_model}"
             )
         if _uses_direct_env_provider(agent_model):
             return self._setup_check(
                 "llm_agent",
-                "Agent 渠道",
+                "Ajan Kanalı",
                 "agent",
                 True,
                 "configured",
@@ -3763,7 +3763,7 @@ class SystemConfigService:
         ) or agent_model in configured_models:
             return self._setup_check(
                 "llm_agent",
-                "Agent 渠道",
+                "Ajan Kanalı",
                 "agent",
                 True,
                 "configured",
@@ -3772,12 +3772,12 @@ class SystemConfigService:
 
         return self._setup_check(
             "llm_agent",
-            "Agent 渠道",
+            "Ajan Kanalı",
             "agent",
             True,
             "needs_action",
-            f"Agent 主模型 {agent_model} 缺少可用渠道或匹配的 API Key。",
-            "请调整 AGENT_LITELLM_MODEL 或补齐对应渠道配置。",
+            f"Ajan modeli {agent_model} için uygun kanal veya API anahtarı eksik.",
+            "AGENT_LITELLM_MODEL değerini güncelleyin veya ilgili kanal ayarını tamamlayın.",
         )
 
     def _build_setup_stock_list_check(self, effective_map: Dict[str, str]) -> Dict[str, Any]:
@@ -3785,20 +3785,20 @@ class SystemConfigService:
         if stocks:
             return self._setup_check(
                 "stock_list",
-                "自选股",
+                "İzleme Listesi",
                 "base",
                 True,
                 "configured",
-                f"已配置 {len(stocks)} 只股票。",
+                f"{len(stocks)} hisse yapılandırıldı.",
             )
         return self._setup_check(
             "stock_list",
-            "自选股",
+            "İzleme Listesi",
             "base",
             True,
             "needs_action",
-            "当前 STOCK_LIST 为空。",
-            "请至少添加 1 只股票用于首次试跑。",
+            "STOCK_LIST şu anda boş.",
+            "İlk analiz için en az 1 hisse ekleyin.",
         )
 
     def _build_setup_notification_check(self, effective_map: Dict[str, str]) -> Dict[str, Any]:
@@ -3846,20 +3846,20 @@ class SystemConfigService:
         if configured:
             return self._setup_check(
                 "notification",
-                "通知渠道",
+                "Bildirim Kanalları",
                 "notification",
                 False,
                 "configured",
-                "已检测到至少一个通知渠道配置。",
+                "En az bir bildirim kanalı yapılandırılmış.",
             )
         return self._setup_check(
             "notification",
-            "通知渠道",
+            "Bildirim Kanalları",
             "notification",
             False,
             "optional",
-            "通知为可选项，未配置也不影响首次跑通。",
-            "需要推送时可稍后配置飞书、钉钉、Telegram、邮件或其他通知渠道。",
+            "Bildirimler isteğe bağlıdır; yapılandırılmasa da analizler çalışır.",
+            "İstediğinizde Telegram, Discord, E-posta veya Webhook ekleyebilirsiniz.",
         )
 
     def _build_setup_storage_check(self, effective_map: Dict[str, str]) -> Dict[str, Any]:
@@ -3872,21 +3872,21 @@ class SystemConfigService:
         if not probe.exists() or not probe.is_dir():
             return self._setup_check(
                 "storage",
-                "数据库 / 本地存储",
+                "Veritabanı / Yerel Depolama",
                 "system",
                 True,
                 "needs_action",
-                f"数据库路径父目录不可用: {parent}",
-                "请检查 DATABASE_PATH 或上级目录权限。",
+                f"Veritabanı üst klasörü erişilebilir değil: {parent}",
+                "DATABASE_PATH ayarını veya klasör izinlerini kontrol edin.",
             )
 
         if os.access(probe, os.W_OK):
-            detail = f"数据库路径可用: {db_path}"
+            detail = f"Veritabanı yolu hazır: {db_path}"
             if not parent.exists():
-                detail = f"数据库上级目录可创建: {parent}"
+                detail = f"Veritabanı klasörü oluşturulabilir: {parent}"
             return self._setup_check(
                 "storage",
-                "数据库 / 本地存储",
+                "Veritabanı / Yerel Depolama",
                 "system",
                 True,
                 "configured",
@@ -3895,12 +3895,12 @@ class SystemConfigService:
 
         return self._setup_check(
             "storage",
-            "数据库 / 本地存储",
+            "Veritabanı / Yerel Depolama",
             "system",
             True,
             "needs_action",
-            f"数据库路径上级目录不可写: {probe}",
-            "请调整 DATABASE_PATH 或目录权限。",
+            f"Veritabanı üst klasörü yazılabilir değil: {probe}",
+            "DATABASE_PATH ayarını veya klasör izinlerini düzenleyin.",
         )
 
     @staticmethod
@@ -4247,7 +4247,7 @@ class SystemConfigService:
             "blocked due to policy",
             "moderation_blocked",
             "policy_blocked",
-            "请求被拦截",
+            "İstek engellendi",
         )
         return any(token in lowered for token in blocked_tokens)
 
@@ -4485,7 +4485,7 @@ class SystemConfigService:
                 {
                     "key": "AGENT_ARCH",
                     "code": "unsupported_agent_arch",
-                    "message": "Codex 本地 Agent 当前只支持单 Agent 问股，请切换为 single。",
+                    "message": "Codex yerel Ajan yalnızca tek ajan (single) modunu destekler.",
                     "severity": "error",
                     "expected": "single",
                     "actual": agent_arch,
@@ -4504,7 +4504,7 @@ class SystemConfigService:
                 {
                     "key": "AGENT_ORCHESTRATOR_TIMEOUT_S",
                     "code": "codex_timeout_required",
-                    "message": "Codex 本地 Agent 必须设置大于 0 的整体时限，确保每次问股都会结束。",
+                    "message": "Codex yerel Ajan için 0'dan büyük bir zaman aşımı (timeout) tanımlanmalıdır.",
                     "severity": "error",
                     "expected": ">0 when AGENT_BACKEND=codex_app_server",
                     "actual": timeout_raw,
@@ -4569,10 +4569,10 @@ class SystemConfigService:
                     "key": "FEISHU_CHAT_ID",
                     "code": "feishu_mode_mismatch",
                     "message": (
-                        "仅配置 FEISHU_APP_ID / FEISHU_APP_SECRET 不会开启飞书静态通知；"
-                        "App Bot 主动推送需要同时配置 FEISHU_CHAT_ID，"
-                        "Webhook 推送请填写 FEISHU_WEBHOOK_URL；"
-                        "事件订阅请使用 FEISHU_STREAM_ENABLED=true 并完成应用发布与权限配置。"
+                        "Yalnızca FEISHU_APP_ID / FEISHU_APP_SECRET tanımlamak Feishu bildirimini açmaz; "
+                        "App Bot gönderimi için FEISHU_CHAT_ID gerekir, "
+                        "Webhook için FEISHU_WEBHOOK_URL girin; "
+                        "olay akışı için FEISHU_STREAM_ENABLED=true kullanın."
                     ),
                     "severity": "warning",
                     "expected": (

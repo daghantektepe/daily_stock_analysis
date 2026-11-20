@@ -301,13 +301,13 @@ export function useSystemConfig() {
     const resolvedChangedItems = explicitItems.length > 0 ? explicitItems : getChangedItems();
 
     if (!explicitItems.length && !hasDirty) {
-      setToast({ type: 'success', message: '当前没有可保存的修改。' });
-      return { success: true, message: '当前没有可保存的修改' };
+      setToast({ type: 'success', message: 'Kaydedilecek bir değişiklik yok.' });
+      return { success: true, message: 'Kaydedilecek değişiklik yok' };
     }
 
     if (!resolvedChangedItems.length) {
-      setToast({ type: 'success', message: '当前没有可保存的修改。' });
-      return { success: true, message: '当前没有可保存的修改' };
+      setToast({ type: 'success', message: 'Kaydedilecek bir değişiklik yok.' });
+      return { success: true, message: 'Kaydedilecek değişiklik yok' };
     }
 
     setIsSaving(true);
@@ -320,15 +320,15 @@ export function useSystemConfig() {
 
       if (!validateResult.valid) {
         setSaveError(createParsedApiError({
-          title: '配置校验未通过',
-          message: '请先修正表单错误后再保存。',
-          rawMessage: '配置校验未通过，请先修正表单错误。',
+          title: 'Yapılandırma Doğrulanamadı',
+          message: 'Lütfen kaydetmeden önce formdaki hataları düzeltin.',
+          rawMessage: 'Yapılandırma doğrulanamadı, lütfen form hatalarını düzeltin.',
           category: 'http_error',
         }));
         setRetryAction('save');
         return {
           success: false,
-          message: '配置校验未通过',
+          message: 'Yapılandırma doğrulanamadı',
           issues: validateResult.issues,
         };
       }
@@ -345,9 +345,9 @@ export function useSystemConfig() {
       applyServerPayload(refreshed.items, refreshed.configVersion, refreshed.maskToken);
 
       const warningText = updateResult.warnings?.length
-        ? `；警告：${updateResult.warnings.join('；')}`
+        ? `; Uyarılar: ${updateResult.warnings.join('; ')}`
         : '';
-      setToast({ type: 'success', message: `配置已更新${warningText}` });
+      setToast({ type: 'success', message: `Ayarlar güncellendi${warningText}` });
       return { success: true };
     } catch (error: unknown) {
       if (error instanceof SystemConfigValidationError) {
@@ -355,8 +355,8 @@ export function useSystemConfig() {
         setSaveError(error.parsedError);
       } else if (error instanceof SystemConfigConflictError) {
         setSaveError(createParsedApiError({
-          title: '配置版本冲突',
-          message: `${error.message}，请先重新加载配置。`,
+          title: 'Yapılandırma Sürüm Çakışması',
+          message: `${error.message}. Lütfen önce ayarları yeniden yükleyin.`,
           rawMessage: error.parsedError.rawMessage,
           status: error.parsedError.status,
           category: error.parsedError.category,
@@ -367,7 +367,7 @@ export function useSystemConfig() {
 
       setToast({ type: 'error', error: getParsedApiError(error) });
       setRetryAction('save');
-      return { success: false, message: '保存失败' };
+      return { success: false, message: 'Kaydetme başarısız' };
     } finally {
       setIsSaving(false);
     }

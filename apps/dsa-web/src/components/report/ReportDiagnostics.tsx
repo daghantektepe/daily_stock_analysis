@@ -165,7 +165,7 @@ const getOrderedComponents = (
 export const ReportDiagnostics: React.FC<ReportDiagnosticsProps> = ({
   recordId,
   summary,
-  language = 'zh',
+  language = 'tr',
   onOpenRunFlow,
 }) => {
   const reportLanguage = normalizeReportLanguage(language);

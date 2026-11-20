@@ -452,7 +452,7 @@ def get_litellm_model_providers() -> frozenset[str]:
             for provider in LlmProviders
             if str(getattr(provider, "value", "")).strip()
         )
-    except (ImportError, AttributeError, TypeError):
+    except Exception:
         logger.debug("LiteLLM provider metadata unavailable; using the compatibility fallback")
     return frozenset(providers)
 

@@ -3,8 +3,11 @@ import type { UiLanguage } from '../i18n/uiText';
 export const UI_LANGUAGE_STORAGE_KEY = 'dsa.uiLanguage';
 
 export function normalizeUiLanguage(value?: string | null): UiLanguage | null {
-  if (value === 'zh' || value === 'en' || value === 'tr') {
+  if (value === 'en' || value === 'tr') {
     return value;
+  }
+  if (value === 'zh') {
+    return 'tr';
   }
   return null;
 }
@@ -53,18 +56,15 @@ function getBrowserUiLanguage(navigatorLike?: Pick<Navigator, 'language' | 'lang
 
   for (const candidate of languageCandidates) {
     const normalized = candidate.toLowerCase();
-    if (normalized.startsWith('zh')) {
-      return 'zh';
+    if (normalized.startsWith('tr')) {
+      return 'tr';
     }
     if (normalized.startsWith('en')) {
       return 'en';
     }
-    if (normalized.startsWith('tr')) {
-      return 'tr';
-    }
   }
 
-  return 'zh';
+  return 'tr';
 }
 
 export function resolveInitialUiLanguage({
@@ -84,7 +84,7 @@ export function resolveInitialUiLanguage({
 
 export function getRuntimeInitialLanguage(): UiLanguage {
   if (typeof window === 'undefined') {
-    return 'zh';
+    return 'tr';
   }
 
   return resolveInitialUiLanguage({

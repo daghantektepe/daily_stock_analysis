@@ -457,7 +457,7 @@ export const screeningApi = {
     try {
       const status = await screeningApi.getStatus();
       if (!status.available) {
-        throw new Error('选股功能不可用。请检查策略配置、数据依赖和服务日志。');
+        throw new Error('Hisse tarama kullanılamıyor. Strateji ayarlarını, veri bağımlılıklarını ve servis günlüklerini kontrol edin.');
       }
     } catch (error) {
       try {

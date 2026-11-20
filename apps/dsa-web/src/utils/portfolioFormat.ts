@@ -22,7 +22,7 @@ export function getTodayIso(): string {
 
 export function formatMoney(value: number | undefined | null, currency = 'CNY'): string {
   if (value == null || Number.isNaN(value)) return '--';
-  return `${currency} ${Number(value).toLocaleString('zh-CN', {
+  return `${currency} ${Number(value).toLocaleString('tr-TR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -54,33 +54,33 @@ export function formatPositionMoney(value: number, row: PortfolioPositionItem): 
 }
 
 export function getPositionPriceLabel(row: PortfolioPositionItem): string {
-  if (!hasPositionPrice(row)) return '缺价';
+  if (!hasPositionPrice(row)) return 'Fiyat Yok';
   if (row.priceSource === 'realtime_quote') {
-    return row.priceProvider ? `实时价 · ${row.priceProvider}` : '实时价';
+    return row.priceProvider ? `Anlık · ${row.priceProvider}` : 'Anlık Fiyat';
   }
   if (row.priceSource === 'history_close') {
-    return row.priceStale && row.priceDate ? `收盘价 · ${row.priceDate}` : '收盘价';
+    return row.priceStale && row.priceDate ? `Kapanış · ${row.priceDate}` : 'Kapanış Fiyatı';
   }
-  return row.priceSource || '未知来源';
+  return row.priceSource || 'Bilinmeyen Kaynak';
 }
 
 export function formatSideLabel(value: PortfolioSide): string {
-  return value === 'buy' ? '买入' : '卖出';
+  return value === 'buy' ? 'Alış' : 'Satış';
 }
 
 export function formatCashDirectionLabel(value: PortfolioCashDirection): string {
-  return value === 'in' ? '流入' : '流出';
+  return value === 'in' ? 'Giriş' : 'Çıkış';
 }
 
 export function formatCorporateActionLabel(value: PortfolioCorporateActionType): string {
-  return value === 'cash_dividend' ? '现金分红' : '拆并股调整';
+  return value === 'cash_dividend' ? 'Nakit Temettü' : 'Bölünme / Birleşme';
 }
 
 export function formatBrokerLabel(value: string, displayName?: string): string {
   if (displayName && displayName.trim()) return `${value}（${displayName.trim()}）`;
-  if (value === 'huatai') return 'huatai（华泰）';
-  if (value === 'citic') return 'citic（中信）';
-  if (value === 'cmb') return 'cmb（招商）';
+  if (value === 'huatai') return 'Huatai';
+  if (value === 'citic') return 'CITIC';
+  if (value === 'cmb') return 'CMB';
   return value;
 }
 
@@ -88,35 +88,35 @@ export function buildFxRefreshFeedback(data: PortfolioFxRefreshResponse): FxRefr
   if (data.refreshEnabled === false) {
     return {
       tone: 'neutral',
-      text: '汇率在线刷新已被禁用。',
+      text: 'Çevrimiçi kur yenileme devre dışı.',
     };
   }
 
   if (data.pairCount === 0) {
     return {
       tone: 'neutral',
-      text: '当前范围无可刷新的汇率对。',
+      text: 'Mevcut kapsamda yenilenecek kur çifti yok.',
     };
   }
 
   if (data.updatedCount > 0 && data.staleCount === 0 && data.errorCount === 0) {
     return {
       tone: 'success',
-      text: `汇率已刷新，共更新 ${data.updatedCount} 对。`,
+      text: `Döviz kurları yenilendi (${data.updatedCount} çift güncellendi).`,
     };
   }
 
-  const summary = `更新 ${data.updatedCount} 对，仍过期 ${data.staleCount} 对，失败 ${data.errorCount} 对。`;
+  const summary = `${data.updatedCount} güncellendi, ${data.staleCount} eski kaldı, ${data.errorCount} başarısız.`;
   if (data.staleCount > 0) {
     return {
       tone: 'warning',
-      text: `已尝试刷新，但仍有部分货币对使用 stale/fallback 汇率。${summary}`,
+      text: `Yenileme denendi ancak bazı çiftler hâlâ yedek/eski kur kullanıyor. ${summary}`,
     };
   }
 
   return {
     tone: 'warning',
-    text: `在线刷新未完全成功。${summary}`,
+    text: `Çevrimiçi yenileme tam olarak tamamlanamadı. ${summary}`,
   };
 }
 

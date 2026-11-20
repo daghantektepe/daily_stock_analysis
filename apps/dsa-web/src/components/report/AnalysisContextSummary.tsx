@@ -306,7 +306,7 @@ const formatMissingReason = (
 
 export const AnalysisContextSummary: React.FC<AnalysisContextSummaryProps> = ({
   overview,
-  language = 'zh',
+  language = 'tr',
 }) => {
   const reportLanguage = toChromeLanguage(normalizeReportLanguage(language));
   const text = TEXT[reportLanguage];

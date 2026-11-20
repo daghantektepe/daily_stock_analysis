@@ -4,11 +4,12 @@ import { getReportText, normalizeReportLanguage } from '../reportLanguage';
 import { getSentimentLabel } from '../../types/analysis';
 
 describe('reportLanguage ko support', () => {
-  it('normalizes ko and falls back to zh for unknown', () => {
+  it('normalizes ko and falls back to tr for unknown', () => {
     expect(normalizeReportLanguage('ko')).toBe('ko');
     expect(normalizeReportLanguage('en')).toBe('en');
-    expect(normalizeReportLanguage('fr')).toBe('zh');
-    expect(normalizeReportLanguage(undefined)).toBe('zh');
+    expect(normalizeReportLanguage('zh')).toBe('zh');
+    expect(normalizeReportLanguage('fr')).toBe('tr');
+    expect(normalizeReportLanguage(undefined)).toBe('tr');
   });
 
   it('returns Korean report copy for ko', () => {

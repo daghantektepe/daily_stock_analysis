@@ -34,11 +34,11 @@ function createStorage(value: string | null): Storage {
 }
 
 describe('UiLanguageContext', () => {
-  it('resolves explicit storage choice before browser language', () => {
+  it('resolves explicit storage choice before browser language and maps legacy zh to tr', () => {
     expect(resolveInitialUiLanguage({
       storage: createStorage('zh'),
       navigatorLike: { language: 'en-US', languages: ['en-US'] },
-    })).toBe('zh');
+    })).toBe('tr');
 
     expect(resolveInitialUiLanguage({
       storage: createStorage('en'),
@@ -46,7 +46,7 @@ describe('UiLanguageContext', () => {
     })).toBe('en');
   });
 
-  it('falls back from invalid storage to the first supported browser language and then zh', () => {
+  it('falls back from invalid storage to the first supported browser language and then tr', () => {
     expect(resolveInitialUiLanguage({
       storage: createStorage('fr'),
       navigatorLike: { language: 'en-US', languages: ['en-US'] },
@@ -55,7 +55,12 @@ describe('UiLanguageContext', () => {
     expect(resolveInitialUiLanguage({
       storage: createStorage('fr'),
       navigatorLike: { language: 'zh-CN', languages: ['zh-CN', 'en-US'] },
-    })).toBe('zh');
+    })).toBe('en');
+
+    expect(resolveInitialUiLanguage({
+      storage: createStorage('fr'),
+      navigatorLike: { language: 'zh-CN', languages: ['zh-CN'] },
+    })).toBe('tr');
 
     expect(resolveInitialUiLanguage({
       storage: createStorage(null),
@@ -65,7 +70,7 @@ describe('UiLanguageContext', () => {
     expect(resolveInitialUiLanguage({
       storage: createStorage(null),
       navigatorLike: { language: 'fr-FR', languages: ['fr-FR'] },
-    })).toBe('zh');
+    })).toBe('tr');
   });
 
   it('falls back to browser language if storage getItem throws', () => {
@@ -107,7 +112,7 @@ describe('UiLanguageContext', () => {
     }
   });
 
-  it('switches UI language immediately and persists the explicit choice', () => {
+  it('switches UI language immediately between tr and en and persists the explicit choice', () => {
     localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, 'zh');
 
     render(
@@ -116,8 +121,8 @@ describe('UiLanguageContext', () => {
       </UiLanguageProvider>
     );
 
-    const toggle = screen.getByRole('button', { name: '切换界面语言' });
-    expect(screen.getByText('界面语言')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: 'Arayüz dilini değiştir' });
+    expect(screen.getByText('Türkçe')).toBeInTheDocument();
 
     fireEvent.click(toggle);
 

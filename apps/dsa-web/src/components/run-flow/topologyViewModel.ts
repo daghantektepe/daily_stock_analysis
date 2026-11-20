@@ -340,7 +340,7 @@ export const buildRunFlowTopologyModel = (
         to: groupId,
         kind: 'control',
         status: groupNode?.status || 'unknown',
-        label: '调用',
+        label: 'Çağır',
       });
     }
     if (!options.expandedGroupIds?.has(groupId)) return;
@@ -352,7 +352,7 @@ export const buildRunFlowTopologyModel = (
         to: firstAttempt.id,
         kind: 'control',
         status: firstAttempt.status,
-        label: '详情',
+        label: 'Detay',
       });
     }
   });

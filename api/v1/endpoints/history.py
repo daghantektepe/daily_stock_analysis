@@ -98,7 +98,7 @@ def _history_share_image_input(
             status_code=404,
             detail={
                 "error": "not_found",
-                "message": f"未找到 id/query_id={record_id} 的分析记录",
+                "message": f"id/query_id={record_id} analiz kaydı bulunamadı",
             },
         )
 
@@ -110,7 +110,7 @@ def _history_share_image_input(
             status_code=500,
             detail={
                 "error": "generation_failed",
-                "message": f"生成分享图片所需报告失败: {exc.message}",
+                "message": f"Paylaşım görseli için rapor oluşturulamadı: {exc.message}",
             },
         ) from exc
 
@@ -119,7 +119,7 @@ def _history_share_image_input(
             status_code=404,
             detail={
                 "error": "not_found",
-                "message": f"未找到 id/query_id={record_id} 的报告内容",
+                "message": f"id/query_id={record_id} için rapor içeriği bulunamadı",
             },
         )
     return result, markdown_content
@@ -291,7 +291,7 @@ def get_history_list(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询历史列表失败: {str(e)}"
+                "message": f"Geçmiş listesi alınamadı: {str(e)}"
             }
         )
 
@@ -317,7 +317,7 @@ def delete_history_by_code(
         if not candidates:
             raise HTTPException(
                 status_code=400,
-                detail={"error": "invalid_request", "message": "stock_code 不能为空"},
+                detail={"error": "invalid_request", "message": "stock_code boş olamaz"},
             )
 
         deleted = 0
@@ -345,7 +345,7 @@ def delete_history_by_code(
         logger.error(f"按股票代码删除历史记录失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail={"error": "internal_error", "message": f"删除失败: {str(e)}"},
+            detail={"error": "internal_error", "message": f"Silme başarısız: {str(e)}"},
         )
 
 
@@ -373,7 +373,7 @@ def delete_history_records(
             status_code=400,
             detail={
                 "error": "invalid_request",
-                "message": "record_ids 不能为空"
+                "message": "record_ids boş olamaz"
             }
         )
 
@@ -389,7 +389,7 @@ def delete_history_records(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"删除历史记录失败: {str(e)}"
+                "message": f"Geçmiş kayıtları silinemedi: {str(e)}"
             }
         )
 
@@ -494,7 +494,7 @@ def get_stock_bar(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询个股栏失败: {str(e)}",
+                "message": f"Hisse listesi alınamadı: {str(e)}",
             },
         )
 
@@ -541,7 +541,7 @@ def get_history_detail(
                 status_code=404,
                 detail={
                     "error": "not_found",
-                    "message": f"未找到 id/query_id={record_id} 的分析记录"
+                    "message": f"id/query_id={record_id} analiz kaydı bulunamadı"
                 }
             )
         
@@ -663,7 +663,7 @@ def get_history_detail(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询历史详情失败: {str(e)}"
+                "message": f"Geçmiş detayı alınamadı: {str(e)}"
             }
         )
 
@@ -694,7 +694,7 @@ def get_history_diagnostics(
                 status_code=404,
                 detail={
                     "error": "not_found",
-                    "message": f"未找到 id/query_id={record_id} 的分析记录",
+                    "message": f"id/query_id={record_id} analiz kaydı bulunamadı",
                 },
             )
         return RunDiagnosticSummaryResponse.model_validate(summary)
@@ -706,7 +706,7 @@ def get_history_diagnostics(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询运行诊断摘要失败: {str(e)}",
+                "message": f"Çalışma tanı özeti alınamadı: {str(e)}",
             },
         )
 
@@ -737,7 +737,7 @@ def get_history_run_flow(
                 status_code=404,
                 detail={
                     "error": "not_found",
-                    "message": f"未找到 id/query_id={record_id} 的分析记录",
+                    "message": f"id/query_id={record_id} analiz kaydı bulunamadı",
                 },
             )
         return snapshot
@@ -749,7 +749,7 @@ def get_history_run_flow(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询运行流快照失败: {str(e)}",
+                "message": f"Çalışma akışı özeti alınamadı: {str(e)}",
             },
         )
 
@@ -807,7 +807,7 @@ def get_history_news(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"查询新闻情报失败: {str(e)}"
+                "message": f"Haber verisi alınamadı: {str(e)}"
             }
         )
 
@@ -836,7 +836,7 @@ def get_history_share_image_html(
             status_code=413,
             detail={
                 "error": "share_image_too_large",
-                "message": f"报告内容超过分享图片上限 {max_chars} 字符",
+                "message": f"Rapor içeriği paylaşım görseli sınırını ({max_chars} karakter) aşıyor",
             },
         )
 
@@ -852,7 +852,7 @@ def get_history_share_image_html(
             status_code=500,
             detail={
                 "error": "generation_failed",
-                "message": "生成桌面分享图片内容失败",
+                "message": "Masaüstü paylaşım görseli oluşturulamadı",
             },
         ) from exc
 
@@ -896,7 +896,7 @@ def get_history_share_image(
             status_code=503,
             detail={
                 "error": "share_image_unavailable",
-                "message": f"分享图片生成失败，请检查 {engine} 转图工具是否已安装并可用",
+                "message": f"Paylaşım görseli oluşturulamadı; {engine} görsel motorunun kurulu olduğunu doğrulayın",
             },
         )
 
@@ -953,7 +953,7 @@ def get_history_markdown(
             status_code=500,
             detail={
                 "error": "generation_failed",
-                "message": f"生成 Markdown 报告失败: {e.message}"
+                "message": f"Markdown raporu oluşturulamadı: {e.message}"
             }
         )
     except Exception as e:
@@ -962,7 +962,7 @@ def get_history_markdown(
             status_code=500,
             detail={
                 "error": "internal_error",
-                "message": f"获取 Markdown 报告失败: {str(e)}"
+                "message": f"Markdown raporu alınamadı: {str(e)}"
             }
         )
 
@@ -971,7 +971,7 @@ def get_history_markdown(
             status_code=404,
             detail={
                 "error": "not_found",
-                "message": f"未找到 id/query_id={record_id} 的分析记录"
+                "message": f"id/query_id={record_id} analiz kaydı bulunamadı"
             }
         )
 

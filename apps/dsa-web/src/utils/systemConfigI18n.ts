@@ -583,6 +583,93 @@ const fieldOptionLabelMapEn: Record<string, Record<string, string>> = {
   },
 };
 
+const fieldOptionLabelMapTr: Record<string, Record<string, string>> = {
+  NEWS_STRATEGY_PROFILE: {
+    ultra_short: 'Çok kısa (1 gün)',
+    short: 'Kısa (3 gün)',
+    medium: 'Orta (7 gün)',
+    long: 'Uzun (30 gün)',
+  },
+  REPORT_TYPE: {
+    simple: 'Basit',
+    full: 'Tam',
+    brief: 'Özet',
+  },
+  REPORT_LANGUAGE: {
+    zh: 'Çince',
+    en: 'İngilizce',
+    ko: 'Korece',
+    tr: 'Türkçe',
+    chinese: 'Çince',
+    english: 'İngilizce',
+  },
+  NOTIFICATION_MIN_SEVERITY: {
+    '': 'Ayarlı değil',
+    'not set': 'Ayarlı değil',
+    info: 'Bilgi',
+    warning: 'Uyarı',
+    error: 'Hata',
+    critical: 'Kritik',
+  },
+  MARKET_REVIEW_COLOR_SCHEME: {
+    green_up: 'Yeşil yükseliş / Kırmızı düşüş',
+    red_up: 'Kırmızı yükseliş / Yeşil düşüş',
+    'green up / red down': 'Yeşil yükseliş / Kırmızı düşüş',
+    'red up / green down': 'Kırmızı yükseliş / Yeşil düşüş',
+  },
+  GENERATION_BACKEND: {
+    litellm: 'Varsayılan model ayarları',
+    codex_cli: 'Codex CLI (yerel)',
+    claude_code_cli: 'Claude Code CLI (yerel)',
+    opencode_cli: 'OpenCode CLI (yerel)',
+    gemini_cli: 'Gemini CLI (yerel)',
+  },
+  GENERATION_FALLBACK_BACKEND: {
+    '': 'Devre dışı',
+    litellm: 'Varsayılan model ayarları',
+  },
+  AGENT_GENERATION_BACKEND: {
+    auto: 'Otomatik',
+    litellm: 'Varsayılan model ayarları',
+  },
+  AGENT_BACKEND: {
+    auto: 'Otomatik (önerilen)',
+    litellm: 'Varsayılan model ayarları',
+    codex_app_server: 'Codex yerel Ajan',
+  },
+  LOG_LEVEL: {
+    debug: 'Hata Ayıklama (Debug)',
+    info: 'Bilgi (Info)',
+    warning: 'Uyarı (Warning)',
+    error: 'Hata (Error)',
+    critical: 'Kritik (Critical)',
+  },
+  LLM_PROMPT_CACHE_DIAGNOSTICS_LEVEL: {
+    off: 'Kapalı',
+    basic: 'Temel',
+    debug: 'Detaylı (Debug)',
+  },
+  AGENT_ARCH: {
+    single: 'Tek Ajan',
+    multi: 'Çoklu Ajan (Orkestratör)',
+    'single agent': 'Tek Ajan',
+    'multi agent (orchestrator)': 'Çoklu Ajan (Orkestratör)',
+  },
+  AGENT_ORCHESTRATOR_MODE: {
+    quick: 'Hızlı',
+    standard: 'Standart',
+    full: 'Tam',
+    specialist: 'Uzman',
+    debate: 'Boğa/Ayı Tartışma',
+  },
+  AGENT_SKILL_ROUTING: {
+    auto: 'Otomatik (piyasa rejimine göre)',
+    manual: 'Manuel (AGENT_SKILLS kullan)',
+    'auto (regime-based)': 'Otomatik (piyasa rejimine göre)',
+    'manual (use agent_skills)': 'Manuel (AGENT_SKILLS kullan)',
+  },
+};
+
 function normalizeOptionToken(raw: string): string {
   return raw.trim().toLowerCase();
 }
@@ -595,11 +682,11 @@ export function getCategoryDescriptionZh(category: SystemConfigCategory, fallbac
   return getCategoryDescription(category, fallback, 'zh');
 }
 
-export function getCategoryTitle(category: SystemConfigCategory, fallback?: string, locale: UiLanguage = 'zh'): string {
+export function getCategoryTitle(category: SystemConfigCategory, fallback?: string, locale: UiLanguage = 'tr'): string {
   return categoryTitleMap[locale][category] || fallback || category;
 }
 
-export function getCategoryDescription(category: SystemConfigCategory, fallback?: string, locale: UiLanguage = 'zh'): string {
+export function getCategoryDescription(category: SystemConfigCategory, fallback?: string, locale: UiLanguage = 'tr'): string {
   return categoryDescriptionMap[locale][category] || fallback || '';
 }
 
@@ -619,9 +706,14 @@ export function getFieldOptionLabel(
   key: string,
   value: string,
   fallbackLabel?: string,
-  locale: UiLanguage = 'zh',
+  locale: UiLanguage = 'tr',
 ): string {
-  const map = locale === 'zh' ? fieldOptionLabelMap[key] : fieldOptionLabelMapEn[key];
+  const map =
+    locale === 'zh'
+      ? fieldOptionLabelMap[key]
+      : locale === 'tr'
+        ? fieldOptionLabelMapTr[key] ?? fieldOptionLabelMapEn[key]
+        : fieldOptionLabelMapEn[key];
   if (!map) {
     return fallbackLabel ?? value;
   }

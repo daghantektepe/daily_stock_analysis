@@ -8,10 +8,10 @@ import { normalizeReportLanguage } from './reportLanguage';
 
 const REQUEST_PHASE_LABELS: Record<ReportLanguage, Record<AnalysisPhase, string>> = {
   zh: {
-    auto: '自动阶段',
-    premarket: '盘前',
-    intraday: '盘中',
-    postmarket: '盘后',
+    auto: 'Otomatik Seans',
+    premarket: 'Seans Öncesi',
+    intraday: 'Seans İçi',
+    postmarket: 'Seans Sonrası',
   },
   en: {
     auto: 'Auto',
@@ -35,13 +35,13 @@ const REQUEST_PHASE_LABELS: Record<ReportLanguage, Record<AnalysisPhase, string>
 
 const MARKET_PHASE_LABELS: Record<ReportLanguage, Record<MarketPhaseValue, string>> = {
   zh: {
-    premarket: '盘前',
-    intraday: '盘中',
-    lunch_break: '午间休市',
-    closing_auction: '临近收盘',
-    postmarket: '盘后',
-    non_trading: '非交易日',
-    unknown: '阶段未知',
+    premarket: 'Seans Öncesi',
+    intraday: 'Seans İçi',
+    lunch_break: 'Öğle Arası',
+    closing_auction: 'Kapanış Müzayedesi',
+    postmarket: 'Seans Sonrası',
+    non_trading: 'İşlem Günü Değil',
+    unknown: 'Seans Bilinmiyor',
   },
   en: {
     premarket: 'Pre-market',
@@ -74,9 +74,9 @@ const MARKET_PHASE_LABELS: Record<ReportLanguage, Record<MarketPhaseValue, strin
 
 const TEXT = {
   zh: {
-    requestPrefix: '请求阶段',
-    finalPrefix: '市场阶段',
-    partialBar: '日线未完成',
+    requestPrefix: 'İstenen Seans',
+    finalPrefix: 'Piyasa Seansı',
+    partialBar: 'Günlük Bar Tamamlanmadı',
   },
   en: {
     requestPrefix: 'Requested phase',
