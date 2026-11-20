@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增原生独立 Windows 桌面应用 `.exe` 打包方案（`desktop_app.py`、`scripts/windows/build_desktop_exe.ps1`、`scripts/windows/generate_icon.py`）：基于系统内置 Edge WebView2（`pywebview`）与 PyInstaller 编译出可直接双击运行的 `dist/DailyStockAnalysis/DailyStockAnalysis.exe`（内置 FastAPI、已编译 React 前端、25 策略锦标赛、PAA/Meta-A/三引擎 AI 委员会模拟盘账本与 `--mcp-serve` 冻结态 MCP 支持，无需 Electron 与开发者模式），并同步补全 `scripts/build-backend.ps1` 与 `apps/dsa-desktop/main.js` 的新模块收集与运行态备份路径
 - [新功能] 完成独立浏览器 Web App / PWA 化改造（脱离 Electron 桌面壳）：新增 `manifest.webmanifest`、品牌图标 `dsa-icon.svg`、网络优先 `sw.js`、`LiveStatusBar` 一键安装按钮、`api/app.py` PWA MIME 与 `no-cache` 响应头、`apps/dsa-web/vercel.json` / `public/_redirects` 云端 SPA 配置，以及 Windows 一键独立浏览器启动器 `dsa-web.cmd` / `scripts/windows/web_app.ps1`（支持无边框 `--app` 模式、桌面快捷方式 `-CreateShortcut`、开机后台自启 `-RegisterServer` 与 `-Lan` 手机/局域网访问），详见 `docs/standalone-web-app.md`
 - [新功能] 新增 Windows 每日模拟盘自动推进脚本与任务计划程序注册工具 `scripts/windows/daily_paper_step.ps1`（`-Register` / `-Status` / `-Unregister`）：每日 `00:30` 与 `18:30`（支持断电/休眠补跑）自动推进 PAA、Meta-Portfolio A、三引擎 AI 委员会（Claude / Codex / Gemini）与加密货币 5-SMA 全部模拟盘账本并触发周五周报检查，结果记录至 `logs/daily_paper_step.log`
 - [新功能] 新增三引擎 AI 量化策略委员会与每日实盘模拟联赛（`src/quant/ai_council.py`、`scripts/run_ai_strategy_council.py`）：同时调用本机 Claude Code CLI、OpenAI Codex CLI 与 Google Gemini CLI 基于当日实证市场状态设计确定性零前视规则策略，自动执行 2022+ OOS 回测校验并写入 `data/strategy_paper/ai_council_charters.json` 与独立 `QuantAllocationPaperBook` 每日跟踪账本，自动接入每日调度、周五周报、DSA MCP 与 WebUI 展示

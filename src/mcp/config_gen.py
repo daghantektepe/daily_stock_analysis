@@ -14,7 +14,12 @@ DSA_MCP_SERVER_NAME = "dsa"
 
 
 def get_project_root() -> Path:
-    """Return the repository root directory without hardcoding machine paths."""
+    """Return the active project/data root directory without hardcoding machine paths."""
+    if getattr(sys, "frozen", False):
+        override_root = (os.getenv("DSA_DATA_ROOT") or "").strip()
+        if override_root:
+            return Path(override_root).resolve()
+        return Path.cwd().resolve()
     return Path(__file__).resolve().parents[2]
 
 
@@ -70,21 +75,33 @@ def build_dsa_mcp_server_entry(
     python_executable: Optional[str] = None,
     extra_env: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    """Build a standard MCP stdio server entry for ``src.mcp.server``."""
+    """Build a standard MCP stdio server entry for ``src.mcp.server`` (or frozen ``--mcp-serve``)."""
     root = Path(project_root or get_project_root()).resolve()
-    python_exe = python_executable or resolve_python_executable(root)
 
     env: Dict[str, str] = {
-        "PYTHONPATH": str(root),
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUTF8": "1",
         "DSA_MCP_MODE": "1",
+        "DSA_DATA_ROOT": str(root),
     }
     if extra_env:
         for key, value in extra_env.items():
             if value is not None:
                 env[str(key)] = str(value)
 
+    # Inside a PyInstaller-frozen desktop .exe, invoke the .exe itself with --mcp-serve
+    # unless an explicit Python interpreter override is supplied.
+    explicit_override = python_executable or (os.getenv("DSA_MCP_PYTHON") or "").strip()
+    if getattr(sys, "frozen", False) and not explicit_override:
+        return {
+            "command": sys.executable,
+            "args": ["--mcp-serve"],
+            "cwd": str(root),
+            "env": env,
+        }
+
+    python_exe = python_executable or resolve_python_executable(root)
+    env["PYTHONPATH"] = str(root)
     return {
         "command": python_exe,
         "args": ["-m", "src.mcp.server"],

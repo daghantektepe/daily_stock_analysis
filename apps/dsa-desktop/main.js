@@ -63,6 +63,8 @@ const DESKTOP_UPDATE_RUNTIME_RELATIVE_FILES = Object.freeze([
   path.join('data', 'screening', 'snapshot.last_good.json'),
   path.join('data', 'screening', 'daily_history'),
   path.join('data', 'screening', 'industry_provider_cache'),
+  path.join('data', 'strategy_paper'),
+  path.join('data', 'quant_cache'),
   path.join('logs', 'desktop.log'),
 ]);
 
