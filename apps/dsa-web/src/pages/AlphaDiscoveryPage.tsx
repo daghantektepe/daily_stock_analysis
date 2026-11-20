@@ -9,13 +9,16 @@ import {
   RefreshCw,
   Sparkles,
   TrendingUp,
+  Trophy,
   UserCheck,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   alphaApi,
   type BistCandidateItem,
+  type CryptoTrendResponse,
   type Form4ClusterItem,
+  type Form4StudyResponse,
   type KapContractItem,
   type PeadCandidateItem,
   type PeadStudyResponse,
@@ -36,8 +39,9 @@ import {
   SectionCard,
   StatCard,
 } from '../components/common';
+import { TournamentTabPanel } from '../components/quant/TournamentTabPanel';
 
-type DiscoverTab = 'us' | 'form4' | 'pead' | 'bist';
+type DiscoverTab = 'tournament' | 'claude' | 'us' | 'form4' | 'pead' | 'bist';
 
 function fmtPct(val?: number | null, digits = 1): string {
   if (val == null || Number.isNaN(val)) return '--';
@@ -53,10 +57,25 @@ function fmtUsd(val?: number | null): string {
 
 const AlphaDiscoveryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<DiscoverTab>('us');
+  const [activeTab, setActiveTab] = useState<DiscoverTab>('claude');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ParsedApiError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Claude Verification & Crypto Trend state
+  const [cryptoData, setCryptoData] = useState<CryptoTrendResponse | null>(null);
+  const [cryptoLoading, setCryptoLoading] = useState(false);
+
+  const [form4Quarters, setForm4Quarters] = useState('2023q1..2026q3');
+  const [form4StudyMinVal, setForm4StudyMinVal] = useState(50000);
+  const [form4StudyLimit, setForm4StudyLimit] = useState(0);
+  const [form4StudyRes, setForm4StudyRes] = useState<Form4StudyResponse | null>(null);
+  const [form4StudyLoading, setForm4StudyLoading] = useState(false);
+
+  const [peadUnbiasedUniv, setPeadUnbiasedUniv] = useState<'smid' | 'sp400' | 'sp600' | 'sp500'>('smid');
+  const [peadUnbiasedSample, setPeadUnbiasedSample] = useState(400);
+  const [peadUnbiasedRes, setPeadUnbiasedRes] = useState<PeadStudyResponse | null>(null);
+  const [peadUnbiasedLoading, setPeadUnbiasedLoading] = useState(false);
 
   // US Quant state
   const [usTopN, setUsTopN] = useState(12);
@@ -234,6 +253,66 @@ const AlphaDiscoveryPage: React.FC = () => {
     }
   };
 
+  const runCryptoTrend = async () => {
+    setCryptoLoading(true);
+    setError(null);
+    try {
+      const res = await alphaApi.getCryptoTrend(true);
+      setCryptoData(res);
+      setNotice('Kripto Trend sinyali, geçmiş testi ve sanal defter güncellendi.');
+    } catch (err) {
+      setError(getParsedApiError(err));
+    } finally {
+      setCryptoLoading(false);
+    }
+  };
+
+  const runForm4HistoricalStudy = async () => {
+    setForm4StudyLoading(true);
+    setError(null);
+    setNotice('SEC Form 4 geçmiş testi başlatıldı. İlk çalıştırmada fiyatlar indirildiği için birkaç dakika sürebilir...');
+    try {
+      const res = await alphaApi.runForm4Study({
+        quarters: form4Quarters,
+        min_value: form4StudyMinVal,
+        limit: form4StudyLimit,
+      });
+      setForm4StudyRes(res);
+      setNotice(`SEC Form 4 geçmiş testi tamamlandı: ${res.evaluated_events} / ${res.total_events} olay ölçüldü.`);
+    } catch (err) {
+      setError(getParsedApiError(err));
+    } finally {
+      setForm4StudyLoading(false);
+    }
+  };
+
+  const runPeadUnbiasedHistoricalStudy = async () => {
+    setPeadUnbiasedLoading(true);
+    setError(null);
+    setNotice('PEAD (S&P 400/600) geçmiş testi başlatıldı. İlk çalıştırmada fiyatlar indirildiği için birkaç dakika sürebilir...');
+    try {
+      const res = await alphaApi.runPeadUnbiasedStudy({
+        universe: peadUnbiasedUniv,
+        sample: peadUnbiasedSample,
+      });
+      setPeadUnbiasedRes(res);
+      setNotice(`PEAD geçmiş testi tamamlandı: ${res.evaluated_events} / ${res.total_events} bilanço olayı ölçüldü.`);
+    } catch (err) {
+      setError(getParsedApiError(err));
+    } finally {
+      setPeadUnbiasedLoading(false);
+    }
+  };
+
+  const copyText = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice(`${label} panoya kopyalandı! Doğrudan Claude'a yapıştırabilirsiniz.`);
+    } catch {
+      setNotice('Panoya kopyalanamadı, metin kutusundan seçip kopyalayabilirsiniz.');
+    }
+  };
+
   const tabButton = (id: DiscoverTab, label: string, icon: React.ReactNode) => (
     <button
       key={id}
@@ -274,6 +353,8 @@ const AlphaDiscoveryPage: React.FC = () => {
 
       {/* Tabs */}
       <div className="mb-4 flex flex-wrap gap-2">
+        {tabButton('tournament', '🏆 Strateji Turnuvası & PAA', <Trophy className="h-4 w-4" />)}
+        {tabButton('claude', '🧪 Claude Doğrulama & Kripto Trend', <Sparkles className="h-4 w-4" />)}
         {tabButton('us', 'ABD Yüksek Alfa (Quant)', <Compass className="h-4 w-4" />)}
         {tabButton('form4', 'Canlı SEC Form 4', <UserCheck className="h-4 w-4" />)}
         {tabButton('pead', 'PEAD 2.0 & Event Study', <TrendingUp className="h-4 w-4" />)}
@@ -282,6 +363,216 @@ const AlphaDiscoveryPage: React.FC = () => {
 
       {error ? <ApiErrorAlert error={error} /> : null}
       {notice ? <InlineAlert variant="success" title="Bilgi" message={notice} /> : null}
+
+      {/* TAB: Strategy Tournament & PAA */}
+      {activeTab === 'tournament' ? <TournamentTabPanel /> : null}
+
+      {/* TAB 0: Claude Verification & Crypto Trend */}
+      {activeTab === 'claude' ? (
+        <div className="space-y-4">
+          <SectionCard
+            title="1. Kripto Trend Stratejisi (BTC & ETH — 50/100/150/200/250 Günlük Ortalamalar)"
+            subtitle="Tahmin yapmadan büyük çöküşlerde nakitte kalmayı hedefleyen 5 hareketli ortalama topluluğu (Ensemble) ve sanal defter"
+            actions={
+              <div className="flex items-center gap-2">
+                {cryptoData?.report_text ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void copyText(cryptoData.report_text, 'Kripto Trend raporu')}
+                  >
+                    📋 Raporu Kopyala
+                  </Button>
+                ) : null}
+                <Button variant="primary" size="sm" onClick={() => void runCryptoTrend()} disabled={cryptoLoading}>
+                  <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${cryptoLoading ? 'animate-spin' : ''}`} />
+                  {cryptoLoading ? 'Hesaplanıyor...' : 'Güncel Sinyal & Backtest Çalıştır'}
+                </Button>
+              </div>
+            }
+          >
+            {!cryptoData ? (
+              <EmptyState
+                title="Kripto Trend Motoru Hazır"
+                description="BTC ve ETH için bugünkü 50/100/150/200/250 günlük ortalama sinyallerini, 2018-bugün geçmiş testini ve sanal defteri görmek için sağ üstteki butona tıklayın."
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {Object.entries(cryptoData.signals).map(([asset, sig]) => (
+                    <Card key={asset} variant="bordered" padding="sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-sm font-bold text-foreground">{asset}</span>
+                        <Badge variant={(sig.weight ?? 0) > 0 ? 'success' : 'warning'} glow>
+                          Hedef: %{((sig.weight ?? 0) * 100).toFixed(0)} Coin / %{(100 - (sig.weight ?? 0) * 100).toFixed(0)} Nakit
+                        </Badge>
+                      </div>
+                      <div className="mt-1.5 text-xs text-secondary-text">
+                        Son Kapanış ({sig.date || '--'}):{' '}
+                        <strong className="text-foreground">
+                          ${sig.close != null ? sig.close.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '--'}
+                        </strong>
+                      </div>
+                      {sig.averages ? (
+                        <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-secondary-text">
+                          {Object.entries(sig.averages).map(([k, v]) => (
+                            <span key={k} className="rounded bg-background/70 px-1.5 py-0.5 font-mono">
+                              SMA{k}: ${Number(v).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </Card>
+                  ))}
+                </div>
+                <pre className="max-h-80 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3 font-mono text-xs text-foreground whitespace-pre-wrap">
+                  {cryptoData.report_text}
+                </pre>
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="2. ABD Testi 1 — SEC Form 4 Yönetici Alımları Geçmiş Testi (sec_form4_study.py)"
+            subtitle="SEC EDGAR çeyreklik veri setleri · S&P 500 (SPY) ve Russell 2000 (IWM) kıyası · Aylık kümeleme & Holm çoklu test düzeltmesi"
+            actions={
+              <div className="flex flex-wrap items-center gap-2">
+                {form4StudyRes?.report_text ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void copyText(form4StudyRes.report_text, 'SEC Form 4 test çıktısı')}
+                  >
+                    📋 Çıktıyı Kopyala (Claude İçin)
+                  </Button>
+                ) : null}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => void runForm4HistoricalStudy()}
+                  disabled={form4StudyLoading}
+                >
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  {form4StudyLoading ? 'SEC & Fiyatlar İndiriliyor...' : 'Form 4 Testini Çalıştır'}
+                </Button>
+              </div>
+            }
+          >
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-background/50 p-3 text-xs">
+              <label className="flex items-center gap-1.5">
+                <span className="text-secondary-text">Çeyrekler:</span>
+                <input
+                  type="text"
+                  value={form4Quarters}
+                  onChange={(e) => setForm4Quarters(e.target.value)}
+                  className="w-40 rounded-lg border border-border/70 bg-card px-2 py-1 font-mono text-foreground"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-secondary-text">Min Alım ($):</span>
+                <select
+                  value={form4StudyMinVal}
+                  onChange={(e) => setForm4StudyMinVal(Number(e.target.value))}
+                  className="rounded-lg border border-border/70 bg-card px-2 py-1 text-foreground"
+                >
+                  <option value={25000}>$25,000</option>
+                  <option value={50000}>$50,000 (Claude Önerisi)</option>
+                  <option value={100000}>$100,000</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-secondary-text">Olay Sınırı:</span>
+                <select
+                  value={form4StudyLimit}
+                  onChange={(e) => setForm4StudyLimit(Number(e.target.value))}
+                  className="rounded-lg border border-border/70 bg-card px-2 py-1 text-foreground"
+                >
+                  <option value={0}>0 — Tüm Olaylar (Claude Önerisi, 10-30 dk)</option>
+                  <option value={250}>250 Olay (Hızlı Önizleme, ~2-4 dk)</option>
+                  <option value={100}>100 Olay (Çok Hızlı Test, ~1 dk)</option>
+                </select>
+              </label>
+            </div>
+
+            {form4StudyRes?.report_text ? (
+              <pre className="max-h-96 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3 font-mono text-xs text-foreground whitespace-pre-wrap">
+                {form4StudyRes.report_text}
+              </pre>
+            ) : (
+              <EmptyState
+                title="SEC Form 4 Geçmiş Testi Hazır"
+                description="E-postanız (xavrail@gmail.com) .env dosyasına tanımlandı. 'Form 4 Testini Çalıştır' butonuna basarak testi başlatabilir ve bitince 'Çıktıyı Kopyala' butonuyla Claude'a gönderebilirsiniz."
+              />
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="3. ABD Testi 2 — PEAD Bilanço Sürüklenmesi Geçmiş Testi (pead_study.py)"
+            subtitle="Seçim yanlılığını önlemek için S&P 400 (MidCap) ve S&P 600 (SmallCap) endeks bileşenleri üzerinde SPY & IWM kıyaslı test"
+            actions={
+              <div className="flex flex-wrap items-center gap-2">
+                {peadUnbiasedRes?.report_text ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void copyText(peadUnbiasedRes.report_text || '', 'PEAD test çıktısı')}
+                  >
+                    📋 Çıktıyı Kopyala (Claude İçin)
+                  </Button>
+                ) : null}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => void runPeadUnbiasedHistoricalStudy()}
+                  disabled={peadUnbiasedLoading}
+                >
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  {peadUnbiasedLoading ? 'Bilanço & Fiyatlar Ölçülüyor...' : 'PEAD Testini Çalıştır'}
+                </Button>
+              </div>
+            }
+          >
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-background/50 p-3 text-xs">
+              <label className="flex items-center gap-1.5">
+                <span className="text-secondary-text">Evren:</span>
+                <select
+                  value={peadUnbiasedUniv}
+                  onChange={(e) => setPeadUnbiasedUniv(e.target.value as 'smid' | 'sp400' | 'sp600' | 'sp500')}
+                  className="rounded-lg border border-border/70 bg-card px-2 py-1 text-foreground"
+                >
+                  <option value="smid">smid — S&P 400 + S&P 600 (Claude Önerisi)</option>
+                  <option value="sp600">sp600 — S&P 600 SmallCap</option>
+                  <option value="sp400">sp400 — S&P 400 MidCap</option>
+                  <option value="sp500">sp500 — S&P 500 LargeCap</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-secondary-text">Hisse Örneklemi:</span>
+                <select
+                  value={peadUnbiasedSample}
+                  onChange={(e) => setPeadUnbiasedSample(Number(e.target.value))}
+                  className="rounded-lg border border-border/70 bg-card px-2 py-1 text-foreground"
+                >
+                  <option value={400}>400 Hisse (Claude Önerisi, 10-25 dk)</option>
+                  <option value={100}>100 Hisse (Hızlı Önizleme, ~3-5 dk)</option>
+                  <option value={40}>40 Hisse (Çok Hızlı Test, ~1 dk)</option>
+                </select>
+              </label>
+            </div>
+
+            {peadUnbiasedRes?.report_text ? (
+              <pre className="max-h-96 overflow-auto rounded-xl border border-border/60 bg-background/80 p-3 font-mono text-xs text-foreground whitespace-pre-wrap">
+                {peadUnbiasedRes.report_text}
+              </pre>
+            ) : (
+              <EmptyState
+                title="PEAD Tarafsız Evren Testi Hazır"
+                description="'PEAD Testini Çalıştır' butonuna basarak S&P 400 ve S&P 600 hisseleri üzerinde geçmiş bilanço sürprizi testini çalıştırabilir, sonucu tek tıkla kopyalayabilirsiniz."
+              />
+            )}
+          </SectionCard>
+        </div>
+      ) : null}
 
       {/* TAB 1: US High Alpha */}
       {activeTab === 'us' ? (

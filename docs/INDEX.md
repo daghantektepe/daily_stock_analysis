@@ -50,6 +50,8 @@
 | [分析上下文包契约、运行态消费与可见性](analysis-context-pack.md) | AnalysisContextPack 首版范围、字段质量状态、P1/P2 内部契约、P3 Prompt 摘要消费、P4 历史/API/Web 低敏可见性、P5 数据质量评分、P6 迁移回滚与源码锚点；完整指南补充 #1386 阶段感知分析、迁移与回滚入口 |
 | [图片识别 Prompt](image-extract-prompt.md) | 图片识别股票信息的 Prompt 与使用边界 |
 | [OpenClaw Skill 集成](openclaw-skill-integration.md) | OpenClaw / Skill 外部集成说明 |
+| [CLI-Native Copilot & DSA MCP Bridge](cli-native-mcp-bridge.md) | Claude Code CLI / Gemini CLI 本地 MCP 桥接、WebUI 全局 Copilot 抽屉（`Ctrl+J`）与终端原生命令 `dsa.cmd` |
+| [多宇宙量化策略锦标赛报告（Strategy Tournament）](STRATEGY_TOURNAMENT_REPORT.md) | 25 套量化策略（US ETF / Sectors / Crypto / BIST + PAA 崩盘护盾 + Meta-Portfolio A/B）零前视实证回测、OOS 样本外指标与 DSR 排行 |
 
 ## 部署与打包
 

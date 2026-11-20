@@ -14,13 +14,20 @@ from api.v1.schemas.alpha import (
     AlphaOverviewResponse,
     BistScreenRequest,
     BistScreenResponse,
+    CryptoTrendResponse,
     Form4ClusterItem,
     Form4LiveResponse,
+    Form4StudyRequest,
+    Form4StudyResponse,
     KapContractResponse,
+    PaaSignalResponse,
     PeadCandidateItem,
     PeadCandidatesResponse,
     PeadStudyRequest,
     PeadStudyResponse,
+    PeadUnbiasedStudyRequest,
+    TournamentResponse,
+    TournamentRunRequest,
     UsQuantCandidateItem,
     UsScreenRequest,
     UsScreenResponse,
@@ -149,7 +156,7 @@ def get_pead_candidates(
 @router.post("/pead-study", response_model=PeadStudyResponse)
 def execute_pead_study(req: PeadStudyRequest) -> PeadStudyResponse:
     """Run empirical PEAD event study (BMO/AMC aligned, net of slippage, vs SPY)."""
-    from src.services.pead_event_study import run_pead_event_study
+    from src.services.pead_event_study import format_pead_study_report, run_pead_event_study
 
     report = run_pead_event_study(
         symbols=req.symbols,
@@ -157,7 +164,131 @@ def execute_pead_study(req: PeadStudyRequest) -> PeadStudyResponse:
         benchmark_symbol=req.benchmark_symbol,
         estimated_slippage_pct=req.estimated_slippage_pct,
     )
-    return PeadStudyResponse(**report)
+    return PeadStudyResponse(**report, report_text=format_pead_study_report(report))
+
+
+@router.post("/pead-unbiased-study", response_model=PeadStudyResponse)
+def execute_pead_unbiased_study(req: PeadUnbiasedStudyRequest) -> PeadStudyResponse:
+    """Run unbiased index constituent PEAD study (S&P 400 + S&P 600, matching scripts/pead_study.py)."""
+    import random
+    from scripts.pead_study import load_index_constituents
+    from src.services.pead_event_study import format_pead_study_report, run_pead_event_study
+
+    names = ("sp400", "sp600") if req.universe == "smid" else (req.universe,)
+    symbols = sorted({sym for name in names for sym in load_index_constituents(name)})
+    if req.sample and len(symbols) > req.sample:
+        symbols = sorted(random.Random(req.seed).sample(symbols, req.sample))
+
+    report = run_pead_event_study(
+        symbols=symbols,
+        min_surprise_pct=req.min_surprise_pct,
+        estimated_slippage_pct=req.slippage,
+    )
+    txt = f"PEAD testi: {len(symbols)} hisse ({req.universe})\n\n" + format_pead_study_report(report)
+    return PeadStudyResponse(**report, report_text=txt)
+
+
+@router.post("/form4-study", response_model=Form4StudyResponse)
+def execute_form4_study(req: Form4StudyRequest) -> Form4StudyResponse:
+    """Run historical SEC Form 4 executive insider buying study (matching scripts/sec_form4_study.py)."""
+    from data_provider.sec_form4_fetcher import SecForm4Fetcher, quarter_range
+    from src.services.sec_form4_study import format_sec_form4_study_report, run_sec_form4_event_study
+
+    fetcher = SecForm4Fetcher()
+    raw_q = req.quarters.strip().lower()
+    if ".." in raw_q:
+        parts = raw_q.split("..")
+        quarters = quarter_range(parts[0].strip(), parts[1].strip())
+    else:
+        quarters = [q.strip().lower() for q in raw_q.split(",") if q.strip()]
+
+    all_events = []
+    for q in quarters:
+        try:
+            events = fetcher.parse_quarter(
+                q,
+                min_value=req.min_value,
+                min_price=req.min_price,
+                exclude_funds_and_trusts=True,
+            )
+            all_events.extend(events)
+        except Exception as exc:
+            logger.warning("Failed to parse quarter %s: %s", q, exc)
+
+    all_events.sort(key=lambda e: e.filing_date)
+    if req.limit and len(all_events) > req.limit:
+        n = len(all_events)
+        all_events = [all_events[int(i * n / req.limit)] for i in range(req.limit)]
+
+    result = run_sec_form4_event_study(
+        all_events,
+        benchmark_symbol="SPY",
+        estimated_slippage_pct=req.slippage,
+    )
+    txt = format_sec_form4_study_report(result, quarters_label=", ".join(quarters))
+    return Form4StudyResponse(
+        quarters=quarters,
+        total_events=int(result.get("total_events", 0)),
+        evaluated_events=int(result.get("evaluated_events", 0)),
+        report_text=txt,
+        horizons=result.get("horizons") or {},
+    )
+
+
+@router.get("/crypto-trend", response_model=CryptoTrendResponse)
+def get_crypto_trend_status(
+    step_paper: bool = Query(True, description="Advance the paper book to latest close"),
+) -> CryptoTrendResponse:
+    """Run Crypto Trend Strategy signal, backtest, and paper book status (matching scripts/crypto_trend.py)."""
+    from datetime import date
+    from src.config import get_config
+    from src.services.crypto_trend_strategy import (
+        TrendConfig,
+        current_targets,
+        load_daily_closes,
+        robustness_grid,
+        run_backtest,
+    )
+    from src.services.strategy_paper_book import StrategyPaperBook, format_book_report
+
+    cfg = get_config()
+    assets = tuple(getattr(cfg, "crypto_trend_assets", None) or ("BTC-USD", "ETH-USD"))
+    trend = TrendConfig(assets=assets)
+    prices = load_daily_closes(trend.assets)
+    targets = current_targets(prices, trend)
+
+    bt_all = robustness_grid(prices, trend.windows, assets=trend.assets, cost_pct=trend.cost_pct, start=None, end=None)
+    bt_oos = robustness_grid(
+        prices, trend.windows, assets=trend.assets, cost_pct=trend.cost_pct, start=date(2022, 1, 1), end=None
+    )
+    bt_res = run_backtest(prices, trend)
+
+    book = StrategyPaperBook(config=trend, initial_capital=float(getattr(cfg, "crypto_trend_capital", 10_000.0)))
+    if step_paper:
+        book.step(prices)
+    paper_rep = format_book_report(book.summary(), targets)
+
+    lines = [f"Kripto trend geçmiş testi ({', '.join(trend.assets)}; maliyet %{trend.cost_pct} / işlem)"]
+    for label, rows in (("Tüm dönem", bt_all), ("2022-bugün (örneklem dışı)", bt_oos)):
+        lines.append(f"\n{label}:")
+        for row in rows:
+            lines.append(
+                f"  {row['label']:>9}: yıllık %{row['strategy_cagr_pct']:>6} | en büyük düşüş %{row['strategy_max_drawdown_pct']:>6} "
+                f"| Sharpe {row['strategy_sharpe']} || al-tut yıllık %{row['buy_hold_cagr_pct']:>6} "
+                f"düşüş %{row['buy_hold_max_drawdown_pct']:>6} Sharpe {row['buy_hold_sharpe']} "
+                f"({row['start']} → {row['end']})"
+            )
+    lines.append("\n" + paper_rep)
+
+    return CryptoTrendResponse(
+        assets=list(trend.assets),
+        signals=targets,
+        backtest_all=bt_all,
+        backtest_oos=bt_oos,
+        yearly=bt_res.get("yearly") or [],
+        paper_report=paper_rep,
+        report_text="\n".join(lines),
+    )
 
 
 @router.post("/bist-screen", response_model=BistScreenResponse)
@@ -195,3 +326,41 @@ def get_kap_contracts(
     )
     items = [asdict(row) if hasattr(row, "__dataclass_fields__") else dict(row) for row in candidates]
     return KapContractResponse(count=len(items), items=items)
+
+
+@router.get("/tournament", response_model=TournamentResponse)
+def get_strategy_tournament(
+    auto_run: bool = Query(True, description="Run tournament automatically when cache is missing"),
+) -> TournamentResponse:
+    """Return the cached 25-strategy multi-universe empirical tournament leaderboard & OOS equity curves."""
+    from src.quant.tournament import load_latest_tournament_results
+
+    data = load_latest_tournament_results(auto_run_if_missing=auto_run)
+    if not data:
+        return TournamentResponse()
+    return TournamentResponse(**data)
+
+
+@router.post("/tournament/run", response_model=TournamentResponse)
+def trigger_strategy_tournament(req: TournamentRunRequest) -> TournamentResponse:
+    """Execute the 25-strategy empirical tournament (OOS 2022+, zero lookahead, net of costs, DSR)."""
+    from src.quant.tournament import run_tournament
+
+    data = run_tournament(
+        oos_start=req.oos_start,
+        force_refresh=req.force_refresh,
+    )
+    return TournamentResponse(**data)
+
+
+@router.get("/paa", response_model=PaaSignalResponse)
+def get_paa_live_signal(
+    refresh: bool = Query(False, description="Force refresh Yahoo Finance ETF prices"),
+) -> PaaSignalResponse:
+    """Return live Protective Asset Allocation (PAA) crash-shield breadth and target weights."""
+    from src.quant.tournament import get_live_paa_signal
+
+    data = get_live_paa_signal(force_refresh=refresh)
+    if data.get("ok") is False:
+        return PaaSignalResponse(regime_label="UNAVAILABLE")
+    return PaaSignalResponse(**data)

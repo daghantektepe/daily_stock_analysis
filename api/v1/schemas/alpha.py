@@ -106,6 +106,41 @@ class PeadStudyResponse(BaseModel):
     estimated_slippage_pct: float
     horizons: Dict[str, Any] = Field(default_factory=dict)
     segments: Dict[str, Any] = Field(default_factory=dict)
+    report_text: Optional[str] = None
+
+
+class Form4StudyRequest(BaseModel):
+    quarters: str = Field("2023q1..2026q3", description="Quarter range e.g. 2023q1..2026q3 or 2025q1..2026q1")
+    min_value: float = Field(50000.0, ge=0.0)
+    min_price: float = Field(2.0, ge=0.0)
+    limit: int = Field(0, ge=0, le=50000, description="0 = all events, or sample limit for faster runs")
+    slippage: float = Field(0.5, ge=0.0, le=5.0)
+
+
+class Form4StudyResponse(BaseModel):
+    quarters: List[str] = Field(default_factory=list)
+    total_events: int = 0
+    evaluated_events: int = 0
+    report_text: str = ""
+    horizons: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PeadUnbiasedStudyRequest(BaseModel):
+    universe: str = Field("smid", pattern="^(sp400|sp600|sp500|smid)$")
+    sample: int = Field(400, ge=10, le=1500)
+    min_surprise_pct: Optional[float] = None
+    slippage: float = Field(0.25, ge=0.0, le=5.0)
+    seed: int = 7
+
+
+class CryptoTrendResponse(BaseModel):
+    assets: List[str] = Field(default_factory=list)
+    signals: Dict[str, Any] = Field(default_factory=dict)
+    backtest_all: List[Dict[str, Any]] = Field(default_factory=list)
+    backtest_oos: List[Dict[str, Any]] = Field(default_factory=list)
+    yearly: List[Dict[str, Any]] = Field(default_factory=list)
+    paper_report: str = ""
+    report_text: str = ""
 
 
 class BistScreenRequest(BaseModel):
@@ -137,3 +172,36 @@ class AlphaOverviewResponse(BaseModel):
     recent_alerts_count: int = 0
     us_screener_enabled: bool = False
     bist_screener_enabled: bool = False
+
+
+class TournamentRunRequest(BaseModel):
+    oos_start: str = Field("2022-01-01", description="Out-of-sample evaluation start date (YYYY-MM-DD)")
+    force_refresh: bool = Field(False, description="Ignore cached price CSVs and re-fetch Yahoo Finance")
+
+
+class TournamentResponse(BaseModel):
+    generated_at: Optional[str] = None
+    oos_start: str = "2022-01-01"
+    latest_date: Optional[str] = None
+    total_strategies: int = 0
+    total_assets: int = 0
+    total_asset_days: int = 0
+    pass_elite_count: int = 0
+    pass_solid_count: int = 0
+    champion: Optional[Dict[str, Any]] = None
+    paa: Optional[Dict[str, Any]] = None
+    meta_portfolio_a: Optional[Dict[str, Any]] = None
+    meta_portfolio_b: Optional[Dict[str, Any]] = None
+    featured_strategy_ids: List[str] = Field(default_factory=list)
+    strategies: List[Dict[str, Any]] = Field(default_factory=list)
+    paper_snapshot: Optional[Dict[str, Any]] = None
+
+
+class PaaSignalResponse(BaseModel):
+    as_of_date: Optional[str] = None
+    risk_assets_total: int = 0
+    risk_assets_below_sma252: int = 0
+    crash_protection_pct: float = 0.0
+    regime_label: str = "UNKNOWN"
+    target_weights_pct: Dict[str, float] = Field(default_factory=dict)
+    risk_asset_breadth: List[Dict[str, Any]] = Field(default_factory=list)

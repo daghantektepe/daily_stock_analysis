@@ -98,6 +98,43 @@ export interface PeadStudyResponse {
   estimated_slippage_pct: number;
   horizons: Record<string, PeadStudyHorizonStat>;
   segments: Record<string, unknown>;
+  report_text?: string | null;
+}
+
+export interface Form4StudyResponse {
+  quarters: string[];
+  total_events: number;
+  evaluated_events: number;
+  report_text: string;
+  horizons: Record<string, unknown>;
+}
+
+export interface CryptoTrendRow {
+  label: string;
+  strategy_cagr_pct: number;
+  strategy_max_drawdown_pct: number;
+  strategy_sharpe: number;
+  buy_hold_cagr_pct: number;
+  buy_hold_max_drawdown_pct: number;
+  buy_hold_sharpe: number;
+  start: string;
+  end: string;
+}
+
+export interface CryptoTrendResponse {
+  assets: string[];
+  signals: Record<string, {
+    date?: string;
+    close?: number;
+    weight?: number;
+    averages?: Record<string, number>;
+    reason?: string;
+  }>;
+  backtest_all: CryptoTrendRow[];
+  backtest_oos: CryptoTrendRow[];
+  yearly: Array<{ year: number; strategy_pct: number; buy_hold_pct: number }>;
+  paper_report: string;
+  report_text: string;
 }
 
 export interface BistCandidateItem {
@@ -137,6 +174,82 @@ export interface KapContractItem {
   url: string;
   counterparty?: string | null;
   details_condensed?: string;
+}
+
+export interface StrategyPerformanceMetrics {
+  start_date?: string | null;
+  end_date?: string | null;
+  trading_days: number;
+  total_return_pct: number;
+  cagr_pct: number;
+  vol_pct: number;
+  sharpe: number;
+  sortino: number;
+  max_drawdown_pct: number;
+  calmar: number;
+  recovery_factor: number;
+  win_rate_pct: number;
+  annual_turnover: number;
+  dsr_pct: number;
+}
+
+export interface StrategyEquityPoint {
+  date: string;
+  equity: number;
+  drawdown_pct: number;
+}
+
+export interface TournamentStrategyRow {
+  strategy_id: string;
+  name: string;
+  universe: string;
+  category: string;
+  description: string;
+  currency: string;
+  cost_bps: number;
+  is_benchmark: boolean;
+  verdict: string;
+  oos: StrategyPerformanceMetrics;
+  full: StrategyPerformanceMetrics;
+  current_weights: Record<string, number>;
+  cash_weight_pct: number;
+  latest_date?: string | null;
+  signal_summary: string;
+  equity_oos_points?: StrategyEquityPoint[];
+}
+
+export interface TournamentResponse {
+  generated_at?: string | null;
+  oos_start: string;
+  latest_date?: string | null;
+  total_strategies: number;
+  total_assets: number;
+  total_asset_days: number;
+  pass_elite_count: number;
+  pass_solid_count: number;
+  champion?: TournamentStrategyRow | null;
+  paa?: TournamentStrategyRow | null;
+  meta_portfolio_a?: TournamentStrategyRow | null;
+  meta_portfolio_b?: TournamentStrategyRow | null;
+  featured_strategy_ids: string[];
+  strategies: TournamentStrategyRow[];
+  paper_snapshot?: Record<string, unknown> | null;
+}
+
+export interface PaaSignalResponse {
+  as_of_date?: string | null;
+  risk_assets_total: number;
+  risk_assets_below_sma252: number;
+  crash_protection_pct: number;
+  regime_label: string;
+  target_weights_pct: Record<string, number>;
+  risk_asset_breadth: Array<{
+    symbol: string;
+    close: number;
+    sma252: number;
+    mom_vs_sma252_pct: number;
+    above_sma252: boolean;
+  }>;
 }
 
 export const alphaApi = {
@@ -216,6 +329,66 @@ export const alphaApi = {
     const res = await apiClient.get('/api/v1/alpha/kap-contracts', {
       params,
       timeout: 90000,
+    });
+    return res.data;
+  },
+
+  async runForm4Study(params: {
+    quarters?: string;
+    min_value?: number;
+    min_price?: number;
+    limit?: number;
+    slippage?: number;
+  } = {}): Promise<Form4StudyResponse> {
+    const res = await apiClient.post('/api/v1/alpha/form4-study', params, {
+      timeout: 600000,
+    });
+    return res.data;
+  },
+
+  async runPeadUnbiasedStudy(params: {
+    universe?: 'smid' | 'sp400' | 'sp600' | 'sp500';
+    sample?: number;
+    min_surprise_pct?: number | null;
+    slippage?: number;
+    seed?: number;
+  } = {}): Promise<PeadStudyResponse> {
+    const res = await apiClient.post('/api/v1/alpha/pead-unbiased-study', params, {
+      timeout: 600000,
+    });
+    return res.data;
+  },
+
+  async getCryptoTrend(stepPaper = true): Promise<CryptoTrendResponse> {
+    const res = await apiClient.get('/api/v1/alpha/crypto-trend', {
+      params: { step_paper: stepPaper },
+      timeout: 90000,
+    });
+    return res.data;
+  },
+
+  async getTournament(autoRun = true): Promise<TournamentResponse> {
+    const res = await apiClient.get<TournamentResponse>('/api/v1/alpha/tournament', {
+      params: { auto_run: autoRun },
+      timeout: 180000,
+    });
+    return res.data;
+  },
+
+  async runTournament(params: {
+    oos_start?: string;
+    force_refresh?: boolean;
+  } = {}): Promise<TournamentResponse> {
+    const res = await apiClient.post<TournamentResponse>('/api/v1/alpha/tournament/run', params, {
+      timeout: 240000,
+    });
+    return res.data;
+  },
+
+  async getPaaSignal(refresh = false): Promise<PaaSignalResponse> {
+    const res = await apiClient.get<PaaSignalResponse>('/api/v1/alpha/paa', {
+      params: { refresh },
+      timeout: 60000,
     });
     return res.data;
   },

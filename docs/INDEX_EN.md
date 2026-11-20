@@ -50,6 +50,8 @@ This is the entry point for project documentation. The README covers the project
 | [Analysis Context Pack Contract, Runtime Consumption, And Visibility](analysis-context-pack.md) <sub><sub>![P6 Badge](https://img.shields.io/badge/P6-orange?style=flat)</sub></sub> (Chinese-only) | AnalysisContextPack first-scope boundaries, field quality states, P1/P2 internal contracts, P3 prompt-summary consumption, P4 history/API/Web low-sensitivity visibility, P5 data-quality scoring, and P6 migration/rollback notes, plus source anchors; the full guide adds #1386 market-phase analysis, migration, and rollback entry points |
 | [Image Extraction Prompt](image-extract-prompt.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | Prompt and boundaries for extracting stock information from images |
 | [OpenClaw Skill Integration](openclaw-skill-integration.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | OpenClaw / Skill external integration notes |
+| [CLI-Native Copilot & DSA MCP Bridge](cli-native-mcp-bridge.md) | Built-in DSA MCP server, local Claude Code CLI & Gemini CLI chat backends, global WebUI Copilot drawer (`Ctrl+J`), and `dsa.cmd` terminal launcher |
+| [Empirical Multi-Universe Strategy Tournament Report](STRATEGY_TOURNAMENT_REPORT.md) | 25-strategy zero-lookahead empirical benchmark across US ETF, US Sectors, Crypto, and BIST (PAA Crash-Shield, Meta-Portfolios A/B, OOS Sharpe/MaxDD/DSR) |
 
 ## Deployment And Packaging
 
