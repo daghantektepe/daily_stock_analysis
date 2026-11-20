@@ -161,10 +161,31 @@ def step_quant_paper_books(
         reports.append(report)
         total_new_trades += len(summary["new_trades"])
 
+    # Also advance any active 3-AI Council StrategyPaperBooks (Claude / Codex / Gemini)
+    try:
+        from src.quant.ai_council import load_council_etf_prices, step_active_council_books
+
+        council_prices = prices if prices is not None else load_council_etf_prices(force_refresh=force_refresh_prices)
+        council_books = step_active_council_books(
+            prices=council_prices,
+            initial_capital=initial_capital,
+            cost_bps=cost_bps,
+            force_rebalance=force_rebalance,
+            book_dir=book_dir,
+            today=today,
+        )
+        for cb in council_books:
+            books_out.append(cb)
+            if cb.get("report_text"):
+                reports.append(cb["report_text"])
+            total_new_trades += len(cb.get("new_trades") or [])
+    except Exception as exc:
+        logger.warning("[quant-paper] AI council step skipped: %s", exc)
+
     return {
         "ok": True,
         "simulated_only": True,
-        "strategies": keys,
+        "strategies": [b["strategy_key"] for b in books_out],
         "total_new_trades": total_new_trades,
         "books": books_out,
         "report_text": "\n\n".join(reports),
@@ -216,10 +237,25 @@ def get_quant_paper_books_status(
         except Exception as exc:
             logger.warning("[quant-paper] auto_step_if_empty failed: %s", exc)
 
+    # Also include active 3-AI Council StrategyPaperBooks (Claude / Codex / Gemini)
+    try:
+        from src.quant.ai_council import get_active_council_books_status
+
+        for cb in get_active_council_books_status(
+            initial_capital=initial_capital,
+            cost_bps=cost_bps,
+            book_dir=book_dir,
+        ):
+            books_out.append(cb)
+            if cb.get("report_text"):
+                reports.append(cb["report_text"])
+    except Exception as exc:
+        logger.warning("[quant-paper] AI council status read skipped: %s", exc)
+
     return {
         "ok": True,
         "simulated_only": True,
-        "strategies": keys,
+        "strategies": [b["strategy_key"] for b in books_out],
         "total_new_trades": 0,
         "books": books_out,
         "report_text": "\n\n".join(reports),

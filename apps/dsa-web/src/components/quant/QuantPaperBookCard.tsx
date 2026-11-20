@@ -38,7 +38,7 @@ export const QuantPaperBookCard: React.FC<QuantPaperBookCardProps> = ({
           <div className="flex items-center gap-2">
             <BookOpenCheck className="h-4 w-4 text-sky-400" />
             <h3 className="text-xs font-semibold text-foreground">
-              Günlük Otomatik Sanal Portföy Defteri (StrategyPaperBook · PAA &amp; Meta-Portföy A)
+              Günlük Otomatik Sanal Portföy Defteri (PAA · Meta-Portföy A · 3-AI Konseyi)
             </h3>
             <span className="rounded-md border border-sky-500/35 bg-sky-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-sky-400">
               SADECE SİMÜLASYON
@@ -89,15 +89,28 @@ export const QuantPaperBookCard: React.FC<QuantPaperBookCardProps> = ({
               className="rounded-xl border border-border/70 bg-card/85 p-3.5"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                     <span className="text-xs font-semibold text-foreground">{book.label}</span>
+                    {book.council_meta?.engine_label ? (
+                      <span className="rounded border border-purple-500/35 bg-purple-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-purple-300">
+                        {book.council_meta.rule_engine}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-0.5 font-mono text-[10px] text-secondary-text">
                     {book.start_date || '—'} → {book.last_date || '—'} · {book.days} gün · mod:{' '}
                     {book.rebalance_mode} · {book.cost_bps} bps
+                    {book.council_meta?.oos_backtest
+                      ? ` · OOS Sharpe ${Number(book.council_meta.oos_backtest.sharpe ?? 0).toFixed(2)} · MaxDD ${Number(book.council_meta.oos_backtest.max_drawdown_pct ?? 0).toFixed(1)}%`
+                      : ''}
                   </p>
+                  {book.council_meta?.thesis ? (
+                    <p className="mt-1 text-[11px] leading-snug text-secondary-text">
+                      {book.council_meta.thesis}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-sm font-semibold text-foreground">

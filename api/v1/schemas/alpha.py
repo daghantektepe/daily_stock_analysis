@@ -250,6 +250,7 @@ class QuantPaperBookItem(BaseModel):
     recent_trades: List[Dict[str, Any]] = Field(default_factory=list)
     history: List[Dict[str, Any]] = Field(default_factory=list)
     report_text: str = ""
+    council_meta: Optional[Dict[str, Any]] = None
 
 
 class QuantPaperStepRequest(BaseModel):

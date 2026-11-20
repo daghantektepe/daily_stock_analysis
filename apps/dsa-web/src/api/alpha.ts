@@ -315,6 +315,21 @@ export interface QuantPaperBookItem {
     late?: boolean;
   }>;
   report_text: string;
+  council_meta?: {
+    member_key?: string;
+    engine_label?: string;
+    model?: string;
+    rule_engine?: string;
+    thesis?: string;
+    risk_rules?: string;
+    verdict?: string;
+    oos_backtest?: {
+      cagr_pct?: number;
+      sharpe?: number;
+      max_drawdown_pct?: number;
+      dsr_pct?: number;
+    };
+  } | null;
 }
 
 export interface QuantPaperBooksResponse {

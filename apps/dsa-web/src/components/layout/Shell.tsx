@@ -18,8 +18,26 @@ type ShellProps = {
 
 export const Shell: React.FC<ShellProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const collapsed = false;
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('dsa.sidebar.collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
   const { t } = useUiLanguage();
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem('dsa.sidebar.collapsed', next ? '1' : '0');
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -60,11 +78,16 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           className={cn(
             'sticky top-3 z-40 hidden shrink-0 overflow-visible rounded-[1.5rem] border border-[var(--shell-sidebar-border)] bg-card/72 p-2.5 shadow-soft-card backdrop-blur-sm transition-[width] duration-200 lg:flex',
             'max-h-[calc(100vh-1.5rem)] self-start sm:top-4 sm:max-h-[calc(100vh-2rem)]',
-            collapsed ? 'w-[64px]' : 'w-[136px]'
+            collapsed ? 'w-[68px]' : 'w-[196px]'
           )}
           aria-label={t('layout.desktopSidebar')}
         >
-          <SidebarNav collapsed={collapsed} variant="rail" onNavigate={() => setMobileOpen(false)} />
+          <SidebarNav
+            collapsed={collapsed}
+            onToggleCollapse={toggleCollapsed}
+            variant="rail"
+            onNavigate={() => setMobileOpen(false)}
+          />
         </aside>
 
         <main className="min-h-0 min-w-0 flex-1 pt-14 lg:pl-3 lg:pt-0 touch-pan-y">
