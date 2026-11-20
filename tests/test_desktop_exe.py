@@ -27,3 +27,19 @@ def test_frozen_exe_mcp_config_uses_self_mcp_serve_flag(monkeypatch, tmp_path: P
     assert entry["command"].endswith("DailyStockAnalysis.exe")
     assert entry["args"] == ["--mcp-serve"]
     assert entry["env"]["DSA_DATA_ROOT"] == str(tmp_path.resolve())
+
+
+def test_desktop_app_mcp_serve_invokes_run_stdio_server(monkeypatch, tmp_path: Path) -> None:
+    import desktop_app
+
+    called = {"count": 0}
+
+    def _fake_stdio() -> int:
+        called["count"] += 1
+        return 0
+
+    monkeypatch.setenv("DSA_DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("src.mcp.server.run_stdio_server", _fake_stdio)
+    rc = desktop_app.main(["--mcp-serve"])
+    assert rc == 0
+    assert called["count"] == 1

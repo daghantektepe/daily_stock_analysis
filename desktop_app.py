@@ -245,9 +245,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Headless MCP stdio mode (used when Claude CLI / Gemini CLI connects to the frozen .exe)
     if args.mcp_serve:
-        from src.mcp.server import DsaMcpServer
+        from src.mcp.server import run_stdio_server
 
-        return DsaMcpServer().run_stdio()
+        return run_stdio_server()
 
     log_path = _configure_desktop_logging(runtime_root)
     logger = logging.getLogger("dsa.desktop_exe")
