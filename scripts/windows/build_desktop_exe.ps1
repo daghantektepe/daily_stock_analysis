@@ -166,7 +166,8 @@ try {
 
   $workDir = Join-Path $env:TEMP 'dsa-pyinstaller-build'
   $specDir = Join-Path $env:TEMP 'dsa-pyinstaller-spec'
-  New-Item -ItemType Directory -Force -Path $workDir, $specDir | Out-Null
+  $stageDist = Join-Path $env:TEMP 'dsa-pyinstaller-dist'
+  New-Item -ItemType Directory -Force -Path $workDir, $specDir, $stageDist | Out-Null
 
   $pyArgs = @(
     '-m', 'PyInstaller',
@@ -177,7 +178,7 @@ try {
     '--icon', $iconPath,
     '--workpath', $workDir,
     '--specpath', $specDir,
-    '--distpath', (Join-Path $root 'dist'),
+    '--distpath', $stageDist,
     '--add-data', "$root\static;static",
     '--add-data', "$root\strategies;strategies",
     '--add-data', "$root\.env.example;.",
@@ -187,9 +188,15 @@ try {
     '--collect-all', 'pythonnet',
     '--collect-all', 'clr_loader',
     '--collect-data', 'tiktoken',
+    '--collect-data', 'litellm',
     '--exclude-module', 'lark_oapi',
     '--exclude-module', 'matplotlib',
-    '--exclude-module', 'tkinter'
+    '--exclude-module', 'tkinter',
+    '--exclude-module', 'boto3',
+    '--exclude-module', 'botocore',
+    '--exclude-module', 's3transfer',
+    '--exclude-module', 'pytest',
+    '--exclude-module', 'IPython'
   )
   if (Test-Path 'src\assets\share_image') {
     $pyArgs += @('--add-data', "$root\src\assets\share_image;src/assets/share_image")
@@ -203,7 +210,14 @@ try {
   & $python @pyArgs
   if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
 
-  $exePath = Join-Path $root 'dist\DailyStockAnalysis\DailyStockAnalysis.exe'
+  $stagedAppDir = Join-Path $stageDist 'DailyStockAnalysis'
+  $finalAppDir = Join-Path $root 'dist\DailyStockAnalysis'
+  New-Item -ItemType Directory -Force -Path $finalAppDir | Out-Null
+  Write-Host "Syncing bundle to $finalAppDir ..."
+  & robocopy $stagedAppDir $finalAppDir /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+  if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
+
+  $exePath = Join-Path $finalAppDir 'DailyStockAnalysis.exe'
   if (-not (Test-Path $exePath)) {
     throw "Expected executable was not produced: $exePath"
   }

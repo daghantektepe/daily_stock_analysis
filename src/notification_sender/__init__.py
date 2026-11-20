@@ -1,23 +1,52 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-通知发送层模块
+Notification sender layer
 ===================================
 
-提供各种通知发送服务
+Lazy-exported notification channel senders (PEP 562) so importing helper
+functions from lightweight senders (e.g. gotify/ntfy) does not eagerly load
+heavy optional SDKs like ``lark_oapi`` during API startup.
 """
 
-from .astrbot_sender import AstrbotSender
-from .custom_webhook_sender import CustomWebhookSender
-from .discord_sender import DiscordSender
-from .email_sender import EmailSender
-from .feishu_sender import FeishuSender
-from .gotify_sender import GotifySender, resolve_gotify_message_endpoint
-from .ntfy_sender import NtfySender, resolve_ntfy_endpoint
-from .pushover_sender import PushoverSender
-from .pushplus_sender import PushplusSender
-from .serverchan3_sender import Serverchan3Sender
-from .slack_sender import SlackSender
-from .telegram_sender import TelegramSender
-from .wechat_sender import WechatSender, WECHAT_IMAGE_MAX_BYTES
-from .dingtalk_sender import DingtalkSender
+from __future__ import annotations
+
+import importlib
+from typing import Any, Dict, Tuple
+
+_EXPORTS: Dict[str, Tuple[str, str]] = {
+    "AstrbotSender": (".astrbot_sender", "AstrbotSender"),
+    "CustomWebhookSender": (".custom_webhook_sender", "CustomWebhookSender"),
+    "DiscordSender": (".discord_sender", "DiscordSender"),
+    "EmailSender": (".email_sender", "EmailSender"),
+    "FeishuSender": (".feishu_sender", "FeishuSender"),
+    "GotifySender": (".gotify_sender", "GotifySender"),
+    "resolve_gotify_message_endpoint": (".gotify_sender", "resolve_gotify_message_endpoint"),
+    "NtfySender": (".ntfy_sender", "NtfySender"),
+    "resolve_ntfy_endpoint": (".ntfy_sender", "resolve_ntfy_endpoint"),
+    "PushoverSender": (".pushover_sender", "PushoverSender"),
+    "PushplusSender": (".pushplus_sender", "PushplusSender"),
+    "Serverchan3Sender": (".serverchan3_sender", "Serverchan3Sender"),
+    "SlackSender": (".slack_sender", "SlackSender"),
+    "TelegramSender": (".telegram_sender", "TelegramSender"),
+    "WechatSender": (".wechat_sender", "WechatSender"),
+    "WECHAT_IMAGE_MAX_BYTES": (".wechat_sender", "WECHAT_IMAGE_MAX_BYTES"),
+    "DingtalkSender": (".dingtalk_sender", "DingtalkSender"),
+}
+
+__all__ = list(_EXPORTS.keys())
+
+
+def __getattr__(name: str) -> Any:
+    target = _EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, attr_name = target
+    module = importlib.import_module(module_name, __name__)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals().keys()) | set(_EXPORTS.keys()))

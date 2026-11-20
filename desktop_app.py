@@ -203,6 +203,8 @@ def _run_smoke_test(static_dir: Path, runtime_root: Path) -> int:
             return 1
         for path in (
             "/api/v1/health",
+            "/api/v1/system/config",
+            "/api/v1/stocks/watchlist",
             "/api/v1/agent/backends",
             "/api/v1/alpha/tournament?auto_run=false",
             "/api/v1/alpha/quant-paper?auto_step=false",
