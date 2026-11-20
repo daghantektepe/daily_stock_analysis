@@ -184,6 +184,7 @@ try {
     '--add-data', "$root\.env.example;.",
     '--collect-all', 'src.quant',
     '--collect-all', 'src.mcp',
+    '--collect-submodules', 'src.notification_sender',
     '--collect-all', 'webview',
     '--collect-all', 'pythonnet',
     '--collect-all', 'clr_loader',

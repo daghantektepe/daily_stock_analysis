@@ -28,6 +28,8 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
+
 _SPLASH_HTML = """<!doctype html>
 <html lang="tr">
 <head>
@@ -214,6 +216,7 @@ def _run_smoke_test(static_dir: Path, runtime_root: Path) -> int:
                 if resp.status != 200:
                     print(f"SMOKE_ERROR: {path} returned {resp.status}", file=sys.stderr)
                     return 1
+        from src.notification import NotificationService  # noqa: F401
         mcp = DsaMcpServer()
         if len(mcp.tool_names) < 16:
             print(f"SMOKE_ERROR: expected >=16 MCP tools, got {len(mcp.tool_names)}", file=sys.stderr)
