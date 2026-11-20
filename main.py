@@ -775,6 +775,39 @@ def _run_crypto_trend_paper_step(
         logger.warning("Kripto trend sanal portföy adımı hatası (yoksayıldı): %s", exc)
 
 
+def _run_quant_allocation_paper_step(
+    config: Config,
+    *,
+    notifier: Any = None,
+    send_notification: bool = False,
+) -> None:
+    """Advance PAA & Meta-Portfolio A StrategyPaperBooks after the daily run (opt-in, fail-open)."""
+    if not getattr(config, "quant_paper_enabled", False):
+        return
+    try:
+        from src.quant.paper_book import step_quant_paper_books
+
+        res = step_quant_paper_books(
+            strategies=tuple(getattr(config, "quant_paper_strategies", ["paa", "meta_a"])),
+            initial_capital=float(getattr(config, "quant_paper_capital", 10000.0)),
+            cost_bps=float(getattr(config, "quant_paper_cost_bps", 5.0)),
+            rebalance_mode=str(getattr(config, "quant_paper_rebalance_mode", "monthly")),
+            force_refresh_prices=True,
+        )
+        if not res.get("ok"):
+            logger.warning("PAA/Meta-A sanal portföy adımı atlandı: %s", res.get("error"))
+            return
+        report = res.get("report_text") or ""
+        if report:
+            logger.info("\n%s", report)
+        if send_notification and notifier is not None and int(res.get("total_new_trades") or 0) > 0:
+            books = res.get("books") or []
+            last_date = books[0].get("last_date") if books else "latest"
+            notifier.send(report, dedup_key=f"quant-paper:{last_date}")
+    except Exception as exc:  # noqa: BLE001 - optional sidecar, fail-open
+        logger.warning("PAA/Meta-A sanal portföy adımı hatası (yoksayıldı): %s", exc)
+
+
 def _resolve_bist_screener_codes(config: Config, args: argparse.Namespace) -> Optional[List[str]]:
     """Return screened BIST stock codes when enabled, or ``None`` to keep STOCK_LIST."""
     if not (getattr(config, "bist_screener_enabled", False) or getattr(args, "screen_bist", False)):
@@ -1176,6 +1209,11 @@ def run_full_analysis(
             send_notification=not args.no_notify and not args.dry_run,
         )
         _run_crypto_trend_paper_step(
+            config,
+            notifier=pipeline.notifier,
+            send_notification=not args.no_notify and not args.dry_run,
+        )
+        _run_quant_allocation_paper_step(
             config,
             notifier=pipeline.notifier,
             send_notification=not args.no_notify and not args.dry_run,

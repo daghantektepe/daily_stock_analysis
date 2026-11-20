@@ -670,6 +670,53 @@ def _handle_paa_allocation(args: Dict[str, Any]) -> Dict[str, Any]:
     return _ok("dsa_get_paa_allocation", result, safety_note=_PAPER_DISCLAIMER)
 
 
+def _handle_quant_paper_books(args: Dict[str, Any]) -> Dict[str, Any]:
+    from src.config import get_config
+    from src.quant.paper_book import get_quant_paper_books_status, step_quant_paper_books
+
+    cfg = get_config()
+    step = _bool_arg(args, "step_paper", False)
+    force_rebalance = _bool_arg(args, "force_rebalance", False)
+    force_refresh = _bool_arg(args, "force_refresh_prices", False)
+    raw_strats = args.get("strategies")
+    strategies = (
+        [str(s).strip().lower() for s in raw_strats if str(s).strip()]
+        if isinstance(raw_strats, list) and raw_strats
+        else list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+    )
+    kwargs = {
+        "strategies": strategies,
+        "initial_capital": float(getattr(cfg, "quant_paper_capital", 10000.0)),
+        "cost_bps": float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+        "rebalance_mode": str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
+    }
+    if step or force_rebalance:
+        result = step_quant_paper_books(
+            **kwargs,
+            force_rebalance=force_rebalance,
+            force_refresh_prices=force_refresh,
+        )
+    else:
+        result = get_quant_paper_books_status(**kwargs, auto_step_if_empty=True)
+
+    # Compact heavy history arrays for crisp MCP context
+    compact_books = []
+    for book in result.get("books") or []:
+        compact_books.append({k: v for k, v in book.items() if k != "history"})
+    return _ok(
+        "dsa_get_quant_paper_books",
+        {
+            "ok": result.get("ok", True),
+            "simulated_only": True,
+            "strategies": result.get("strategies") or strategies,
+            "total_new_trades": result.get("total_new_trades", 0),
+            "books": compact_books,
+            "report_text": result.get("report_text", ""),
+        },
+        safety_note=_PAPER_DISCLAIMER,
+    )
+
+
 def _handle_strategy_tournament(args: Dict[str, Any]) -> Dict[str, Any]:
     """Return empirical multi-universe 25-strategy tournament results (PAA, Meta-Portfolio A/B, OOS DSR)."""
     force_refresh = _bool_arg(args, "force_refresh", False)
@@ -781,6 +828,10 @@ def _handle_strategic_trading_brief(args: Dict[str, Any]) -> Dict[str, Any]:
                 out["meta_portfolio_b"] = cached.get("meta_portfolio_b")
                 out["total_strategies"] = cached.get("total_strategies")
                 out["pass_elite_count"] = cached.get("pass_elite_count")
+            try:
+                out["quant_paper_books"] = _handle_quant_paper_books({"step_paper": False}).get("data")
+            except Exception:
+                pass
             return out
 
         tasks["strategy_tournament_and_paa"] = _tournament_brief_task
@@ -1194,5 +1245,41 @@ def build_dsa_mcp_tools() -> List[McpToolSpec]:
             },
             handler=_handle_paa_allocation,
             read_only=True,
+        ),
+        McpToolSpec(
+            name="dsa_get_quant_paper_books",
+            description=(
+                "Read or advance the simulated daily StrategyPaperBook ledgers for PAA Crash-Shield "
+                "and Meta-Portfolio A (virtual NAV, return vs SPY, open ETF shares/weights, recent "
+                "rebalance trades). Strictly simulated; never places real broker orders."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "strategies": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["paa", "meta_a"]},
+                        "description": "Optional list of strategy books (default ['paa', 'meta_a']).",
+                    },
+                    "step_paper": {
+                        "type": "boolean",
+                        "description": "Advance books through latest completed daily close (default false).",
+                        "default": False,
+                    },
+                    "force_rebalance": {
+                        "type": "boolean",
+                        "description": "Force rebalance to live model targets on latest close (default false).",
+                        "default": False,
+                    },
+                    "force_refresh_prices": {
+                        "type": "boolean",
+                        "description": "Force refresh Yahoo Finance ETF closes before stepping (default false).",
+                        "default": False,
+                    },
+                },
+                "additionalProperties": False,
+            },
+            handler=_handle_quant_paper_books,
+            read_only=False,
         ),
     ]

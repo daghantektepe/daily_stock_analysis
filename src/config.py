@@ -1207,6 +1207,12 @@ class Config:
     crypto_trend_enabled: bool = False
     crypto_trend_assets: List[str] = field(default_factory=lambda: ["BTC-USD", "ETH-USD"])
     crypto_trend_capital: float = 10000.0
+    # Quant allocation paper books: PAA Crash-Shield & Meta-Portfolio A (scripts/quant_paper.py)
+    quant_paper_enabled: bool = False
+    quant_paper_strategies: List[str] = field(default_factory=lambda: ["paa", "meta_a"])
+    quant_paper_capital: float = 10000.0
+    quant_paper_cost_bps: float = 5.0
+    quant_paper_rebalance_mode: str = "monthly"
     # KAP watcher (scripts/kap_watch.py): poll interval and active window in Istanbul time
     kap_watch_interval_seconds: int = 300
     kap_watch_hours: str = "08:00-23:00"
@@ -2291,6 +2297,23 @@ class Config:
             ] or ["BTC-USD", "ETH-USD"],
             crypto_trend_capital=parse_env_float(
                 os.getenv('CRYPTO_TREND_CAPITAL'), 10000.0, field_name='CRYPTO_TREND_CAPITAL', minimum=100.0,
+            ),
+            quant_paper_enabled=parse_env_bool(os.getenv('QUANT_PAPER_ENABLED'), default=False),
+            quant_paper_strategies=[
+                item.strip().lower()
+                for item in (os.getenv('QUANT_PAPER_STRATEGIES') or 'paa,meta_a').split(',')
+                if item.strip()
+            ] or ["paa", "meta_a"],
+            quant_paper_capital=parse_env_float(
+                os.getenv('QUANT_PAPER_CAPITAL'), 10000.0, field_name='QUANT_PAPER_CAPITAL', minimum=100.0,
+            ),
+            quant_paper_cost_bps=parse_env_float(
+                os.getenv('QUANT_PAPER_COST_BPS'), 5.0, field_name='QUANT_PAPER_COST_BPS', minimum=0.0,
+            ),
+            quant_paper_rebalance_mode=(
+                (os.getenv('QUANT_PAPER_REBALANCE_MODE') or 'monthly').strip().lower()
+                if (os.getenv('QUANT_PAPER_REBALANCE_MODE') or 'monthly').strip().lower() in ('monthly', 'daily')
+                else 'monthly'
             ),
             kap_watch_interval_seconds=parse_env_int(
                 os.getenv('KAP_WATCH_INTERVAL_SECONDS'),

@@ -4,31 +4,37 @@ import { RefreshCw, ShieldCheck, Sparkles, Terminal, Trophy } from 'lucide-react
 import {
   alphaApi,
   type PaaSignalResponse,
+  type QuantPaperBookItem,
   type TournamentResponse,
 } from '../../api/alpha';
 import { getParsedApiError, type ParsedApiError } from '../../api/error';
 import { ApiErrorAlert, Button, SectionCard, StatCard } from '../common';
 import { openCopilotDrawer } from '../chat/copilotEvents';
+import { QuantPaperBookCard } from './QuantPaperBookCard';
 import { StrategyEquityChart } from './StrategyEquityChart';
 import { TournamentLeaderboard } from './TournamentLeaderboard';
 
 export const TournamentTabPanel: React.FC = () => {
   const [tournament, setTournament] = useState<TournamentResponse | null>(null);
   const [paa, setPaa] = useState<PaaSignalResponse | null>(null);
+  const [paperBooks, setPaperBooks] = useState<QuantPaperBookItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [steppingPaper, setSteppingPaper] = useState(false);
   const [error, setError] = useState<ParsedApiError | null>(null);
 
   const loadCached = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [tData, paaData] = await Promise.all([
+      const [tData, paaData, paperData] = await Promise.all([
         alphaApi.getTournament(true),
         alphaApi.getPaaSignal(false).catch(() => null),
+        alphaApi.getQuantPaperBooks(true).catch(() => null),
       ]);
       setTournament(tData);
       if (paaData) setPaa(paaData);
+      if (paperData && Array.isArray(paperData.books)) setPaperBooks(paperData.books);
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -47,16 +53,36 @@ export const TournamentTabPanel: React.FC = () => {
     setRefreshing(true);
     setError(null);
     try {
-      const [tData, paaData] = await Promise.all([
+      const [tData, paaData, paperData] = await Promise.all([
         alphaApi.runTournament({ force_refresh: true }),
         alphaApi.getPaaSignal(true).catch(() => null),
+        alphaApi.stepQuantPaperBooks({ force_refresh_prices: false }).catch(() => null),
       ]);
       setTournament(tData);
       if (paaData) setPaa(paaData);
+      if (paperData && Array.isArray(paperData.books)) setPaperBooks(paperData.books);
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleStepPaper = async (opts: { forceRebalance?: boolean; forceRefreshPrices?: boolean }) => {
+    setSteppingPaper(true);
+    setError(null);
+    try {
+      const res = await alphaApi.stepQuantPaperBooks({
+        force_rebalance: Boolean(opts.forceRebalance),
+        force_refresh_prices: Boolean(opts.forceRefreshPrices),
+      });
+      if (Array.isArray(res.books)) {
+        setPaperBooks(res.books);
+      }
+    } catch (err) {
+      setError(getParsedApiError(err));
+    } finally {
+      setSteppingPaper(false);
     }
   };
 
@@ -176,6 +202,13 @@ export const TournamentTabPanel: React.FC = () => {
                 </div>
               </div>
             ) : null}
+
+            {/* Daily Automated PAA & Meta-Portfolio A StrategyPaperBook */}
+            <QuantPaperBookCard
+              books={paperBooks}
+              stepping={steppingPaper}
+              onStep={(opts) => void handleStepPaper(opts)}
+            />
 
             {/* OOS Equity / Drawdown Comparison Chart */}
             <StrategyEquityChart

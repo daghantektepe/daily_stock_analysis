@@ -205,3 +205,67 @@ class PaaSignalResponse(BaseModel):
     regime_label: str = "UNKNOWN"
     target_weights_pct: Dict[str, float] = Field(default_factory=dict)
     risk_asset_breadth: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class QuantPaperPositionItem(BaseModel):
+    symbol: str
+    shares: float = 0.0
+    avg_cost: float = 0.0
+    last_price: float = 0.0
+    market_value: float = 0.0
+    weight_pct: float = 0.0
+    unrealized_pnl_usd: float = 0.0
+    unrealized_pnl_pct: float = 0.0
+
+
+class QuantPaperBookItem(BaseModel):
+    name: str
+    strategy_key: str
+    strategy_id: str
+    label: str
+    benchmark_symbol: str = "SPY"
+    rebalance_mode: str = "monthly"
+    cost_bps: float = 5.0
+    simulated_only: bool = True
+    start_date: Optional[str] = None
+    last_date: Optional[str] = None
+    last_rebalance_date: Optional[str] = None
+    days: int = 0
+    late_days: int = 0
+    initial_capital: float = 10000.0
+    nav: float = 10000.0
+    cash: float = 10000.0
+    cash_pct: float = 100.0
+    return_pct: float = 0.0
+    benchmark_return_pct: float = 0.0
+    excess_return_pct: float = 0.0
+    max_drawdown_pct: float = 0.0
+    benchmark_max_drawdown_pct: float = 0.0
+    weights_pct: Dict[str, float] = Field(default_factory=dict)
+    live_target_weights_pct: Dict[str, float] = Field(default_factory=dict)
+    positions: List[QuantPaperPositionItem] = Field(default_factory=list)
+    trade_count: int = 0
+    processed_days: int = 0
+    new_trades: List[Dict[str, Any]] = Field(default_factory=list)
+    recent_trades: List[Dict[str, Any]] = Field(default_factory=list)
+    history: List[Dict[str, Any]] = Field(default_factory=list)
+    report_text: str = ""
+
+
+class QuantPaperStepRequest(BaseModel):
+    strategies: Optional[List[str]] = Field(
+        default=None,
+        description="Strategy keys to step (e.g. ['paa', 'meta_a']); defaults to configured strategies",
+    )
+    force_rebalance: bool = Field(False, description="Force rebalance to live model targets on latest close")
+    force_refresh_prices: bool = Field(False, description="Force refresh US ETF prices from Yahoo Finance")
+
+
+class QuantPaperBooksResponse(BaseModel):
+    ok: bool = True
+    simulated_only: bool = True
+    strategies: List[str] = Field(default_factory=list)
+    total_new_trades: int = 0
+    books: List[QuantPaperBookItem] = Field(default_factory=list)
+    report_text: str = ""
+    error: Optional[str] = None

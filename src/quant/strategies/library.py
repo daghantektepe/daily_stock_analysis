@@ -278,6 +278,31 @@ def _build_gtaa5_weights(prices: pd.DataFrame) -> pd.DataFrame:
     return _causal_rebalance(w, "M")
 
 
+def compute_meta_a_weights(prices: pd.DataFrame) -> pd.DataFrame:
+    """Compute causal target weight matrix for Meta-Portfolio A (US Orthogonal ETF Ensemble).
+
+    Linear blend matching ``META_US_ETF_ALL_WEATHER`` in ``src/quant/portfolio.py``:
+      - 40% Protective Asset Allocation (PAA)
+      - 20% Vigilant Asset Allocation (VAA-G4)
+      - 20% Faber GTAA-5 (200D SMA Trend)
+      - 20% All-Weather Risk Parity (63D Inverse-Vol)
+    """
+    components = [
+        (compute_paa_weights(prices), 0.40),
+        (_build_vaa_weights(prices), 0.20),
+        (_build_gtaa5_weights(prices), 0.20),
+        (_build_risk_parity_weights(prices), 0.20),
+    ]
+    all_cols = list(dict.fromkeys(col for df, _ in components for col in df.columns))
+    combined = pd.DataFrame(0.0, index=prices.index, columns=all_cols)
+    for df, weight in components:
+        if df.empty:
+            continue
+        aligned = df.reindex(index=prices.index, columns=all_cols).fillna(0.0)
+        combined = combined + aligned * float(weight)
+    return combined
+
+
 def _build_vol_target_trend_weights(prices: pd.DataFrame) -> pd.DataFrame:
     risky = [c for c in ("SPY", "QQQ", "GLD", "TLT") if c in prices.columns]
     safe = "SHY" if "SHY" in prices.columns else None

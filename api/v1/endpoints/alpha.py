@@ -26,6 +26,8 @@ from api.v1.schemas.alpha import (
     PeadStudyRequest,
     PeadStudyResponse,
     PeadUnbiasedStudyRequest,
+    QuantPaperBooksResponse,
+    QuantPaperStepRequest,
     TournamentResponse,
     TournamentRunRequest,
     UsQuantCandidateItem,
@@ -364,3 +366,40 @@ def get_paa_live_signal(
     if data.get("ok") is False:
         return PaaSignalResponse(regime_label="UNAVAILABLE")
     return PaaSignalResponse(**data)
+
+
+@router.get("/quant-paper", response_model=QuantPaperBooksResponse)
+def get_quant_paper_books(
+    auto_step: bool = Query(True, description="Initialize paper books automatically if not yet started"),
+) -> QuantPaperBooksResponse:
+    """Return persisted PAA & Meta-Portfolio A StrategyPaperBook ledgers (simulated only)."""
+    from src.config import get_config
+    from src.quant.paper_book import get_quant_paper_books_status
+
+    cfg = get_config()
+    data = get_quant_paper_books_status(
+        strategies=tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+        initial_capital=float(getattr(cfg, "quant_paper_capital", 10000.0)),
+        cost_bps=float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+        rebalance_mode=str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
+        auto_step_if_empty=auto_step,
+    )
+    return QuantPaperBooksResponse(**data)
+
+
+@router.post("/quant-paper/step", response_model=QuantPaperBooksResponse)
+def step_quant_paper(req: QuantPaperStepRequest) -> QuantPaperBooksResponse:
+    """Advance PAA & Meta-Portfolio A StrategyPaperBook ledgers to the latest completed close."""
+    from src.config import get_config
+    from src.quant.paper_book import step_quant_paper_books
+
+    cfg = get_config()
+    data = step_quant_paper_books(
+        strategies=req.strategies or tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+        initial_capital=float(getattr(cfg, "quant_paper_capital", 10000.0)),
+        cost_bps=float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+        rebalance_mode=str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
+        force_rebalance=req.force_rebalance,
+        force_refresh_prices=req.force_refresh_prices,
+    )
+    return QuantPaperBooksResponse(**data)

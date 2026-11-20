@@ -33,6 +33,7 @@ FastAPI Agent Endpoint (api/v1/endpoints/agent.py)
              ├── dsa_get_decision_signals         (Recent persisted AI decision signals)
              ├── dsa_get_strategy_tournament      (25-strategy multi-universe OOS tournament + DSR leaderboard)
              ├── dsa_get_paa_allocation           (Live Protective Asset Allocation crash-shield target weights)
+             ├── dsa_get_quant_paper_books        (Daily PAA & Meta-Portfolio A StrategyPaperBook ledgers)
              └── dsa_get_system_overview          (Live cockpit health & counts)
 ```
 
@@ -56,10 +57,10 @@ Run directly from the repository root:
 # Generate/update local .mcp.json (Claude Code) and .gemini/settings.json (Gemini CLI)
 .\dsa.cmd install-mcp
 
-# Launch native interactive Claude Code CLI pre-wired to all 15 DSA MCP tools
+# Launch native interactive Claude Code CLI pre-wired to all 16 DSA MCP tools
 .\dsa.cmd claude
 
-# Launch native interactive Gemini CLI pre-wired to all 15 DSA MCP tools
+# Launch native interactive Gemini CLI pre-wired to all 16 DSA MCP tools
 .\dsa.cmd gemini
 
 # One-shot strategic trading recommendation via Claude CLI + MCP

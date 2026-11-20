@@ -68,6 +68,7 @@ MCP_TOOL_DISPLAY_NAMES: Dict[str, str] = {
     "dsa_get_decision_signals": "Son AI Karar Sinyalleri Okunuyor",
     "dsa_get_strategy_tournament": "Strateji Turnuva Liderlik Tablosu Okunuyor",
     "dsa_get_paa_allocation": "PAA Çöküş Kalkanı Canlı Dağılımı Hesaplanıyor",
+    "dsa_get_quant_paper_books": "PAA & Meta-Portföy A Sanal Defteri Okunuyor",
 }
 
 _CLI_STRATEGIC_PROMPT_ADDENDUM = """

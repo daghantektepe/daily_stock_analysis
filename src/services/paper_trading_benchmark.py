@@ -413,6 +413,29 @@ def _crypto_trend_weekly_text() -> str:
         return ""
 
 
+def _quant_paper_weekly_text() -> str:
+    """PAA & Meta-Portfolio A StrategyPaperBook summary for the weekly report."""
+    try:
+        from src.config import get_config
+
+        config = get_config()
+        if not getattr(config, "quant_paper_enabled", False):
+            return ""
+        from src.quant.paper_book import get_quant_paper_books_status
+
+        res = get_quant_paper_books_status(
+            strategies=tuple(getattr(config, "quant_paper_strategies", ["paa", "meta_a"])),
+            initial_capital=float(getattr(config, "quant_paper_capital", 10000.0)),
+            cost_bps=float(getattr(config, "quant_paper_cost_bps", 5.0)),
+            rebalance_mode=str(getattr(config, "quant_paper_rebalance_mode", "monthly")),
+        )
+        active = [b.get("report_text") for b in (res.get("books") or []) if b.get("days") and b.get("report_text")]
+        return "\n\n".join(active)
+    except Exception as exc:  # noqa: BLE001 - optional section, fail-open
+        logger.info("[weekly-report] quant paper section skipped: %s", exc)
+        return ""
+
+
 def maybe_send_weekly_performance_report(
     *,
     notifier: Any = None,
@@ -450,12 +473,15 @@ def maybe_send_weekly_performance_report(
             benchmark_history=history,
         )
         crypto_text = _crypto_trend_weekly_text()
+        quant_text = _quant_paper_weekly_text()
         stock_activity = summary.get("trade_count", 0) or int(outcomes.get("total") or 0)
-        if not stock_activity and not crypto_text:
+        if not stock_activity and not crypto_text and not quant_text:
             return False
         text = format_paper_trading_report(summary, outcome_stats=outcomes) if stock_activity else ""
         if crypto_text:
             text = f"{text}\n\n{crypto_text}" if text else crypto_text
+        if quant_text:
+            text = f"{text}\n\n{quant_text}" if text else quant_text
         if notifier is None:
             from src.notification import NotificationService
 

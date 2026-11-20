@@ -252,6 +252,81 @@ export interface PaaSignalResponse {
   }>;
 }
 
+export interface QuantPaperPositionItem {
+  symbol: string;
+  shares: number;
+  avg_cost: number;
+  last_price: number;
+  market_value: number;
+  weight_pct: number;
+  unrealized_pnl_usd: number;
+  unrealized_pnl_pct: number;
+}
+
+export interface QuantPaperTradeItem {
+  date: string;
+  symbol: string;
+  side: 'BUY' | 'SELL' | string;
+  shares: number;
+  price: number;
+  notional: number;
+  cost: number;
+  target_weight_pct: number;
+  reason: string;
+  late?: boolean;
+}
+
+export interface QuantPaperBookItem {
+  name: string;
+  strategy_key: string;
+  strategy_id: string;
+  label: string;
+  benchmark_symbol: string;
+  rebalance_mode: string;
+  cost_bps: number;
+  simulated_only: boolean;
+  start_date?: string | null;
+  last_date?: string | null;
+  last_rebalance_date?: string | null;
+  days: number;
+  late_days: number;
+  initial_capital: number;
+  nav: number;
+  cash: number;
+  cash_pct: number;
+  return_pct: number;
+  benchmark_return_pct: number;
+  excess_return_pct: number;
+  max_drawdown_pct: number;
+  benchmark_max_drawdown_pct: number;
+  weights_pct: Record<string, number>;
+  live_target_weights_pct: Record<string, number>;
+  positions: QuantPaperPositionItem[];
+  trade_count: number;
+  processed_days: number;
+  new_trades: QuantPaperTradeItem[];
+  recent_trades: QuantPaperTradeItem[];
+  history: Array<{
+    date: string;
+    nav: number;
+    benchmark_nav: number;
+    cash: number;
+    rebalanced?: boolean;
+    late?: boolean;
+  }>;
+  report_text: string;
+}
+
+export interface QuantPaperBooksResponse {
+  ok: boolean;
+  simulated_only: boolean;
+  strategies: string[];
+  total_new_trades: number;
+  books: QuantPaperBookItem[];
+  report_text: string;
+  error?: string | null;
+}
+
 export const alphaApi = {
   async getOverview(): Promise<AlphaOverviewResponse> {
     const res = await apiClient.get<AlphaOverviewResponse>('/api/v1/alpha/overview', {
@@ -389,6 +464,25 @@ export const alphaApi = {
     const res = await apiClient.get<PaaSignalResponse>('/api/v1/alpha/paa', {
       params: { refresh },
       timeout: 60000,
+    });
+    return res.data;
+  },
+
+  async getQuantPaperBooks(autoStep = true): Promise<QuantPaperBooksResponse> {
+    const res = await apiClient.get<QuantPaperBooksResponse>('/api/v1/alpha/quant-paper', {
+      params: { auto_step: autoStep },
+      timeout: 60000,
+    });
+    return res.data;
+  },
+
+  async stepQuantPaperBooks(params: {
+    strategies?: string[];
+    force_rebalance?: boolean;
+    force_refresh_prices?: boolean;
+  } = {}): Promise<QuantPaperBooksResponse> {
+    const res = await apiClient.post<QuantPaperBooksResponse>('/api/v1/alpha/quant-paper/step', params, {
+      timeout: 90000,
     });
     return res.data;
   },
