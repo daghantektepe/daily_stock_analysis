@@ -57,13 +57,18 @@ _FRONTEND_ASSET_MEDIA_TYPES = {
     ".css": "text/css",
     ".js": "text/javascript",
     ".mjs": "text/javascript",
+    ".webmanifest": "application/manifest+json",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".ico": "image/x-icon",
 }
-_SAFE_MISSING_ASSET_MEDIA_TYPES = frozenset(_FRONTEND_ASSET_MEDIA_TYPES.values())
+_SAFE_MISSING_ASSET_MEDIA_TYPES = frozenset({"text/css", "text/javascript"})
 _FRONTEND_INDEX_NO_CACHE_HEADERS = {
     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
     "Pragma": "no-cache",
     "Expires": "0",
 }
+_PWA_META_FILENAMES = frozenset({"sw.js", "manifest.webmanifest"})
 
 
 def _frontend_index_response(static_dir: Path) -> FileResponse:
@@ -347,6 +352,8 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
     ]
     
     # 从环境变量添加额外的允许来源
@@ -547,9 +554,14 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
                 if file_path == (static_dir / "index.html").resolve():
                     return _frontend_index_response(static_dir)
                 # Issue #520: Explicitly resolve MIME type to avoid
-                # browsers rejecting JS modules served as text/plain.
+                # browsers rejecting JS modules or PWA manifests served as text/plain.
                 content_type = _frontend_asset_media_type(str(file_path))
-                return FileResponse(file_path, media_type=content_type)
+                headers = None
+                if file_path.name in _PWA_META_FILENAMES:
+                    headers = {"Cache-Control": "no-cache"}
+                    if file_path.name == "sw.js":
+                        headers["Service-Worker-Allowed"] = "/"
+                return FileResponse(file_path, media_type=content_type, headers=headers)
 
             return _frontend_index_response(static_dir)
     

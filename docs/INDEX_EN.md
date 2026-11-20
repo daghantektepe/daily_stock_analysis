@@ -52,6 +52,7 @@ This is the entry point for project documentation. The README covers the project
 | [OpenClaw Skill Integration](openclaw-skill-integration.md) <sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub> (Chinese-only) | OpenClaw / Skill external integration notes |
 | [CLI-Native Copilot & DSA MCP Bridge](cli-native-mcp-bridge.md) | Built-in DSA MCP server, local Claude Code CLI & Gemini CLI chat backends, global WebUI Copilot drawer (`Ctrl+J`), and `dsa.cmd` terminal launcher |
 | [Empirical Multi-Universe Strategy Tournament Report](STRATEGY_TOURNAMENT_REPORT.md) | 25-strategy zero-lookahead empirical benchmark across US ETF, US Sectors, Crypto, and BIST (PAA Crash-Shield, Meta-Portfolios A/B, OOS Sharpe/MaxDD/DSR) |
+| [Standalone Browser Web App & PWA Guide](standalone-web-app.md) | Zero-Electron browser-native PWA install, `dsa-web.cmd` standalone window launcher, LAN/mobile access, Docker, and Vercel/Netlify deployment |
 
 ## Deployment And Packaging
 

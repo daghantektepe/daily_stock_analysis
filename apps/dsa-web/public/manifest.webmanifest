@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Daily Stock Analysis · Quant Web App",
+  "short_name": "DSA Quant",
+  "description": "Independent browser-native quantitative trading cockpit, 25-strategy empirical tournament, PAA crash-shield, 3-AI strategy council, and MCP Copilot.",
+  "start_url": "/discover",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090d16",
+  "theme_color": "#0ea5e9",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/dsa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

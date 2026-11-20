@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Compass, Search, ShieldAlert, Terminal, TrendingUp } from 'lucide-react';
+import { Bell, Compass, Download, Search, ShieldAlert, Terminal, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { alphaApi, type AlphaOverviewResponse } from '../../api/alpha';
 import { OPEN_COMMAND_PALETTE_EVENT } from './CommandPalette';
@@ -8,8 +8,40 @@ import { openCopilotDrawer } from '../chat/copilotEvents';
 
 const POLL_INTERVAL_MS = 30000;
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export const LiveStatusBar: React.FC = () => {
   const [overview, setOverview] = useState<AlphaOverviewResponse | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const onBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const onAppInstalled = () => {
+      setInstallPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
+    window.addEventListener('appinstalled', onAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      window.removeEventListener('appinstalled', onAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (!installPrompt) return;
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+    } finally {
+      setInstallPrompt(null);
+    }
+  };
 
   const loadOverview = useCallback(async () => {
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
@@ -57,6 +89,18 @@ export const LiveStatusBar: React.FC = () => {
       </button>
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        {installPrompt ? (
+          <button
+            type="button"
+            onClick={() => void handleInstallPwa()}
+            aria-label="Bağımsız tarayıcı uygulaması olarak yükle (PWA)"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 font-medium text-sky-400 transition-colors hover:bg-sky-500/20"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Uygulama Yükle</span>
+          </button>
+        ) : null}
+
         <button
           type="button"
           onClick={() => openCopilotDrawer()}

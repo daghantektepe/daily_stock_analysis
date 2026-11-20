@@ -52,6 +52,7 @@
 | [OpenClaw Skill 集成](openclaw-skill-integration.md) | OpenClaw / Skill 外部集成说明 |
 | [CLI-Native Copilot & DSA MCP Bridge](cli-native-mcp-bridge.md) | Claude Code CLI / Gemini CLI 本地 MCP 桥接、WebUI 全局 Copilot 抽屉（`Ctrl+J`）与终端原生命令 `dsa.cmd` |
 | [多宇宙量化策略锦标赛报告（Strategy Tournament）](STRATEGY_TOURNAMENT_REPORT.md) | 25 套量化策略（US ETF / Sectors / Crypto / BIST + PAA 崩盘护盾 + Meta-Portfolio A/B）零前视实证回测、OOS 样本外指标与 DSR 排行 |
+| [独立浏览器 Web App / PWA 部署指南](standalone-web-app.md) | 零 Electron 依赖运行方案：PWA 一键安装、`dsa-web.cmd` 本地应用模式、局域网/手机访问、Docker 与 Vercel/Netlify 静态托管 |
 
 ## 部署与打包
 
