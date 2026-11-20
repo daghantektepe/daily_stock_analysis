@@ -6,9 +6,10 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
 
-from src.analyzer import GeminiAnalyzer
+if TYPE_CHECKING:
+    from src.analyzer import GeminiAnalyzer
 from src.config import (
     ANSPIRE_LLM_BASE_URL_DEFAULT,
     ANSPIRE_LLM_MODEL_DEFAULT,
@@ -190,7 +191,15 @@ class GenerationBackendStatusService:
     ) -> None:
         self._effective_map = {str(k).upper(): "" if v is None else str(v) for k, v in effective_map.items()}
         self._validation_issues = list(validation_issues or [])
-        self._analyzer_factory = analyzer_factory or (lambda config: GeminiAnalyzer(config=config))
+        if analyzer_factory is not None:
+            self._analyzer_factory = analyzer_factory
+        else:
+            def _default_analyzer_factory(config: Config) -> "GeminiAnalyzer":
+                from src.analyzer import GeminiAnalyzer
+
+                return GeminiAnalyzer(config=config)
+
+            self._analyzer_factory = _default_analyzer_factory
 
     def get_status(self) -> Dict[str, Any]:
         config = self._build_backend_config()

@@ -154,17 +154,45 @@ def _codex_protocol_schema_is_capable(schema_dir: Path) -> bool:
     return True
 
 
-def evaluate_agent_backend_config(config: Config) -> Dict[str, Any]:
+def evaluate_agent_backend_config(
+    config: Config,
+    *,
+    backend_override: Optional[str] = None,
+) -> Dict[str, Any]:
     """Select the backend and evaluate only request-time configuration invariants."""
-    requested = str(getattr(config, "agent_backend", "auto") or "auto").strip().lower()
-    try:
-        selected = resolve_agent_backend_id(config)
-    except ValueError as exc:
+    from src.agent.agent_backend import AGENT_BACKEND_IDS
+
+    if backend_override is not None and str(backend_override).strip():
+        requested = str(backend_override).strip().lower()
+        if requested not in AGENT_BACKEND_IDS:
+            return {
+                "backend": requested or "unknown",
+                "available": False,
+                "error_code": "capability_unsupported",
+                "message": f"Unsupported AGENT_BACKEND: {requested}",
+            }
+        selected = "litellm" if requested == "auto" else requested
+    else:
+        requested = str(getattr(config, "agent_backend", "auto") or "auto").strip().lower()
+        try:
+            selected = resolve_agent_backend_id(config)
+        except ValueError as exc:
+            return {
+                "backend": requested or "unknown",
+                "available": False,
+                "error_code": getattr(exc, "code", "capability_unsupported"),
+                "message": str(exc),
+            }
+
+    if selected in {"claude_cli", "gemini_cli"}:
+        from src.agent.cli_bridge_common import probe_cli_backend
+
+        probe = probe_cli_backend(selected)
         return {
-            "backend": requested or "unknown",
-            "available": False,
-            "error_code": getattr(exc, "code", "capability_unsupported"),
-            "message": str(exc),
+            "backend": selected,
+            "available": bool(probe.get("available")),
+            "error_code": probe.get("error_code"),
+            "message": probe.get("message"),
         }
 
     if getattr(config, "_agent_mode_explicit", False) and not getattr(config, "agent_mode", False):
@@ -226,9 +254,92 @@ class AgentBackendStatusService:
                 error_code=evaluation["error_code"],
                 message=evaluation["message"],
             )
+        if evaluation["backend"] in {"claude_cli", "gemini_cli"}:
+            from src.agent.cli_bridge_common import probe_cli_backend
+
+            probe = probe_cli_backend(evaluation["backend"])
+            return self._response(
+                backend=evaluation["backend"],
+                available=bool(probe.get("available")),
+                version=probe.get("version"),
+                error_code=probe.get("error_code"),
+                message=probe.get("message"),
+            )
         if evaluation["backend"] == "litellm":
             return self._response(backend="litellm", available=True)
         return self._codex_cheap_status()
+
+    def list_backends(self) -> Dict[str, Any]:
+        """Return availability metadata for all Chat backends (Claude CLI, Gemini CLI, LiteLLM, Codex)."""
+        from src.agent.cli_bridge_common import probe_cli_backend
+
+        config = self._build_config()
+        configured_default = "litellm"
+        try:
+            configured_default = resolve_agent_backend_id(config)
+        except ValueError:
+            configured_default = "litellm"
+
+        claude_probe = probe_cli_backend("claude_cli")
+        gemini_probe = probe_cli_backend("gemini_cli")
+        litellm_eval = evaluate_agent_backend_config(config, backend_override="litellm")
+
+        backends = [
+            {
+                "id": "claude_cli",
+                "label": "Claude CLI (MCP)",
+                "available": bool(claude_probe.get("available")),
+                "version": claude_probe.get("version"),
+                "mcp_enabled": True,
+                "is_default": configured_default == "claude_cli",
+                "error_code": claude_probe.get("error_code"),
+                "message": claude_probe.get("message"),
+                "description": "Yerel Claude Code CLI + canlı DSA MCP araç köprüsü (API anahtarı gerekmez)",
+            },
+            {
+                "id": "gemini_cli",
+                "label": "Gemini CLI (MCP)",
+                "available": bool(gemini_probe.get("available")),
+                "version": gemini_probe.get("version"),
+                "mcp_enabled": True,
+                "is_default": configured_default == "gemini_cli",
+                "error_code": gemini_probe.get("error_code"),
+                "message": gemini_probe.get("message"),
+                "description": "Yerel Gemini CLI + canlı DSA MCP araç köprüsü (API anahtarı gerekmez)",
+            },
+            {
+                "id": "litellm",
+                "label": "LiteLLM API",
+                "available": bool(litellm_eval.get("available")),
+                "version": None,
+                "mcp_enabled": False,
+                "is_default": configured_default == "litellm",
+                "error_code": litellm_eval.get("error_code"),
+                "message": litellm_eval.get("message"),
+                "description": "Yapılandırılmış API anahtarı üzerinden yerleşik DSA Agent motoru",
+            },
+        ]
+
+        # Recommend Claude CLI first when installed, then Gemini CLI, then LiteLLM.
+        recommended = configured_default
+        if not any(b["id"] == recommended and b["available"] for b in backends):
+            for candidate_id in ("claude_cli", "gemini_cli", "litellm"):
+                if any(b["id"] == candidate_id and b["available"] for b in backends):
+                    recommended = candidate_id
+                    break
+        elif configured_default == "litellm":
+            # In native CLI setups, highlight claude_cli if installed as the recommended MCP bridge.
+            if claude_probe.get("available"):
+                recommended = "claude_cli"
+            elif gemini_probe.get("available"):
+                recommended = "gemini_cli"
+
+        return {
+            "configured_default": configured_default,
+            "recommended_backend": recommended,
+            "mcp_server_name": "dsa",
+            "backends": backends,
+        }
 
     def _codex_cheap_status(self) -> Dict[str, Any]:
         if is_native_windows():

@@ -91,7 +91,7 @@ class AgentChatExecutor:
             use_legacy_default_prompt=self.use_legacy_default_prompt,
             use_codex_prompt=self.backend.backend_id == "codex_app_server",
             include_provider_trace=not self.backend.runtime_owns_loop,
-            strict_initial_stock_scope=self.backend.runtime_owns_loop,
+            strict_initial_stock_scope=self.backend.backend_id == "codex_app_server",
         )
         baseline_len = len(prepared.history_messages) + 2
         run_id = str(uuid.uuid4())

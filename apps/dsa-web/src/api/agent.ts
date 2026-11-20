@@ -15,9 +15,31 @@ export function isAbortError(error: unknown): boolean {
     && error.name === 'AbortError';
 }
 
+export type AgentBackendId = 'claude_cli' | 'gemini_cli' | 'litellm' | 'codex_app_server';
+
+export interface AgentBackendOption {
+  id: AgentBackendId | string;
+  label: string;
+  available: boolean;
+  version?: string | null;
+  mcpEnabled: boolean;
+  isDefault: boolean;
+  errorCode?: string | null;
+  message?: string | null;
+  description: string;
+}
+
+export interface AgentBackendsResponse {
+  configuredDefault: string;
+  recommendedBackend: string;
+  mcpServerName: string;
+  backends: AgentBackendOption[];
+}
+
 export interface ChatRequest {
   message: string;
   skills?: string[];
+  backend?: AgentBackendId | string;
 }
 
 export interface ChatStreamRequest extends ChatRequest {
@@ -88,6 +110,10 @@ export const agentApi = {
   async getStatus(): Promise<AgentStatusResponse> {
     const response = await apiClient.get<Record<string, unknown>>('/api/v1/agent/status');
     return toCamelCase<AgentStatusResponse>(response.data);
+  },
+  async getBackends(): Promise<AgentBackendsResponse> {
+    const response = await apiClient.get<Record<string, unknown>>('/api/v1/agent/backends');
+    return toCamelCase<AgentBackendsResponse>(response.data);
   },
   async getChatSessions(limit = 50): Promise<ChatSessionItem[]> {
     const response = await apiClient.get<{ sessions: ChatSessionItem[] }>('/api/v1/agent/chat/sessions', { params: { limit } });

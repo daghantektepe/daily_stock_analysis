@@ -1,9 +1,10 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Compass, Search, ShieldAlert, TrendingUp } from 'lucide-react';
+import { Bell, Compass, Search, ShieldAlert, Terminal, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { alphaApi, type AlphaOverviewResponse } from '../../api/alpha';
 import { OPEN_COMMAND_PALETTE_EVENT } from './CommandPalette';
+import { openCopilotDrawer } from '../chat/copilotEvents';
 
 const POLL_INTERVAL_MS = 30000;
 
@@ -56,6 +57,20 @@ export const LiveStatusBar: React.FC = () => {
       </button>
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        <button
+          type="button"
+          onClick={() => openCopilotDrawer()}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+          aria-label="Claude / Gemini CLI + MCP Copilot Chatbox (Ctrl+J)"
+        >
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <Terminal className="h-3.5 w-3.5" />
+          <span>AI Copilot</span>
+          <kbd className="hidden rounded border border-emerald-500/30 bg-background/60 px-1 py-0.2 font-mono text-[10px] sm:inline">
+            Ctrl+J
+          </kbd>
+        </button>
+
         <Link
           to="/discover"
           className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-2.5 py-1 font-medium text-primary transition-colors hover:bg-primary/20"

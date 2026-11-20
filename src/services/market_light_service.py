@@ -9,10 +9,11 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy import desc
 
-from src.core.market_review import MARKET_REVIEW_HISTORY_CODE, MARKET_REVIEW_REPORT_TYPE
-from src.market_analyzer import MarketAnalyzer
 from src.schemas.market_light import MarketLightSnapshot
 from src.storage import AnalysisHistory, DatabaseManager
+
+MARKET_REVIEW_HISTORY_CODE = "MARKET"
+MARKET_REVIEW_REPORT_TYPE = "market_review"
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ def normalize_market_alert_region(region: str) -> str:
 
 def build_current_snapshot(region: str) -> Dict[str, Any]:
     """Build the current structured Market Light snapshot without LLM review."""
+    from src.market_analyzer import MarketAnalyzer
 
     normalized_region = normalize_market_region(region)
     analyzer = MarketAnalyzer(region=normalized_region)

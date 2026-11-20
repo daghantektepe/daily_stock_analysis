@@ -123,7 +123,7 @@ _FALLBACK_LITELLM_MODEL_PROVIDERS = _MANAGED_LITELLM_KEY_PROVIDERS | set(SUPPORT
 }
 _FALSEY_ENV_VALUES = {"0", "false", "no", "off"}
 PROMPT_CACHE_DIAGNOSTICS_LEVELS = {"off", "basic", "debug"}
-SUPPORTED_AGENT_BACKENDS = {"auto", "litellm", "codex_app_server"}
+SUPPORTED_AGENT_BACKENDS = {"auto", "litellm", "codex_app_server", "claude_cli", "gemini_cli"}
 TICKFLOW_KLINE_ADJUST_VALUES = {"none", "forward", "backward", "forward_additive", "backward_additive"}
 # Fallback defaults used when ANSPIRE_API_KEYS is reused as legacy OpenAI-compatible source.
 # These are compatibility examples; actual availability should be validated by Anspire console/model entitlement.
@@ -1001,6 +1001,8 @@ class Config:
     agent_backend: str = "auto"
     agent_generation_backend: str = AUTO_AGENT_BACKEND_ID
     agent_litellm_model: str = ""  # Optional Agent-only primary model; empty inherits LITELLM_MODEL
+    claude_cli_model: str = ""  # Optional model override for native Claude CLI + MCP chat backend
+    gemini_cli_model: str = ""  # Optional model override for native Gemini CLI + MCP chat backend
     agent_mode: bool = False
     _agent_mode_explicit: bool = False  # True when AGENT_MODE was explicitly set in env
     agent_max_steps: int = AGENT_MAX_STEPS_DEFAULT
@@ -1944,6 +1946,8 @@ class Config:
             agent_backend=(os.getenv('AGENT_BACKEND', 'auto') or 'auto').strip().lower(),
             agent_generation_backend=agent_generation_backend,
             agent_litellm_model=agent_litellm_model,
+            claude_cli_model=(os.getenv('DSA_CLAUDE_CLI_MODEL', '') or '').strip(),
+            gemini_cli_model=(os.getenv('DSA_GEMINI_CLI_MODEL', '') or '').strip(),
             agent_mode=os.getenv('AGENT_MODE', 'false').lower() == 'true',
             _agent_mode_explicit=os.getenv('AGENT_MODE') is not None,
             agent_max_steps=parse_env_int(
@@ -3330,7 +3334,7 @@ class Config:
             issues.append(ConfigIssue(
                 severity="error",
                 message=(
-                    "AGENT_BACKEND 当前支持 auto、litellm、codex_app_server。"
+                    "AGENT_BACKEND 当前支持 auto、litellm、codex_app_server、claude_cli、gemini_cli。"
                     f"已配置的值为：{agent_backend}。"
                 ),
                 field="AGENT_BACKEND",

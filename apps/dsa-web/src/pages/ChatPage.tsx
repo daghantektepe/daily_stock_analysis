@@ -10,6 +10,7 @@ import { ApiErrorAlert, Badge, Button, ConfirmDialog, EmptyState, InlineAlert, S
 import { createParsedApiError, getParsedApiError } from '../api/error';
 import type { AgentStatusResponse, SkillInfo } from '../api/agent';
 import { DashboardStateBlock } from '../components/dashboard';
+import { BackendSwitcher } from '../components/chat/BackendSwitcher';
 import {
   useAgentChatStore,
   type Message,
@@ -342,6 +343,8 @@ const ChatPage: React.FC = () => {
   const {
     messages,
     selectedSkillIds: sessionSelectedSkillIds,
+    selectedBackend,
+    backends,
     loading,
     progressSteps,
     sessionId,
@@ -549,8 +552,13 @@ const ChatPage: React.FC = () => {
   const quickQuestions = QUICK_QUESTIONS.filter((question) => availableSkillIds.size === 0 || availableSkillIds.has(question.skill));
   const selectedSkillIdSet = new Set(selectedSkillIds);
   const skillLimitReached = selectedSkillIds.length >= MAX_SELECTED_SKILLS;
-  const agentConfirmedUnavailable = Boolean(agentStatus && !agentStatus.available);
-  const agentAvailable = Boolean(agentStatus?.available) && !agentStatusChecking;
+  const safeBackends = Array.isArray(backends) ? backends : [];
+  const cliBackendSelected = Boolean(
+    (selectedBackend === 'claude_cli' || selectedBackend === 'gemini_cli')
+    && safeBackends.some((item) => item.id === selectedBackend && item.available),
+  );
+  const agentConfirmedUnavailable = Boolean(agentStatus && !agentStatus.available) && !cliBackendSelected;
+  const agentAvailable = cliBackendSelected || (Boolean(agentStatus?.available) && !agentStatusChecking);
   const agentUnavailableMessage = agentStatus?.errorCode === 'agent_mode_disabled'
     ? t('chat.agentModeDisabled')
     : agentStatus?.errorCode === 'platform_unsupported'
@@ -679,7 +687,7 @@ const ChatPage: React.FC = () => {
       overrideStockContext?: ActiveStockContext,
     ) => {
       const msgText = (overrideMessage ?? input).trim();
-      if (!msgText || loading || !agentAvailable || !agentStatus) return;
+      if (!msgText || loading || !agentAvailable || (!agentStatus && !cliBackendSelected)) return;
       if (overrideMessage !== undefined) {
         setInput(msgText);
       }
@@ -718,6 +726,7 @@ const ChatPage: React.FC = () => {
       const payload = {
         message: msgText,
         session_id: sessionId,
+        ...(cliBackendSelected && selectedBackend ? { backend: selectedBackend } : {}),
         ...(requestedSkillIds !== null
           ? { skills: normalizeSelectedSkillIds(requestedSkillIds) }
           : {}),
@@ -740,7 +749,7 @@ const ChatPage: React.FC = () => {
         },
       });
     },
-    [activeStockContext, agentAvailable, agentStatus, getSkillNames, input, loading, normalizeSelectedSkillIds, requestScrollToBottom, selectedSkillIds, sessionId, sessionSelectedSkillIds, startStream, stockIndex],
+    [activeStockContext, agentAvailable, agentStatus, cliBackendSelected, getSkillNames, input, loading, normalizeSelectedSkillIds, requestScrollToBottom, selectedBackend, selectedSkillIds, sessionId, sessionSelectedSkillIds, startStream, stockIndex],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1214,6 +1223,7 @@ const ChatPage: React.FC = () => {
           <p className="text-secondary-text text-sm">
             {t(agentStatus?.backend === 'codex_app_server' ? 'chat.introCodex' : 'chat.introDefault')}
           </p>
+          <BackendSwitcher compact className="pt-0.5" />
           {agentStatus?.backend === 'codex_app_server' ? (
             <InlineAlert
               variant="warning"
@@ -1333,7 +1343,11 @@ const ChatPage: React.FC = () => {
                         </Badge> : null}
                         {msg.backend ? (
                           <Badge variant={msg.backend === 'codex_app_server' ? 'warning' : 'history'} size="sm">
-                            {t(msg.backend === 'codex_app_server' ? 'chat.codexBackendBadge' : 'chat.defaultBackendBadge')}
+                            {msg.backend === 'claude_cli'
+                              ? 'Claude CLI · MCP'
+                              : msg.backend === 'gemini_cli'
+                                ? 'Gemini CLI · MCP'
+                                : t(msg.backend === 'codex_app_server' ? 'chat.codexBackendBadge' : 'chat.defaultBackendBadge')}
                           </Badge>
                         ) : null}
                       </div>
@@ -1653,7 +1667,7 @@ const ChatPage: React.FC = () => {
                     t.style.height = `${Math.min(t.scrollHeight, 200)}px`;
                   }}
                 />
-                {loading && agentStatus?.backend === 'codex_app_server' ? (
+                {loading && (agentStatus?.backend === 'codex_app_server' || cliBackendSelected) ? (
                   <Button
                     variant="danger-subtle"
                     onClick={stopStream}

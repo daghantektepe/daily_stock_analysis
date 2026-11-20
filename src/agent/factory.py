@@ -382,7 +382,13 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
     )
 
 
-def build_agent_chat_executor(config=None, skills: Optional[List[str]] = None):
+def build_agent_chat_executor(
+    config=None,
+    skills: Optional[List[str]] = None,
+    *,
+    backend_override: Optional[str] = None,
+    page_route: Optional[str] = None,
+):
     """Build the backend-neutral executor used only by Agent Chat endpoints."""
     if config is None:
         from src.config import get_config
@@ -390,13 +396,23 @@ def build_agent_chat_executor(config=None, skills: Optional[List[str]] = None):
         config = get_config()
 
     from src.agent.agent_backend import (
+        AGENT_BACKEND_IDS,
         AgentBackendConfigError,
         LiteLLMAgentBackend,
         resolve_agent_backend_id,
     )
     from src.agent.chat_executor import AgentChatExecutor
 
-    backend_id = resolve_agent_backend_id(config)
+    if backend_override is not None and str(backend_override).strip():
+        requested_override = str(backend_override).strip().lower()
+        if requested_override not in AGENT_BACKEND_IDS:
+            raise AgentBackendConfigError(
+                "capability_unsupported",
+                f"Unsupported AGENT_BACKEND: {requested_override}",
+            )
+        backend_id = "litellm" if requested_override == "auto" else requested_override
+    else:
+        backend_id = resolve_agent_backend_id(config)
     arch = str(getattr(config, "agent_arch", "single") or "single").strip().lower()
     if backend_id == "codex_app_server" and arch != "single":
         raise AgentBackendConfigError(
@@ -406,17 +422,28 @@ def build_agent_chat_executor(config=None, skills: Optional[List[str]] = None):
     if backend_id == "litellm" and arch == "multi":
         return build_agent_executor(config, skills=skills)
 
-    registry = get_tool_registry()
     prompt_state = resolve_skill_prompt_state(config, skills=skills)
-    if backend_id == "litellm":
+    if backend_id == "claude_cli":
+        from src.agent.claude_cli_backend import ClaudeCliAgentBackend
+
+        context_llm_adapter = None
+        backend = ClaudeCliAgentBackend(config, page_route=page_route)
+    elif backend_id == "gemini_cli":
+        from src.agent.gemini_cli_backend import GeminiCliAgentBackend
+
+        context_llm_adapter = None
+        backend = GeminiCliAgentBackend(config, page_route=page_route)
+    elif backend_id == "litellm":
         from src.agent.llm_adapter import LLMToolAdapter
 
+        registry = get_tool_registry()
         context_llm_adapter = LLMToolAdapter(config)
         backend = LiteLLMAgentBackend(registry, context_llm_adapter)
     else:
         from src.agent.codex_agent_backend import CodexAgentBackend
         from src.agent.tool_surface import ToolSurface
 
+        registry = get_tool_registry()
         context_llm_adapter = None
         backend = CodexAgentBackend(ToolSurface(registry), config)
 

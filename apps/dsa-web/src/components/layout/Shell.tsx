@@ -6,6 +6,7 @@ import { Drawer } from '../common/Drawer';
 import { SidebarNav } from './SidebarNav';
 import { CommandPalette } from './CommandPalette';
 import { LiveStatusBar } from './LiveStatusBar';
+import { CopilotDrawer } from '../chat/CopilotDrawer';
 import { cn } from '../../utils/cn';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { UiLanguageToggle } from '../i18n/UiLanguageToggle';
@@ -75,6 +76,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
       </div>
 
       <CommandPalette />
+      <CopilotDrawer />
 
       <Drawer
         isOpen={mobileOpen}

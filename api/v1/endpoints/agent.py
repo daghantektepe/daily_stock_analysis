@@ -20,7 +20,9 @@ from src.config import get_config
 from src.services.agent_chat_session_service import AgentChatSessionService
 from src.services.agent_model_service import list_agent_model_deployments
 
-# Tool name -> Chinese display name mapping
+from src.agent.cli_bridge_common import MCP_TOOL_DISPLAY_NAMES
+
+# Tool name -> display name mapping
 TOOL_DISPLAY_NAMES: Dict[str, str] = {
     "get_realtime_quote":         "获取实时行情",
     "get_daily_history":          "获取历史K线",
@@ -38,6 +40,7 @@ TOOL_DISPLAY_NAMES: Dict[str, str] = {
     "get_skill_backtest_summary": "获取技能回测概览",
     "get_strategy_backtest_summary": "获取策略回测概览",
     "get_stock_backtest_summary": "获取个股回测数据",
+    **MCP_TOOL_DISPLAY_NAMES,
 }
 
 logger = logging.getLogger(__name__)
@@ -46,6 +49,7 @@ router = APIRouter()
 
 _ACTIVE_CODEX_STREAMS: Dict[str, threading.Event] = {}
 _ACTIVE_CODEX_STREAMS_LOCK = threading.Lock()
+_SERVER_CANCELLABLE_BACKENDS = frozenset({"codex_app_server", "claude_cli", "gemini_cli"})
 
 class ChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -53,6 +57,10 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
     request_id: Optional[str] = Field(default=None, min_length=1, max_length=64)
+    backend: Optional[str] = Field(
+        default=None,
+        description="Optional per-request backend override: claude_cli, gemini_cli, litellm, codex_app_server",
+    )
     skills: Optional[List[str]] = Field(
         default=None,
         validation_alias=AliasChoices("skills", "strategies"),
@@ -132,11 +140,46 @@ async def get_agent_models():
     )
 
 
+class AgentBackendOption(BaseModel):
+    id: str
+    label: str
+    available: bool
+    version: Optional[str] = None
+    mcp_enabled: bool = False
+    is_default: bool = False
+    error_code: Optional[str] = None
+    message: Optional[str] = None
+    description: str = ""
+
+
+class AgentBackendsResponse(BaseModel):
+    configured_default: str
+    recommended_backend: str
+    mcp_server_name: str = "dsa"
+    backends: List[AgentBackendOption]
+
+
 @router.get("/status", response_model=AgentBackendStatusResponse)
 async def get_agent_status():
     """Return the current effective Chat backend status for the Chat page."""
     payload = await asyncio.to_thread(_get_agent_chat_status, get_config())
     return _agent_status_response(payload)
+
+
+@router.get("/backends", response_model=AgentBackendsResponse)
+async def get_agent_backends():
+    """Return all available Chat backends (Claude CLI + MCP, Gemini CLI + MCP, LiteLLM)."""
+    from src.services.agent_backend_status_service import AgentBackendStatusService
+
+    payload = await asyncio.to_thread(
+        lambda: AgentBackendStatusService(config=get_config()).list_backends()
+    )
+    return AgentBackendsResponse(
+        configured_default=payload["configured_default"],
+        recommended_backend=payload["recommended_backend"],
+        mcp_server_name=payload.get("mcp_server_name", "dsa"),
+        backends=[AgentBackendOption(**item) for item in payload.get("backends", [])],
+    )
 
 
 def _agent_status_response(payload: Dict[str, Any]) -> AgentBackendStatusResponse:
@@ -207,7 +250,11 @@ async def agent_chat(
     endpoint's existing behavior.
     """
     config = get_config()
-    backend_id = _select_agent_chat_backend(config)
+    backend_id = (
+        _select_agent_chat_backend(config, backend_override=request.backend)
+        if request.backend
+        else _select_agent_chat_backend(config)
+    )
     if backend_id == "codex_app_server":
         raise HTTPException(
             status_code=400,
@@ -227,9 +274,14 @@ async def agent_chat(
         )
         skills = skill_selection.effective_skill_ids
         selected_skill_ids = skill_selection.selected_skill_ids_update
-        executor = _build_executor(config, skills or None)
-
         ctx = _build_agent_chat_context(request, config, skills)
+        page_route = str(ctx.get("page_route") or "").strip() or None
+        executor = _resolve_chat_executor(
+            config,
+            skills or None,
+            backend_override=request.backend,
+            page_route=page_route,
+        )
 
         # Offload the blocking call to a thread to avoid blocking the event loop.
         loop = asyncio.get_running_loop()
@@ -357,17 +409,41 @@ def _build_executor(config, skills: Optional[List[str]] = None):
     return build_agent_chat_executor(config, skills=skills)
 
 
+def _resolve_chat_executor(
+    config,
+    skills: Optional[List[str]] = None,
+    *,
+    backend_override: Optional[str] = None,
+    page_route: Optional[str] = None,
+):
+    """Preserve the 2-arg ``_build_executor`` call when no override/route is passed."""
+    if not backend_override and not page_route:
+        return _build_executor(config, skills)
+    from src.agent.factory import build_agent_chat_executor
+
+    return build_agent_chat_executor(
+        config,
+        skills=skills,
+        backend_override=backend_override,
+        page_route=page_route,
+    )
+
+
 def _get_agent_chat_status(config) -> Dict[str, Any]:
     from src.services.agent_backend_status_service import AgentBackendStatusService
 
     return AgentBackendStatusService(config=config).get_status()
 
 
-def _select_agent_chat_backend(config) -> str:
+def _select_agent_chat_backend(config, *, backend_override: Optional[str] = None) -> str:
     """Select the runtime backend without repeating the compatibility probe."""
     from src.services.agent_backend_status_service import evaluate_agent_backend_config
 
-    evaluation = evaluate_agent_backend_config(config)
+    evaluation = (
+        evaluate_agent_backend_config(config, backend_override=backend_override)
+        if backend_override
+        else evaluate_agent_backend_config(config)
+    )
     if not evaluation["available"]:
         raise HTTPException(
             status_code=400,
@@ -494,7 +570,12 @@ async def agent_chat_stream(
       - error: error occurred, contains 'message'
     """
     config = get_config()
-    backend_id = _select_agent_chat_backend(config)
+    backend_id = (
+        _select_agent_chat_backend(config, backend_override=request.backend)
+        if request.backend
+        else _select_agent_chat_backend(config)
+    )
+    is_cancellable = backend_id in _SERVER_CANCELLABLE_BACKENDS
 
     session_id = request.session_id or str(uuid.uuid4())
     loop = asyncio.get_running_loop()
@@ -509,8 +590,9 @@ async def agent_chat_stream(
     skills = skill_selection.effective_skill_ids
     selected_skill_ids = skill_selection.selected_skill_ids_update
     stream_ctx = _build_agent_chat_context(request, config, skills)
+    page_route = str(stream_ctx.get("page_route") or "").strip() or None
 
-    if backend_id == "codex_app_server":
+    if is_cancellable:
         with _ACTIVE_CODEX_STREAMS_LOCK:
             if request_id in _ACTIVE_CODEX_STREAMS:
                 raise HTTPException(
@@ -523,12 +605,12 @@ async def agent_chat_stream(
             _ACTIVE_CODEX_STREAMS[request_id] = cancel_event
 
     def progress_callback(event: dict):
-        if backend_id == "codex_app_server" and cancel_event.is_set():
+        if is_cancellable and cancel_event.is_set():
             return
         # Enrich tool events with display names
         if event.get("type") in ("tool_start", "tool_done"):
             tool = event.get("tool", "")
-            event["display_name"] = TOOL_DISPLAY_NAMES.get(tool, tool)
+            event["display_name"] = TOOL_DISPLAY_NAMES.get(tool, event.get("display_name") or tool)
         asyncio.run_coroutine_threadsafe(queue.put(event), loop)
 
     def run_sync(executor, turn):
@@ -536,7 +618,7 @@ async def agent_chat_stream(
             execute_kwargs = {
                 "progress_callback": progress_callback,
             }
-            if backend_id == "codex_app_server":
+            if is_cancellable:
                 execute_kwargs["cancel_event"] = cancel_event
             result = executor.execute_turn(
                 turn,
@@ -571,7 +653,16 @@ async def agent_chat_stream(
         fut = None
         try:
             try:
-                executor = await asyncio.to_thread(_build_executor, config, skills or None)
+                if request.backend or page_route:
+                    executor = await asyncio.to_thread(
+                        _resolve_chat_executor,
+                        config,
+                        skills or None,
+                        backend_override=request.backend,
+                        page_route=page_route,
+                    )
+                else:
+                    executor = await asyncio.to_thread(_build_executor, config, skills or None)
                 turn = await asyncio.to_thread(
                     executor.prepare_turn,
                     message=request.message,
@@ -606,10 +697,9 @@ async def agent_chat_stream(
             fut = loop.run_in_executor(None, run_sync, executor, turn)
             while True:
                 try:
-                    if backend_id == "codex_app_server":
-                        # Codex owns one authoritative backend deadline.  A
-                        # second API timeout would race it and could emit a
-                        # terminal event before process cleanup finishes.
+                    if is_cancellable:
+                        # Managed CLI backends own one authoritative backend deadline.
+                        # A second API timeout would race cleanup before exit.
                         event = await queue.get()
                     else:
                         event = await asyncio.wait_for(queue.get(), timeout=300.0)
@@ -621,16 +711,16 @@ async def agent_chat_stream(
                 if event.get("type") in ("done", "error"):
                     break
         finally:
-            if backend_id == "codex_app_server" and (fut is None or not fut.done()):
+            if is_cancellable and (fut is None or not fut.done()):
                 cancel_event.set()
             try:
-                if backend_id == "codex_app_server" and fut is not None:
+                if is_cancellable and fut is not None:
                     while not fut.done():
                         try:
                             await asyncio.shield(fut)
                         except asyncio.CancelledError:
                             # Client disconnect cancellation must not abandon the
-                            # owned Codex/tool worker before it actually exits.
+                            # owned CLI/MCP worker before it actually exits.
                             cancel_event.set()
                     if not fut.cancelled():
                         fut.result()
@@ -644,7 +734,7 @@ async def agent_chat_stream(
             except Exception as exc:
                 logger.warning("agent executor cleanup error (ignored): %s", exc, exc_info=True)
             finally:
-                if backend_id == "codex_app_server":
+                if is_cancellable:
                     with _ACTIVE_CODEX_STREAMS_LOCK:
                         if _ACTIVE_CODEX_STREAMS.get(request_id) is cancel_event:
                             _ACTIVE_CODEX_STREAMS.pop(request_id, None)

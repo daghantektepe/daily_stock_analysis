@@ -6,12 +6,13 @@ from __future__ import annotations
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
-from src.agent.llm_adapter import LLMToolAdapter
-from src.agent.runner import run_agent_loop
 from src.agent.stock_scope import StockScope
-from src.agent.tools.registry import ToolRegistry
+
+if TYPE_CHECKING:
+    from src.agent.llm_adapter import LLMToolAdapter
+    from src.agent.tools.registry import ToolRegistry
 
 
 AGENT_BACKEND_ERROR_CODES = frozenset(
@@ -32,7 +33,7 @@ AGENT_BACKEND_ERROR_CODES = frozenset(
         "unknown_backend_error",
     }
 )
-AGENT_BACKEND_IDS = frozenset({"auto", "litellm", "codex_app_server"})
+AGENT_BACKEND_IDS = frozenset({"auto", "litellm", "codex_app_server", "claude_cli", "gemini_cli"})
 
 
 class AgentBackendConfigError(ValueError):
@@ -104,6 +105,8 @@ class LiteLLMAgentBackend(AgentBackend):
         self.llm_adapter = llm_adapter
 
     def run(self, request: AgentRunRequest) -> AgentRunResult:
+        from src.agent.runner import run_agent_loop
+
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": request.system_prompt},
             *request.history_messages,

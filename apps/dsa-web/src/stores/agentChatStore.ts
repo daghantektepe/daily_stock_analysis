@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { agentApi, isAbortError } from '../api/agent';
-import type { ChatSessionItem, ChatStreamRequest } from '../api/agent';
+import type { AgentBackendId, AgentBackendOption, ChatSessionItem, ChatStreamRequest } from '../api/agent';
 import {
   createParsedApiError,
   getParsedApiError,
@@ -11,6 +11,9 @@ import {
 import { generateUUID } from '../utils/uuid';
 
 const STORAGE_KEY_SESSION = 'dsa_chat_session_id';
+const STORAGE_KEY_BACKEND = 'dsa_chat_backend';
+const ACCEPTED_STREAM_BACKENDS = new Set<string>(['litellm', 'codex_app_server', 'claude_cli', 'gemini_cli']);
+const SERVER_CANCELLABLE_BACKENDS = new Set<string>(['codex_app_server', 'claude_cli', 'gemini_cli']);
 
 export interface ProgressStep {
   type: string;
@@ -55,7 +58,7 @@ export interface StreamMeta {
 
 export interface StreamAcceptedEvent {
   type: 'accepted';
-  backend: 'litellm' | 'codex_app_server';
+  backend: AgentBackendId;
   request_id: string;
   session_id: string;
 }
@@ -73,9 +76,16 @@ type StreamFailureEvent = {
 };
 
 function streamFailureFallback(event: StreamFailureEvent, defaultMessage: string): string {
-  return event.backend === 'codex_app_server'
-    ? 'Codex Agent 暂时无法完成本次问股，请查看 Agent 设置中的运行状态。'
-    : defaultMessage;
+  if (event.backend === 'codex_app_server') {
+    return 'Codex Agent 暂时无法完成本次问股，请查看 Agent 设置中的运行状态。';
+  }
+  if (event.backend === 'claude_cli') {
+    return 'Claude CLI (MCP) yanıt üretemedi. Yerel `claude` oturumunuzu kontrol edip tekrar deneyin.';
+  }
+  if (event.backend === 'gemini_cli') {
+    return 'Gemini CLI (MCP) yanıt üretemedi. Yerel `gemini` oturumunuzu kontrol edip tekrar deneyin.';
+  }
+  return defaultMessage;
 }
 
 function getFirstMeaningfulStreamError(...candidates: Array<unknown>): unknown {
@@ -112,6 +122,12 @@ function getStreamFailureError(
 interface AgentChatState {
   messages: Message[];
   selectedSkillIds: string[] | null;
+  selectedBackend: AgentBackendId | null;
+  backends: AgentBackendOption[];
+  recommendedBackend: AgentBackendId | null;
+  backendsLoaded: boolean;
+  copilotOpen: boolean;
+  copilotPrefill: string | null;
   loading: boolean;
   progressSteps: ProgressStep[];
   sessionId: string;
@@ -131,6 +147,12 @@ interface AgentChatState {
 
 interface AgentChatActions {
   setSelectedSkillIds: (skillIds: string[]) => void;
+  setSelectedBackend: (backend: AgentBackendId | null) => void;
+  loadBackends: (force?: boolean) => Promise<void>;
+  openCopilot: (prefill?: string) => void;
+  closeCopilot: () => void;
+  toggleCopilot: () => void;
+  consumeCopilotPrefill: () => string | null;
   setCurrentRoute: (path: string) => void;
   clearCompletionBadge: () => void;
   loadSessions: () => Promise<void>;
@@ -145,6 +167,15 @@ const getInitialSessionId = (): string =>
   typeof localStorage !== 'undefined'
     ? localStorage.getItem(STORAGE_KEY_SESSION) || generateUUID()
     : generateUUID();
+
+const getInitialBackend = (): AgentBackendId | null => {
+  if (typeof localStorage === 'undefined') return null;
+  const saved = localStorage.getItem(STORAGE_KEY_BACKEND);
+  if (saved && ACCEPTED_STREAM_BACKENDS.has(saved)) {
+    return saved as AgentBackendId;
+  }
+  return null;
+};
 
 export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set, get) => {
   const deliverServerCancellation = async (requestId: string): Promise<void> => {
@@ -161,6 +192,12 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
   return {
   messages: [],
   selectedSkillIds: null,
+  selectedBackend: getInitialBackend(),
+  backends: [],
+  recommendedBackend: null,
+  backendsLoaded: false,
+  copilotOpen: false,
+  copilotPrefill: null,
   loading: false,
   progressSteps: [],
   sessionId: getInitialSessionId(),
@@ -178,6 +215,66 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
   stopError: false,
 
   setSelectedSkillIds: (skillIds) => set({ selectedSkillIds: skillIds }),
+
+  setSelectedBackend: (backend) => {
+    set({ selectedBackend: backend });
+    if (typeof localStorage !== 'undefined') {
+      if (backend) {
+        localStorage.setItem(STORAGE_KEY_BACKEND, backend);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_BACKEND);
+      }
+    }
+  },
+
+  loadBackends: async (force = false) => {
+    if (!force && get().backendsLoaded) return;
+    try {
+      const data = await agentApi.getBackends();
+      const recommended = ACCEPTED_STREAM_BACKENDS.has(data.recommendedBackend)
+        ? (data.recommendedBackend as AgentBackendId)
+        : null;
+      const currentSelected = get().selectedBackend;
+      const currentStillAvailable = currentSelected
+        ? data.backends.some((b) => b.id === currentSelected && b.available)
+        : false;
+      const nextSelected = currentStillAvailable ? currentSelected : recommended;
+      set({
+        backends: data.backends,
+        recommendedBackend: recommended,
+        backendsLoaded: true,
+        selectedBackend: nextSelected,
+      });
+      if (nextSelected && typeof localStorage !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY_BACKEND, nextSelected);
+      }
+    } catch {
+      set({ backendsLoaded: true });
+    }
+  },
+
+  openCopilot: (prefill) =>
+    set((s) => ({
+      copilotOpen: true,
+      completionBadge: false,
+      copilotPrefill: prefill !== undefined ? prefill : s.copilotPrefill,
+    })),
+
+  closeCopilot: () => set({ copilotOpen: false }),
+
+  toggleCopilot: () =>
+    set((s) => ({
+      copilotOpen: !s.copilotOpen,
+      completionBadge: !s.copilotOpen ? false : s.completionBadge,
+    })),
+
+  consumeCopilotPrefill: () => {
+    const val = get().copilotPrefill;
+    if (val !== null) {
+      set({ copilotPrefill: null });
+    }
+    return val;
+  },
 
   setCurrentRoute: (path) => set({ currentRoute: path }),
 
@@ -352,7 +449,12 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
 
     try {
       const response = await agentApi.chatStream(
-        { ...payload, session_id: streamSessionId, request_id: requestId },
+        {
+          ...payload,
+          ...(payload.backend ? {} : (get().selectedBackend ? { backend: get().selectedBackend ?? undefined } : {})),
+          session_id: streamSessionId,
+          request_id: requestId,
+        },
         { signal: ac.signal },
       );
       const reader = response.body!.getReader();
@@ -378,7 +480,8 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
             throw protocolError('Agent stream emitted accepted more than once.');
           }
           if (
-            (event.backend !== 'litellm' && event.backend !== 'codex_app_server')
+            !event.backend
+            || !ACCEPTED_STREAM_BACKENDS.has(event.backend)
             || event.request_id !== requestId
             || event.session_id !== streamSessionId
           ) {
@@ -388,7 +491,7 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
           finalBackend = acceptedEvent.backend;
           set((s) => ({
             messages: [...s.messages, { ...userMessage, backend: acceptedEvent!.backend }],
-            serverCancellation: acceptedEvent!.backend === 'codex_app_server',
+            serverCancellation: SERVER_CANCELLABLE_BACKENDS.has(acceptedEvent!.backend),
             sessions: s.sessions.some((x) => x.session_id === streamSessionId)
               ? s.sessions
               : [
