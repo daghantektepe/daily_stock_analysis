@@ -351,7 +351,9 @@ def test_mcp_server_subprocess_smoke() -> None:
     assert len(lines[1]["result"]["tools"]) == len(build_dsa_mcp_tools())
 
 
-def test_strategy_tournament_tool_gracefully_handles_missing_v03_module() -> None:
+def test_strategy_tournament_tool_gracefully_handles_missing_v03_module(monkeypatch) -> None:
+    # No cached results here must not trigger a live tournament (network + docs report rewrite).
+    monkeypatch.setattr("src.quant.tournament.load_latest_tournament_results", lambda **_kwargs: None)
     server = DsaMcpServer()
     res = server.call_tool("dsa_get_strategy_tournament", {})
     assert res["isError"] is False
