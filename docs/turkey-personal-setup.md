@@ -418,6 +418,48 @@ CRYPTO_TREND_CAPITAL=10000
 
 Sanal defter `data/strategy_paper/crypto_trend.json` dosyasında tutulur ve geçmiş testle aynı kodu kullanır, yani ikisinin sonuçları birebir karşılaştırılabilir. Pozisyon değişince Telegram'a mesaj gelir; özet haftalık rapora da eklenir. Bilgisayar kapalıyken geçen günler sonradan işlenir ve raporda "sonradan işlendi" olarak ayrıca gösterilir.
 
+### 7.3 İleri doğrulama kapısı (PAA ve Meta-Portföy A)
+
+Meta-Portföy A v2'nin 2022–2026 sonucu, parametreler aynı dönem görülerek ayarlandığı için gerçek örneklem dışı değildir. Temiz kanıt yalnızca stratejinin dondurulmasından sonra gelen veridir.
+
+- **Dondurma:** `quant_paper.py step` ilk çalıştığında PAA ve Meta-A kendiliğinden dondurulur. Ağırlık fonksiyonunun, kullandığı tüm yardımcı fonksiyonların ve sabitlerin, ayrıca maliyet ve dengeleme ayarlarının parmak izi `data/strategy_paper/forward_validation.json` dosyasına yazılır. Yalnızca dondurma gününden sonraki işlem günleri sayılır.
+- **Geçersiz sayılma:** Dondurmadan sonra bu kod ya da ayarlar değişirse kayıt "geçersiz" olur. Yeni test bilerek başlatılır:
+
+```bash
+python scripts/quant_forward.py freeze --strategy meta_a --reset
+```
+
+- **Kapı:** QA planındaki kriterler kullanılır.
+  - En az 120 ileri işlem günü.
+  - BIL üstü Sharpe ≥ 0,50.
+  - En büyük düşüş −%18'den kötü değil. Bu sınır aşılırsa test 120 günü beklemeden "kaldı" olur.
+  - Günlerin en fazla %10'u sonradan işlenmiş.
+  - Ölçülen ortalama kayma ≤ 20 bps.
+- **Backtest kıyası:** İleri getiri, donmuş backtest'teki aynı uzunluktaki dönemlerle karşılaştırılır. Geçmiş dönemlerin %5'inden kötüyse aşırı uyum uyarısı çıkar.
+- **Durum:** Günlük adım raporunda, MCP'de `dsa_get_forward_validation` aracında ve şu komutta görünür:
+
+```bash
+python scripts/quant_forward.py status
+```
+
+**Kayma ölçümü (isteğe bağlı, Alpaca sanal hesabı).** Kapının kayma kriteri gerçek dolum gerektirir. Bunun için Alpaca'nın ücretsiz Paper Trading anahtarlarını `.env`'e ekle (`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_PAPER=true`). Sonra aylık dengeleme günlerinde:
+
+```bash
+python scripts/quant_forward.py alpaca-plan --strategy meta_a --capital 10000
+```
+
+```bash
+python scripts/quant_forward.py alpaca-submit-paper --strategy meta_a --capital 10000
+```
+
+```bash
+python scripts/quant_forward.py alpaca-reconcile
+```
+
+- **Komutların işi:** `alpaca-plan` yalnızca okur ve emir planını gösterir. `alpaca-submit-paper` onay ister, emirleri **yalnızca sanal hesaba** gönderir, gerçek hesapta reddeder. `alpaca-reconcile` dolum fiyatını, gönderim anındaki fiyatla karşılaştırıp kaymayı kaydeder.
+- **Kilitler:** Zamanlanmış görev hiçbir zaman emir göndermez. `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` değişmez.
+- **Hata payı:** 120 günlük bir Sharpe tahmininin hata payı ±1,4 civarındadır. Kapıyı geçmek kanıtın başlangıcıdır, garantisi değil.
+
 ## 8. Sonraki adımlar
 
 - 2–3 gün klasik modla çalıştırıp Türkçe raporları değerlendir; sorunlu ifadeleri not al (prompt iyileştirmesi için).

@@ -34,6 +34,7 @@ FastAPI Agent Endpoint (api/v1/endpoints/agent.py)
              ├── dsa_get_strategy_tournament      (25-strategy multi-universe OOS tournament + DSR leaderboard)
              ├── dsa_get_paa_allocation           (Live Protective Asset Allocation crash-shield target weights)
              ├── dsa_get_quant_paper_books        (Daily PAA & Meta-Portfolio A StrategyPaperBook ledgers)
+             ├── dsa_get_forward_validation       (Frozen-strategy forward gate: days, Excess Sharpe ± SE, MaxDD, slippage, verdict)
              └── dsa_get_system_overview          (Live cockpit health & counts)
 ```
 

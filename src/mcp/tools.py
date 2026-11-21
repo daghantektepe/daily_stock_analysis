@@ -733,6 +733,35 @@ def _handle_quant_paper_books(args: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+def _handle_forward_validation(args: Dict[str, Any]) -> Dict[str, Any]:
+    """Forward (live paper) validation gate for the frozen PAA / Meta-Portfolio A strategies (read-only)."""
+    try:
+        from src.config import get_config
+        from src.quant.forward_validation import format_forward_report, run_forward_validation
+
+        cfg = get_config()
+        strategies = args.get("strategies") or list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+        results = run_forward_validation(
+            strategies=strategies,
+            auto_freeze=False,
+            paper_settings={
+                "initial_capital": float(getattr(cfg, "quant_paper_capital", 10000.0)),
+                "cost_bps": float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+                "rebalance_mode": str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
+            },
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _err("dsa_get_forward_validation", f"İleri doğrulama okunamadı: {exc}")
+    compact = [
+        {k: r.get(k) for k in ("strategy_key", "label", "status", "frozen_date", "forward_days", "forward_return_pct",
+                               "benchmark_return_pct", "excess_sharpe", "excess_sharpe_se", "max_drawdown_pct",
+                               "backtest_percentile", "slippage", "reasons", "warnings") if k in r}
+        for r in results
+    ]
+    return _ok("dsa_get_forward_validation", {"strategies": compact, "report_text": format_forward_report(results)},
+               safety_note=_PAPER_DISCLAIMER)
+
+
 def _handle_strategy_tournament(args: Dict[str, Any]) -> Dict[str, Any]:
     """Return empirical multi-universe 25-strategy tournament results (PAA, Meta-Portfolio A/B, OOS DSR)."""
     force_refresh = _bool_arg(args, "force_refresh", False)
@@ -1379,5 +1408,28 @@ def build_dsa_mcp_tools() -> List[McpToolSpec]:
             },
             handler=_handle_quant_paper_books,
             read_only=False,
+        ),
+        McpToolSpec(
+            name="dsa_get_forward_validation",
+            description=(
+                "Forward (live paper) validation gate for the frozen PAA and Meta-Portfolio A strategies: "
+                "days collected since the freeze, forward return vs SPY, Excess Sharpe vs BIL with its "
+                "standard error, max drawdown, percentile of the forward return within the frozen backtest, "
+                "measured Alpaca paper slippage, and the verdict (COLLECTING / PASS / FAIL / INVALIDATED). "
+                "Use before claiming any strategy is proven; read-only."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "strategies": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["paa", "meta_a"]},
+                        "description": "Optional list (default: configured quant paper strategies).",
+                    },
+                },
+                "additionalProperties": False,
+            },
+            handler=_handle_forward_validation,
+            read_only=True,
         ),
     ]

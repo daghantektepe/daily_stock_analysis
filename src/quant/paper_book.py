@@ -182,12 +182,34 @@ def step_quant_paper_books(
     except Exception as exc:
         logger.warning("[quant-paper] AI council step skipped: %s", exc)
 
+    # Forward validation gate: freezes PAA / Meta-A on first run, then counts only later days.
+    forward: List[Dict[str, Any]] = []
+    try:
+        from src.quant.forward_validation import format_forward_report, run_forward_validation
+
+        forward = run_forward_validation(
+            strategies=keys,
+            prices=price_frame,
+            book_dir=book_dir,
+            paper_settings={
+                "initial_capital": initial_capital,
+                "cost_bps": cost_bps,
+                "rebalance_mode": rebalance_mode,
+                "rebalance_band_pct": rebalance_band_pct,
+            },
+            today=today,
+        )
+        reports.append(format_forward_report(forward))
+    except Exception as exc:  # noqa: BLE001 - validation report is optional, books already stepped
+        logger.warning("[quant-paper] forward validation skipped: %s", exc)
+
     return {
         "ok": True,
         "simulated_only": True,
         "strategies": [b["strategy_key"] for b in books_out],
         "total_new_trades": total_new_trades,
         "books": books_out,
+        "forward_validation": forward,
         "report_text": "\n\n".join(reports),
     }
 

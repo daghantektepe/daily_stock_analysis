@@ -108,3 +108,13 @@ Programdaki mevcut `src/quant/stats.py` Sharpe oranını **risksiz faizi (`BIL` 
 | **Faz 4 (P3)** | `v0.5.4-verified-release` | 4 ESLint hatası sıfırlandı (`CommandPalette.tsx` + `commandPaletteEvents.ts`, `ReportPriceChart.tsx`); 12 çekirdek Türkçe/uygulama Vitest dosyası (83/83 test, `CommandPalette.test.tsx` dahil) yeşile çekildi; `tests/test_qa_regression_guards.py` (8 yeni regresyon testi) eklendi; frontend `vite build` + `check_static_assets.py` + `DailyStockAnalysis.exe` yeniden derlendi ve canlı doğrulandı | **ESLint 0 hata**; **160/160 backend `pytest`** geçti; **30/30 canlı HTTP uç noktası `200 OK` (0 zaman aşımı)**; **16/16 MCP aracı aktif (`0 hata`)**; `desktop_exe.log` 3,8s soğuk başlangıç ve 0 deadlock; `ALPACA_PAPER=true` & `ALPACA_AUTO_EXECUTE=false` kilitleri doğrulandı |
 
 > **Kalan Bilinen Not (Legacy Upstream Testler):** `apps/dsa-web` içinde `4271682` Türkçe yerelleştirmesi öncesinden kalan 42 eski üst-akış (upstream) Vitest dosyası hâlâ Çince metin (`韩股`, `持仓明细` vb.) beklediği için toplu `npm test` çalıştırmasında kalmaktadır; fonksiyonel bileşen regresyonu değildir. Tüm çekirdek uygulama/yönlendirme/mağaza/tema/dil/tarama testleri (`12 dosya / 83 test`) ve `npm run lint` + `npm run build` %100 yeşildir.
+
+
+---
+
+## Faz 5 (A) — İleri Doğrulama Başladı (21 Kasım 2026)
+
+- `src/quant/forward_validation.py` + `scripts/quant_forward.py`: PAA ve Meta-A, ilk `quant_paper.py step` çalıştırmasında parmak iziyle dondurulur; yalnızca dondurma sonrası günler sayılır, kod/ayar değişirse kayıt `INVALIDATED` olur.
+- Kapı (Faz 4 kriterleri koda bağlandı): ≥120 ileri işlem günü, BIL üstü Sharpe ≥0,50 (± standart hata ile raporlanır), MaxDD ≤%18 (aşılırsa erken `FAIL`), sonradan işlenen gün ≤%10, Alpaca sanal dolumlarında ortalama kayma ≤20 bps.
+- **Not:** 2022–2026 penceresi PAA v2 / QQQ histerezisi / Meta-A v2 karışımı ayarlanırken görüldüğü için Meta-A v2'nin +%10,92 CAGR'ı örneklem dışı kanıt sayılmaz; kanıt bu ileri kayıttan gelecektir.
+- Canlı veriyle ilk dondurma (bulut doğrulaması, 20 Kasım 2026 kapanışı): Meta-A donmuş backtest 120 günlük getiri bandı p5 %−3,2 · p50 %+4,9 · p95 %+16,5; iki strateji de risk-off modda (BIL/SHY).
