@@ -373,14 +373,29 @@ def _handle_bist_screen(args: Dict[str, Any]) -> Dict[str, Any]:
     top_n = _int_arg(args, "top_n", 8, minimum=1, maximum=30)
     min_score = _float_arg(args, "min_score", 25.0, minimum=0.0, maximum=100.0)
     include_kap = _bool_arg(args, "include_kap", True)
+    max_symbols = _int_arg(args, "max_symbols", 120, minimum=20, maximum=800)
 
-    res = screen_bist_stocks(top_n=top_n, min_score=min_score, include_kap=include_kap)
+    res = screen_bist_stocks(
+        top_n=top_n,
+        min_score=min_score,
+        include_kap=include_kap,
+        max_symbols=max_symbols,
+    )
     return _ok(
         "dsa_screen_bist_stocks",
         {
             "selected_codes": list(res.get("selected_codes") or []),
-            "scanned_count": int(res.get("scanned_count") or 0),
-            "passed_count": int(res.get("passed_count") or 0),
+            "scanned_count": int(
+                res.get("scanned_count")
+                or res.get("evaluated_count")
+                or res.get("universe_count")
+                or 0
+            ),
+            "passed_count": int(
+                res.get("passed_count")
+                or res.get("qualified_count")
+                or len(res.get("candidates") or [])
+            ),
             "candidates": list(res.get("candidates") or []),
             "errors": list(res.get("errors") or [])[:10],
         },
@@ -461,6 +476,7 @@ def _handle_pead_candidates(args: Dict[str, Any]) -> Dict[str, Any]:
         max_days=max_days,
         min_score=min_score,
         top_n=top_n,
+        deadline_seconds=14.0,
     )
     items = [c.to_dict() for c in candidates]
     return _ok(
@@ -750,15 +766,50 @@ def _handle_strategy_tournament(args: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+def _compact_quant_book(book: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "strategy_key": book.get("strategy_key"),
+        "label": book.get("label"),
+        "days": book.get("days"),
+        "last_date": book.get("last_date"),
+        "nav": book.get("nav"),
+        "return_pct": book.get("return_pct"),
+        "benchmark_return_pct": book.get("benchmark_return_pct"),
+        "max_drawdown_pct": book.get("max_drawdown_pct"),
+        "weights_pct": book.get("weights_pct"),
+        "trade_count": book.get("trade_count"),
+    }
+
+
+def _compact_tournament_entry(entry: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not isinstance(entry, dict):
+        return None
+    oos = entry.get("oos") or {}
+    return {
+        "strategy_id": entry.get("strategy_id"),
+        "name": entry.get("name"),
+        "verdict": entry.get("verdict"),
+        "signal_summary": entry.get("signal_summary"),
+        "current_weights": entry.get("current_weights"),
+        "oos_cagr_pct": oos.get("cagr_pct"),
+        "oos_excess_cagr_pct": oos.get("excess_cagr_pct"),
+        "oos_sharpe": oos.get("sharpe"),
+        "oos_excess_sharpe": oos.get("excess_sharpe"),
+        "oos_max_drawdown_pct": oos.get("max_drawdown_pct"),
+        "oos_dsr_pct": oos.get("dsr_pct"),
+    }
+
+
 def _handle_strategic_trading_brief(args: Dict[str, Any]) -> Dict[str, Any]:
-    """One-call multi-pillar strategic trading brief (parallelized with per-pillar timeouts)."""
+    """One-call multi-pillar strategic trading brief (parallelized with per-pillar timeouts & compact mode)."""
     include_crypto = _bool_arg(args, "include_crypto_trend", True)
     include_us_screen = _bool_arg(args, "include_us_screen", False)
     include_bist_screen = _bool_arg(args, "include_bist_screen", False)
     include_form4 = _bool_arg(args, "include_form4", False)
     include_pead = _bool_arg(args, "include_pead", False)
+    compact = _bool_arg(args, "compact", True)
     top_n = _int_arg(args, "top_n", 5, minimum=1, maximum=15)
-    pillar_timeout = _float_arg(args, "pillar_timeout_s", 35.0, minimum=5.0, maximum=90.0)
+    pillar_timeout = _float_arg(args, "pillar_timeout_s", 20.0, minimum=5.0, maximum=90.0)
 
     brief: Dict[str, Any] = {}
     errors: Dict[str, str] = {}
@@ -820,16 +871,30 @@ def _handle_strategic_trading_brief(args: Dict[str, Any]) -> Dict[str, Any]:
             from src.quant.tournament import get_live_paa_signal, load_latest_tournament_results
 
             cached = load_latest_tournament_results(auto_run_if_missing=False)
-            out: Dict[str, Any] = {"paa_live": get_live_paa_signal(force_refresh=False)}
+            paa_live = get_live_paa_signal(force_refresh=False)
+            if compact and isinstance(paa_live, dict):
+                paa_live = {
+                    "as_of_date": paa_live.get("as_of_date"),
+                    "regime_label": paa_live.get("regime_label"),
+                    "crash_protection_pct": paa_live.get("crash_protection_pct"),
+                    "risk_assets_below_sma252": paa_live.get("risk_assets_below_sma252"),
+                    "risk_assets_total": paa_live.get("risk_assets_total"),
+                    "target_weights_pct": paa_live.get("target_weights_pct"),
+                }
+            out: Dict[str, Any] = {"paa_live": paa_live}
             if cached:
-                out["champion"] = cached.get("champion")
-                out["paa"] = cached.get("paa")
-                out["meta_portfolio_a"] = cached.get("meta_portfolio_a")
-                out["meta_portfolio_b"] = cached.get("meta_portfolio_b")
+                out["champion"] = _compact_tournament_entry(cached.get("champion")) if compact else cached.get("champion")
+                out["paa"] = _compact_tournament_entry(cached.get("paa")) if compact else cached.get("paa")
+                out["meta_portfolio_a"] = _compact_tournament_entry(cached.get("meta_portfolio_a")) if compact else cached.get("meta_portfolio_a")
+                out["meta_portfolio_b"] = _compact_tournament_entry(cached.get("meta_portfolio_b")) if compact else cached.get("meta_portfolio_b")
                 out["total_strategies"] = cached.get("total_strategies")
                 out["pass_elite_count"] = cached.get("pass_elite_count")
             try:
-                out["quant_paper_books"] = _handle_quant_paper_books({"step_paper": False}).get("data")
+                qbooks = _handle_quant_paper_books({"step_paper": False}).get("data") or {}
+                if compact and isinstance(qbooks, dict):
+                    out["quant_paper_books"] = [_compact_quant_book(b) for b in (qbooks.get("books") or [])]
+                else:
+                    out["quant_paper_books"] = qbooks
             except Exception:
                 pass
             return out
@@ -841,7 +906,40 @@ def _handle_strategic_trading_brief(args: Dict[str, Any]) -> Dict[str, Any]:
     try:
         for name, fut in futures.items():
             try:
-                brief[name] = fut.result(timeout=pillar_timeout)
+                val = fut.result(timeout=pillar_timeout)
+                if compact and name == "crypto_trend_strategy" and isinstance(val, dict):
+                    val = {
+                        "assets": val.get("assets"),
+                        "signals": val.get("signals"),
+                        "paper_nav": (val.get("paper_summary") or {}).get("nav"),
+                        "paper_return_pct": (val.get("paper_summary") or {}).get("return_pct"),
+                        "paper_benchmark_return_pct": (val.get("paper_summary") or {}).get("benchmark_return_pct"),
+                    }
+                elif compact and name == "recent_decision_signals" and isinstance(val, dict):
+                    raw_items = val.get("items") or val.get("signals") or []
+                    val = {
+                        "count": len(raw_items),
+                        "items": [
+                            {
+                                "code": it.get("code"),
+                                "name": it.get("name"),
+                                "action": it.get("action") or it.get("operation_advice"),
+                                "sentiment_score": it.get("sentiment_score"),
+                                "date": it.get("date") or it.get("created_at"),
+                            }
+                            for it in raw_items[:5]
+                        ],
+                    }
+                elif compact and name == "paper_portfolio" and isinstance(val, dict):
+                    sm = val.get("summary") or {}
+                    val = {
+                        "enabled": sm.get("enabled"),
+                        "open_position_count": sm.get("open_position_count"),
+                        "trade_count": sm.get("trade_count"),
+                        "win_rate_pct": sm.get("win_rate_pct"),
+                        "totals_by_currency": sm.get("totals_by_currency"),
+                    }
+                brief[name] = val
             except FuturesTimeoutError:
                 errors[name] = f"Timed out after {pillar_timeout:.0f}s"
             except Exception as exc:  # noqa: BLE001

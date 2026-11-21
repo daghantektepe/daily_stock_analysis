@@ -2186,7 +2186,15 @@ class SearXNGSearchProvider(BaseSearchProvider):
             )
 
         errors: List[str] = []
-        for base_url in candidates:
+        now_ts = time.time()
+        cooldown_map = getattr(self, "_failed_instance_until", None)
+        if cooldown_map is None:
+            cooldown_map = {}
+            self._failed_instance_until = cooldown_map
+        active_candidates = [u for u in candidates if cooldown_map.get(u, 0.0) <= now_ts]
+        if not active_candidates:
+            active_candidates = list(candidates)[:2]
+        for base_url in active_candidates:
             response = self._do_search(
                 query,
                 base_url,
@@ -2197,6 +2205,7 @@ class SearXNGSearchProvider(BaseSearchProvider):
             )
             response.search_time = time.time() - start_time
             if response.success:
+                cooldown_map.pop(base_url, None)
                 logger.info(
                     "[%s] 搜索 '%s' 成功，实例=%s，返回 %s 条结果，耗时 %.2fs",
                     self.name,
@@ -2207,8 +2216,11 @@ class SearXNGSearchProvider(BaseSearchProvider):
                 )
                 return response
 
-            errors.append(f"{base_url}: {response.error_message or '未知错误'}")
-            logger.warning("[%s] 实例 %s 搜索失败: %s", self.name, base_url, response.error_message)
+            err_txt = str(response.error_message or "")
+            if any(m in err_txt for m in ("SSL", "Too Many Requests", "not a bot", "document.cookie", "JSON")):
+                cooldown_map[base_url] = time.time() + 900.0
+            errors.append(f"{base_url}: {err_txt or 'unknown error'}")
+            logger.debug("[%s] Instance %s failed (cooldown applied if SSL/429/bot): %s", self.name, base_url, err_txt)
 
         elapsed = time.time() - start_time
         return SearchResponse(

@@ -374,20 +374,34 @@ def screen_pead_candidates(
     top_n: int = 10,
     max_workers: int = 8,
     today: Optional[date] = None,
+    deadline_seconds: Optional[float] = None,
 ) -> List[PeadCandidate]:
     """Scan a list of symbols in parallel for Post-Earnings Announcement Drift setups."""
-    from concurrent.futures import ThreadPoolExecutor
+    import time as _time
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
     results: List[PeadCandidate] = []
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+    start_ts = _time.monotonic()
+    pool = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         futures = [
             pool.submit(evaluate_pead_for_symbol, sym, today=today, max_days=max_days, min_score=min_score)
             for sym in symbols
         ]
-        for f in futures:
-            res = f.result()
-            if res is not None:
-                results.append(res)
+        try:
+            for f in as_completed(futures, timeout=deadline_seconds):
+                try:
+                    res = f.result()
+                    if res is not None:
+                        results.append(res)
+                except Exception:
+                    continue
+                if deadline_seconds is not None and (_time.monotonic() - start_ts) >= deadline_seconds:
+                    break
+        except TimeoutError:
+            logger.info("[pead-screener] deadline %.1fs reached; returning %d completed candidates", deadline_seconds or 0, len(results))
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
     results.sort(key=lambda c: (c.score, c.eps_surprise_pct or 0.0), reverse=True)
     return results[:top_n]

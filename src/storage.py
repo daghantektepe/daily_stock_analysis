@@ -1404,7 +1404,7 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
             self._ensure_intelligence_items_unique_index()
 
             self._initialized = True
-            logger.info(f"数据库初始化完成: {db_url}")
+            logger.info(f"Database initialized: {db_url}")
 
             # 注册退出钩子，确保程序退出时关闭数据库连接
             atexit.register(DatabaseManager._cleanup_engine, self._engine)

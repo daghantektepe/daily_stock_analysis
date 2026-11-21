@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
+import time
 from dataclasses import asdict
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -41,6 +45,36 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_SCREENER_CACHE_DIR = Path("data") / "cache" / "screeners"
+_SCREENER_TTL_SECONDS = 1200.0  # 20 minutes
+
+
+def _screener_cache_key(prefix: str, params: Dict[str, Any]) -> Path:
+    digest = hashlib.sha256(json.dumps(params, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+    return _SCREENER_CACHE_DIR / f"{prefix}_{digest}.json"
+
+
+def _read_screener_cache(prefix: str, params: Dict[str, Any], ttl_s: float = _SCREENER_TTL_SECONDS) -> Optional[Dict[str, Any]]:
+    path = _screener_cache_key(prefix, params)
+    if not path.is_file():
+        return None
+    try:
+        if (time.time() - path.stat().st_mtime) > ttl_s:
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _write_screener_cache(prefix: str, params: Dict[str, Any], payload: Dict[str, Any]) -> None:
+    try:
+        _SCREENER_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path = _screener_cache_key(prefix, params)
+        path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    except (OSError, TypeError, ValueError):
+        pass
+
 
 @router.get("/overview", response_model=AlphaOverviewResponse)
 def get_alpha_overview(
@@ -67,9 +101,18 @@ def get_alpha_overview(
 
 
 @router.post("/us-screen", response_model=UsScreenResponse)
-def run_us_alpha_screen(req: UsScreenRequest) -> UsScreenResponse:
+def run_us_alpha_screen(
+    req: UsScreenRequest,
+    refresh: bool = Query(False, description="Bypass 20-minute screener cache"),
+) -> UsScreenResponse:
     """Run composite US High-Alpha screen (Residual Momentum + 52W High + FIP + CashOpProf + PEAD + Form 4)."""
     from src.services.us_quant_screener import screen_us_alpha_candidates
+
+    cache_params = req.model_dump()
+    if not refresh:
+        cached = _read_screener_cache("us_screen", cache_params)
+        if cached is not None:
+            return UsScreenResponse(**cached)
 
     candidates = screen_us_alpha_candidates(
         symbols=req.symbols or None,
@@ -79,7 +122,9 @@ def run_us_alpha_screen(req: UsScreenRequest) -> UsScreenResponse:
         use_sec_xbrl=req.use_sec_xbrl,
     )
     items = [UsQuantCandidateItem(**asdict(c)) for c in candidates]
-    return UsScreenResponse(count=len(items), items=items)
+    resp = UsScreenResponse(count=len(items), items=items)
+    _write_screener_cache("us_screen", cache_params, resp.model_dump())
+    return resp
 
 
 @router.get("/form4-live", response_model=Form4LiveResponse)
@@ -87,10 +132,17 @@ def get_live_form4_clusters(
     count: int = Query(80, ge=10, le=200),
     max_filings: int = Query(40, ge=5, le=100),
     min_value: float = Query(10000.0, ge=0.0),
+    refresh: bool = Query(False, description="Bypass 20-minute Form 4 cache"),
 ) -> Form4LiveResponse:
     """Fetch live SEC EDGAR Form 4 Atom filings and cluster open-market executive purchases."""
     from data_provider.sec_form4_fetcher import SecForm4Fetcher
     from src.services.sec_form4_screener import score_insider_event
+
+    cache_params = {"count": count, "max_filings": max_filings, "min_value": min_value}
+    if not refresh:
+        cached = _read_screener_cache("form4_live", cache_params)
+        if cached is not None:
+            return Form4LiveResponse(**cached)
 
     fetcher = SecForm4Fetcher()
     clusters = fetcher.fetch_live_purchases(
@@ -124,7 +176,9 @@ def get_live_form4_clusters(
             )
         )
     items.sort(key=lambda x: x.score, reverse=True)
-    return Form4LiveResponse(count=len(items), items=items)
+    resp = Form4LiveResponse(count=len(items), items=items)
+    _write_screener_cache("form4_live", cache_params, resp.model_dump())
+    return resp
 
 
 @router.get("/pead-candidates", response_model=PeadCandidatesResponse)
@@ -133,26 +187,36 @@ def get_pead_candidates(
     max_days: int = Query(21, ge=1, le=90),
     min_score: float = Query(40.0, ge=0.0, le=100.0),
     top_n: int = Query(15, ge=1, le=50),
+    refresh: bool = Query(False, description="Bypass 20-minute PEAD cache"),
 ) -> PeadCandidatesResponse:
     """Scan US stocks for recent Post-Earnings Announcement Drift (PEAD 2.0) setups."""
     from scripts.pead_screener import DEFAULT_US_MIDCAP_WATCHLIST, DEFAULT_US_WATCHLIST
     from src.services.pead_screener import screen_pead_candidates
+
+    cache_params = {"universe": universe, "max_days": max_days, "min_score": min_score, "top_n": top_n}
+    if not refresh:
+        cached = _read_screener_cache("pead_candidates", cache_params)
+        if cached is not None:
+            return PeadCandidatesResponse(**cached)
 
     if universe == "midcap":
         syms = DEFAULT_US_MIDCAP_WATCHLIST
     elif universe == "megacap":
         syms = DEFAULT_US_WATCHLIST
     else:
-        syms = list(dict.fromkeys([*DEFAULT_US_MIDCAP_WATCHLIST, *DEFAULT_US_WATCHLIST]))
+        syms = list(dict.fromkeys([*DEFAULT_US_WATCHLIST, *DEFAULT_US_MIDCAP_WATCHLIST]))
 
     candidates = screen_pead_candidates(
         symbols=syms,
         max_days=max_days,
-        min_score=min_score,
+        min_score=int(min_score),
         top_n=top_n,
+        deadline_seconds=14.0,
     )
     items = [PeadCandidateItem(**c.to_dict()) for c in candidates]
-    return PeadCandidatesResponse(count=len(items), universe=universe, items=items)
+    resp = PeadCandidatesResponse(count=len(items), universe=universe, items=items)
+    _write_screener_cache("pead_candidates", cache_params, resp.model_dump())
+    return resp
 
 
 @router.post("/pead-study", response_model=PeadStudyResponse)
@@ -240,6 +304,7 @@ def execute_form4_study(req: Form4StudyRequest) -> Form4StudyResponse:
 @router.get("/crypto-trend", response_model=CryptoTrendResponse)
 def get_crypto_trend_status(
     step_paper: bool = Query(True, description="Advance the paper book to latest close"),
+    refresh: bool = Query(False, description="Bypass 20-minute crypto trend cache"),
 ) -> CryptoTrendResponse:
     """Run Crypto Trend Strategy signal, backtest, and paper book status (matching scripts/crypto_trend.py)."""
     from datetime import date
@@ -255,6 +320,12 @@ def get_crypto_trend_status(
 
     cfg = get_config()
     assets = tuple(getattr(cfg, "crypto_trend_assets", None) or ("BTC-USD", "ETH-USD"))
+    cache_params = {"assets": list(assets), "step_paper": bool(step_paper)}
+    if not refresh:
+        cached = _read_screener_cache("crypto_trend", cache_params)
+        if cached is not None:
+            return CryptoTrendResponse(**cached)
+
     trend = TrendConfig(assets=assets)
     prices = load_daily_closes(trend.assets)
     targets = current_targets(prices, trend)
@@ -282,7 +353,7 @@ def get_crypto_trend_status(
             )
     lines.append("\n" + paper_rep)
 
-    return CryptoTrendResponse(
+    resp = CryptoTrendResponse(
         assets=list(trend.assets),
         signals=targets,
         backtest_all=bt_all,
@@ -291,25 +362,48 @@ def get_crypto_trend_status(
         paper_report=paper_rep,
         report_text="\n".join(lines),
     )
+    _write_screener_cache("crypto_trend", cache_params, resp.model_dump())
+    return resp
 
 
 @router.post("/bist-screen", response_model=BistScreenResponse)
-def run_bist_screen(req: BistScreenRequest) -> BistScreenResponse:
-    """Scan BIST stocks for technical breakouts, volume surges, and KAP catalysts."""
+def run_bist_screen(
+    req: BistScreenRequest,
+    refresh: bool = Query(False, description="Bypass 20-minute BIST screener cache"),
+) -> BistScreenResponse:
+    """Scan liquid BIST equities for technical breakouts, volume surges, and KAP catalysts."""
     from src.services.bist_screener import screen_bist_stocks
+
+    cache_params = req.model_dump()
+    if not refresh:
+        cached = _read_screener_cache("bist_screen", cache_params)
+        if cached is not None:
+            return BistScreenResponse(**cached)
 
     res = screen_bist_stocks(
         top_n=req.top_n,
         min_score=req.min_score,
         include_kap=req.include_kap,
+        max_symbols=120,
     )
-    return BistScreenResponse(
+    resp = BistScreenResponse(
         selected_codes=list(res.get("selected_codes") or []),
-        scanned_count=int(res.get("scanned_count") or 0),
-        passed_count=int(res.get("passed_count") or 0),
+        scanned_count=int(
+            res.get("scanned_count")
+            or res.get("evaluated_count")
+            or res.get("universe_count")
+            or 0
+        ),
+        passed_count=int(
+            res.get("passed_count")
+            or res.get("qualified_count")
+            or len(res.get("candidates") or [])
+        ),
         candidates=list(res.get("candidates") or []),
         errors=list(res.get("errors") or []),
     )
+    _write_screener_cache("bist_screen", cache_params, resp.model_dump())
+    return resp
 
 
 @router.get("/kap-contracts", response_model=KapContractResponse)
@@ -317,9 +411,16 @@ def get_kap_contracts(
     days_back: int = Query(7, ge=1, le=90),
     min_score: int = Query(30, ge=0, le=100),
     top_n: int = Query(20, ge=1, le=100),
+    refresh: bool = Query(False, description="Bypass 20-minute KAP cache"),
 ) -> KapContractResponse:
     """Fetch and score recent BIST KAP new contract/tender disclosures."""
     from src.services.kap_contract_screener import KapContractScreener
+
+    cache_params = {"days_back": days_back, "min_score": min_score, "top_n": top_n}
+    if not refresh:
+        cached = _read_screener_cache("kap_contracts", cache_params)
+        if cached is not None:
+            return KapContractResponse(**cached)
 
     candidates = KapContractScreener().scan_recent_contracts(
         days=days_back,
@@ -327,7 +428,9 @@ def get_kap_contracts(
         top_n=top_n,
     )
     items = [asdict(row) if hasattr(row, "__dataclass_fields__") else dict(row) for row in candidates]
-    return KapContractResponse(count=len(items), items=items)
+    resp = KapContractResponse(count=len(items), items=items)
+    _write_screener_cache("kap_contracts", cache_params, resp.model_dump())
+    return resp
 
 
 @router.get("/tournament", response_model=TournamentResponse)

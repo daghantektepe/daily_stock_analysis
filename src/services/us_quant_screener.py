@@ -502,6 +502,47 @@ def _default_history_fetcher(symbol: str, period: str = "18mo") -> pd.DataFrame:
     return yf.Ticker(symbol).history(period=period, auto_adjust=True)
 
 
+def _batch_download_us_histories(
+    symbols: Sequence[str],
+    *,
+    period: str = "18mo",
+) -> Dict[str, pd.DataFrame]:
+    """Download OHLCV daily history for all requested US symbols in one parallel yfinance batch."""
+    unique = list(dict.fromkeys(str(s).strip().upper() for s in symbols if str(s or "").strip()))
+    if not unique:
+        return {}
+    try:
+        import yfinance as yf
+
+        raw = yf.download(
+            tickers=unique,
+            period=period,
+            interval="1d",
+            group_by="ticker",
+            auto_adjust=True,
+            progress=False,
+            threads=True,
+        )
+    except Exception as exc:
+        logger.debug("US quant batch download failed: %s", exc)
+        return {}
+    if raw is None or getattr(raw, "empty", True):
+        return {}
+
+    out: Dict[str, pd.DataFrame] = {}
+    is_multi = isinstance(raw.columns, pd.MultiIndex)
+    for sym in unique:
+        try:
+            sub = raw[sym] if is_multi else raw
+            if sub is not None and not sub.empty:
+                cleaned = sub.dropna(how="all")
+                if len(cleaned) >= 40:
+                    out[sym] = cleaned
+        except (KeyError, TypeError):
+            continue
+    return out
+
+
 def screen_us_quant(
     symbols: Optional[Sequence[str]] = None,
     *,
@@ -513,34 +554,75 @@ def screen_us_quant(
     use_sec_xbrl: bool = True,
 ) -> List[UsQuantCandidate]:
     """Screen US equities using Residual Momentum, 52W High, FIP, and Cash Profitability."""
-    universe = [s.upper() for s in (symbols or DEFAULT_US_QUANT_UNIVERSE)]
-    fetcher = history_fetcher or (lambda sym: _default_history_fetcher(sym, period="18mo"))
+    from concurrent.futures import ThreadPoolExecutor
 
-    market_df = fetcher("SPY")
+    universe = [s.upper() for s in (symbols or DEFAULT_US_QUANT_UNIVERSE)]
+    if history_fetcher is not None:
+        market_df = history_fetcher("SPY")
+        hist_map: Dict[str, pd.DataFrame] = {}
+        for sym in universe:
+            try:
+                df = history_fetcher(sym)
+                if df is not None and not df.empty:
+                    hist_map[sym] = df
+            except Exception as exc:
+                logger.debug("US quant history fetch failed for %s: %s", sym, exc)
+    else:
+        batch = _batch_download_us_histories([*universe, "SPY"], period="18mo")
+        market_df = batch.get("SPY")
+        if market_df is None or market_df.empty:
+            market_df = _default_history_fetcher("SPY", period="18mo")
+        hist_map = {sym: batch[sym] for sym in universe if sym in batch}
+
     if market_df is None or market_df.empty:
         logger.warning("SPY benchmark history unavailable; US quant screener aborted.")
         return []
+
+    # Fast Stage 1: score technical/momentum factors for all symbols in memory
+    stage1: List[Tuple[str, pd.DataFrame, UsQuantCandidate]] = []
+    for sym in universe:
+        df = hist_map.get(sym)
+        if df is None or df.empty:
+            continue
+        try:
+            cand = score_us_quant_candidate(
+                sym,
+                df,
+                market_df,
+                cash_op_profitability=None,
+                accruals_ratio=None,
+                min_dollar_volume=min_dollar_volume,
+            )
+            if cand is not None:
+                stage1.append((sym, df, cand))
+        except Exception as exc:
+            logger.debug("US quant stage-1 scoring failed for %s: %s", sym, exc)
+
+    if not stage1:
+        return []
+
+    # Stage 2: enrich quality/profitability in parallel only for top shortlist (or all if custom fetcher)
+    stage1.sort(key=lambda item: item[2].score, reverse=True)
+    enrich_limit = len(stage1) if quality_fetcher is not None else min(len(stage1), max(top_n * 2, 12))
+    shortlist = stage1[:enrich_limit]
 
     cik_map: Dict[str, str] = {}
     if quality_fetcher is None and use_sec_xbrl:
         cik_map = load_sec_cik_map()
 
-    results: List[UsQuantCandidate] = []
-    for sym in universe:
+    def _enrich_one(item: Tuple[str, pd.DataFrame, UsQuantCandidate]) -> Optional[UsQuantCandidate]:
+        sym, df, _ = item
         try:
-            df = fetcher(sym)
-            if df is None or df.empty:
-                continue
-
             if quality_fetcher is not None:
                 cash_prof, accruals = quality_fetcher(sym)
-            else:
+            elif use_sec_xbrl:
                 cash_prof, accruals = (None, None)
                 if cik_map:
                     cash_prof, accruals = fetch_sec_xbrl_quality(sym, cik_map=cik_map)
                 if cash_prof is None:
                     cash_prof, accruals = fetch_yfinance_quality(sym)
-
+            else:
+                cash_prof, accruals = (None, None)
             cand = score_us_quant_candidate(
                 sym,
                 df,
@@ -550,9 +632,22 @@ def screen_us_quant(
                 min_dollar_volume=min_dollar_volume,
             )
             if cand is not None and cand.score >= min_score:
-                results.append(cand)
+                return cand
         except Exception as exc:
             logger.debug("US quant scoring failed for %s: %s", sym, exc)
+        return None
+
+    results: List[UsQuantCandidate] = []
+    if quality_fetcher is not None or not use_sec_xbrl:
+        for item in shortlist:
+            c = _enrich_one(item)
+            if c is not None:
+                results.append(c)
+    else:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            for c in pool.map(_enrich_one, shortlist):
+                if c is not None:
+                    results.append(c)
 
     results.sort(key=lambda c: c.score, reverse=True)
     return results[:top_n]

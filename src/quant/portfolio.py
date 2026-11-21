@@ -110,7 +110,9 @@ def save_champion_paper_snapshot(
 
     history: List[Dict[str, Any]] = list(existing.get("history") or [])
     entry = {
+        "date": champion.latest_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "as_of_date": champion.latest_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "nav": round(float(existing.get("initial_capital_usd", initial_capital)), 2),
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "champion_id": champion.strategy_id,
         "champion_weights_pct": dict(champion.current_weights),
