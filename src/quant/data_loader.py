@@ -208,3 +208,50 @@ def load_all_tournament_universes(
         "crypto": crypto_frame,
         "bist": bist_frame,
     }
+
+
+# ---------------------------------------------------------------------------
+# Strategy Research v3 (19-year multi-era universes: 2007-present)
+# Kept in isolated CSV caches so existing tournament caches are untouched.
+# ---------------------------------------------------------------------------
+
+MACRO_V3_UNIVERSE: tuple[str, ...] = (
+    "SPY", "QQQ", "EFA", "EEM", "TLT", "IEF", "SHY", "BIL", "GLD", "DBC", "VNQ", "UUP",
+)
+
+SECTOR_FACTOR_V3_UNIVERSE: tuple[str, ...] = (
+    "XLK", "XLV", "XLF", "XLE", "XLI", "XLP", "XLU", "XLY", "XLB", "XLC", "XLRE",
+    "MTUM", "QUAL", "USMV", "VLUE", "SPY", "BIL", "SHY",
+)
+
+
+def load_macro_v3_closes(
+    *,
+    start_date: str = "2007-01-01",
+    cache_dir: Optional[Path] = None,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Load 19-year adjusted daily closes for the 12-ETF Macro v3 universe (including BIL & UUP)."""
+    return load_universe_closes(
+        "macro_v3",
+        MACRO_V3_UNIVERSE,
+        start_date=start_date,
+        cache_dir=cache_dir,
+        force_refresh=force_refresh,
+    )
+
+
+def load_sector_factor_v3_closes(
+    *,
+    start_date: str = "2007-01-01",
+    cache_dir: Optional[Path] = None,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Load 19-year adjusted daily closes for the 15-ETF Sector/Factor v3 universe + SPY/BIL/SHY."""
+    return load_universe_closes(
+        "sector_factor_v3",
+        SECTOR_FACTOR_V3_UNIVERSE,
+        start_date=start_date,
+        cache_dir=cache_dir,
+        force_refresh=force_refresh,
+    )

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 新增 19 年多宏观阶段反过拟合策略研究实验室 v3（`src/quant/strategies/research_v3.py`、`src/quant/research_lab.py`、`scripts/run_strategy_research_v3.py`）：完全独立于已冻结的 `PAA v2` / `Meta-A v2`（不改变其 SHA-256 指纹），使用预先登记的经典学术参数在 2008–2026 四个宏观周期（GFC、QE、COVID、加息周期）下执行 5/15/25/50 bps 成本压力、±20% 参数高原测试与 Meta-A 正交性/50-50 组合检验；突出胜出者 `V3_TREND_RISK_PARITY_BIL`（`v3_trp`，4/4 周期正超额、2022 +3.59%、100% 高原通过、50/50 组合将 Meta-A ExBIL Sharpe 0.83→0.91 且 MaxDD -8.3%→-5.4%）支持作为独立模拟盘账本 `quant_v3_trp.json` 冻结并接入 `ForwardRegistry`，`ALPACA_PAPER=true` 与 `ALPACA_AUTO_EXECUTE=false` 保持不变
 - [改进] 锦标赛 BIST 策略新增美元视角（`src/quant/bist_usd.py`）：以 `TRY=X` 将每日 TL 净收益换算为 USD（土耳其假期汇率前向填充），按与美股相同的 `BIL` 无风险超额 Sharpe 评估；BIST 判定改为 USD 超额 Sharpe ≥0.15 且 USD 超额收益为正（无汇率数据时沿用旧 TL 规则），DSR 与排序同步使用 USD 序列；结果新增 `usd`、`usd_yearly_returns_pct`、`yearly_returns_pct` 与 `bist_usd_reference`（USD/TRY 及 XU100 TL/USD 对比）字段（仅追加），报告新增「Gerçek Dolar (USD) Karşılığı」章节，MCP 锦标赛摘要新增 `oos_excess_sharpe` / `usd_*` 字段
 - [新功能] AI 策略委员会 v2 稳健性门槛：除 `BIL` 超额 OOS 判定外，要求 25 bps 成本压力下仍有 BIL 超额 Sharpe ≥0.15 与正超额收益，且 2022 熊市亏损少于 SPY（50 bps 仅作参考）；新增 `python scripts/run_ai_strategy_council.py reevaluate`，无需调用 CLI 即可重新评估已存章程（规则与模拟账本不变）；CLI 提示词同步说明 v2 门槛
 - [改进] Web 锦标赛排行榜与概览卡改用 BIL 超额 Sharpe 排序和展示（BIST 行显示 USD 指标并附 TL CAGR），委员会账本卡片显示 BIL 超额 Sharpe 与「Konsey v2」结果及未通过项，旧章程无超额数据时明确标注为 Rf=0 Sharpe

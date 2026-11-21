@@ -16,8 +16,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import pandas as pd
 
-from src.quant.data_loader import US_ETF_UNIVERSE, load_universe_closes
+from src.quant.data_loader import MACRO_V3_UNIVERSE, US_ETF_UNIVERSE, load_universe_closes
 from src.quant.strategies.library import compute_meta_a_weights, compute_paa_weights
+from src.quant.strategies.research_v3 import compute_v3_trend_risk_parity_bil_weights
 from src.services.strategy_paper_book import (
     DEFAULT_BOOK_DIR,
     QuantAllocationPaperBook,
@@ -42,6 +43,15 @@ QUANT_PAPER_SPECS: Dict[str, Dict[str, Any]] = {
         "label": "Meta-Portföy A (ABD Ortogonal ETF Ensemble)",
         "benchmark_symbol": "SPY",
         "weight_fn": compute_meta_a_weights,
+    },
+    "v3_trp": {
+        "name": "quant_v3_trp",
+        "strategy_key": "v3_trp",
+        "strategy_id": "V3_TREND_RISK_PARITY_BIL",
+        "label": "v3 Vol-Yönetimli Trend-Frenli Risk Paritesi (BIL)",
+        "benchmark_symbol": "SPY",
+        "weight_fn": compute_v3_trend_risk_parity_bil_weights,
+        "requires_macro_v3": True,
     },
 }
 
@@ -96,6 +106,7 @@ def load_quant_paper_prices(
     force_refresh: bool = False,
     start_date: str = "2018-01-01",
     cache_dir: Optional[Path] = None,
+    include_macro_v3: bool = False,
 ) -> pd.DataFrame:
     """Load completed daily closes for the US ETF universe (drops today's unfinished bar)."""
     frame = load_universe_closes(
@@ -105,8 +116,23 @@ def load_quant_paper_prices(
         cache_dir=cache_dir,
         force_refresh=force_refresh,
     )
-    if frame.empty:
-        return frame
+    if include_macro_v3:
+        macro_frame = load_universe_closes(
+            "macro_v3",
+            MACRO_V3_UNIVERSE,
+            start_date=start_date,
+            cache_dir=cache_dir,
+            force_refresh=force_refresh,
+        )
+        if macro_frame is not None and not macro_frame.empty:
+            if frame is None or frame.empty:
+                frame = macro_frame
+            else:
+                extra = [c for c in macro_frame.columns if c not in frame.columns]
+                if extra:
+                    frame = frame.join(macro_frame[extra], how="outer").sort_index().ffill()
+    if frame is None or frame.empty:
+        return pd.DataFrame()
     today = pd.Timestamp.utcnow().tz_localize(None).normalize()
     completed = frame[frame.index < today]
     return completed if not completed.empty else frame
@@ -125,9 +151,14 @@ def step_quant_paper_books(
     book_dir: Optional[Path] = None,
     today: Optional[date] = None,
 ) -> Dict[str, Any]:
-    """Advance all requested quant StrategyPaperBooks (PAA / Meta-Portfolio A) to the latest completed close."""
+    """Advance all requested quant StrategyPaperBooks (PAA / Meta-Portfolio A / v3) to the latest completed close."""
     keys = normalize_quant_paper_strategies(strategies)
-    price_frame = prices if prices is not None else load_quant_paper_prices(force_refresh=force_refresh_prices)
+    needs_macro_v3 = any(bool(QUANT_PAPER_SPECS.get(k, {}).get("requires_macro_v3")) for k in keys)
+    price_frame = (
+        prices
+        if prices is not None
+        else load_quant_paper_prices(force_refresh=force_refresh_prices, include_macro_v3=needs_macro_v3)
+    )
     if price_frame is None or price_frame.empty:
         return {
             "ok": False,

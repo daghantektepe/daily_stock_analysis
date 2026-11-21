@@ -387,14 +387,21 @@ def run_forward_validation(
     today: Optional[date] = None,
 ) -> List[Dict[str, Any]]:
     """Freeze (if needed) and evaluate every requested quant paper strategy."""
-    from src.quant.paper_book import build_quant_paper_book, load_quant_paper_prices, normalize_quant_paper_strategies
+    from src.quant.paper_book import (
+        QUANT_PAPER_SPECS,
+        build_quant_paper_book,
+        load_quant_paper_prices,
+        normalize_quant_paper_strategies,
+    )
 
     # The registry lives next to the paper books it validates.
     registry = registry or ForwardRegistry(Path(book_dir) / DEFAULT_REGISTRY_PATH.name if book_dir else None)
     settings = dict(paper_settings or {})
-    frame = prices if prices is not None else load_quant_paper_prices()
+    norm_keys = normalize_quant_paper_strategies(strategies)
+    needs_macro_v3 = any(bool(QUANT_PAPER_SPECS.get(k, {}).get("requires_macro_v3")) for k in norm_keys)
+    frame = prices if prices is not None else load_quant_paper_prices(include_macro_v3=needs_macro_v3)
     results: List[Dict[str, Any]] = []
-    for key in normalize_quant_paper_strategies(strategies):
+    for key in norm_keys:
         book, weight_fn = build_quant_paper_book(key, book_dir=book_dir, **settings)
         fingerprint = strategy_fingerprint(weight_fn, _book_settings(book))
         frozen = registry.get(key)

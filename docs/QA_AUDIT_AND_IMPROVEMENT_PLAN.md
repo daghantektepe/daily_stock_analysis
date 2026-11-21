@@ -164,3 +164,17 @@ Diğer değişiklikler:
 | PAA custom pf=1,0 | FAIL (Rf=0 döneminde PASS_SOLID idi) | +0,04 | −13,6% |
 
 Gerçek tüzükler için E:\ üzerinde `reevaluate` çalıştırılmalıdır.
+
+
+## Faz 5 (D) — 19 Yıllık Çok-Rejimli Strateji Araştırması v3 (`2008–2026`, Sıfır Optimizasyon)
+
+Claude'un aşırı uyum uyarısına uygun olarak tüm v3 adayları dondurulmuş `PAA v2` (`87e22a6b3559`) ve `Meta-Portföy A v2` (`37a7ab36a0d9`) kodlarından tamamen izole yeni [research_v3.py](file:///E:/daily_stock_analysis/src/quant/strategies/research_v3.py) ve [research_lab.py](file:///E:/daily_stock_analysis/src/quant/research_lab.py) modüllerinde, ön-kayıtlı (pre-registered) akademik parametrelerle 4 ayrı makro rejimde (`2008–12 GFC`, `2013–19 QE`, `2020–21 COVID`, `2022–26 Faiz Şoku`) ve `5/15/25/50 bps` maliyet stresinde değerlendirildi (`docs/STRATEGY_RESEARCH_V3_REPORT.md`).
+
+| Aday | Karar | Kapı | 2008+ ExBIL CAGR | ExSh (5 / 25 / 50 bps) | MaxDD (2008 / Genel) | 2022 Getiri | Plato (±%20) | Meta-A Kor. / 50-50 ExSh |
+| :--- | :---: | :---: | ---: | :---: | :---: | ---: | :---: | :---: |
+| **`V3_TREND_RISK_PARITY_BIL`** *(Öne Çıkan Kazanan)* | **✅ TERFİ** | **5/5** | **+2,49%** (`4/4` rejim +) | **+0,63 / +0,47 / +0,26** | **-%3,8 / -%7,3** | **+%3,59** *(SPY -%18,2)* | **9/9 (%100)** | **0,61** / **+0,91** *(vs +0,83, DD -%5,4)* |
+| `V3_SECTOR_FACTOR_BREADTH_BIL` *(İkincil / Uyarı)* | ✅ TERFİ* | 5/5 | +4,53% (`3/4` rejim +) | +0,46 / +0,30 / +0,10 | -%2,7 / -%20,1 | -%10,67 | 9/9 (%100) | 0,46 / +0,59 *(2022–26 ExBIL -%2,24)* |
+| `V3_TSMOM_CROSS_ASSET` | ❌ RED | 4/5 | +3,89% (`4/4` rejim +) | +0,62 / +0,46 / +0,26 | -%5,3 / -%9,5 | -%1,51 | 9/9 (%100) | 0,76 *(>=0,70 eşiği)* / +0,74 |
+
+- **Önemli Ayrım:** `V3_TREND_RISK_PARITY_BIL` (`v3_trp`) hem 4/4 makro rejimde pozitif `ExBIL` üreten, hem 2022 ayı piyasasında `+%3,59` pozitif kalan, hem de optimizasyonsuz 50/50 harmanda `Meta-A v2`'nin Sharpe'ını `+0,83 → +0,91`'e çıkarıp MaxDD'sini `-%8,3 → -%5,4`'e düşüren tek adaydır. Yalnızca `v3_trp` bağımsız dondurulmuş sanal defter (`quant_v3_trp.json`) olarak `ForwardRegistry`'ye alınmıştır; `PAA v2` ve `Meta-A v2` parmak izleri değişmemiştir.
+- **Faz 0 Yerel `.venv` Gerçek AI Konseyi v2 Sonucu:** E:\ üzerindeki gerçek tüzüklerin `reevaluate` sonucu: Claude (`FAIL`, ExSh -0,05), Codex (`FAIL`, ExSh -0,14), **Gemini (`PASS | PASS_ELITE`, 2022 `+%0,6` vs SPY `-%18,2`, 25 bps ExSh `+0,31`, 50 bps ExSh `+0,16`)**.
