@@ -418,11 +418,30 @@ def run_forward_validation(
             except Exception as exc:  # noqa: BLE001
                 logger.warning("[forward] expectation returns failed for %s: %s", key, exc)
         rf = frame["BIL"] if frame is not None and "BIL" in getattr(frame, "columns", []) else None
-        results.append(evaluate_forward_record(
+        result = evaluate_forward_record(
             book.state or {"strategy_key": key, "label": book.label}, frozen, fingerprint,
             rf_closes=rf, expectation_returns=expectation_returns, orders=registry.data["orders"], gate=gate,
-        ))
+        )
+        result.setdefault("label", book.label)
+        result["expectation"] = expectation_summary((frozen or {}).get("expectation") or {}, gate.min_trading_days)
+        results.append(result)
     return results
+
+
+def expectation_summary(expectation: Dict[str, Any], horizon_days: int) -> Dict[str, Any]:
+    """Frozen backtest headline numbers plus the return band for the gate horizon (for UI / MCP)."""
+    if not expectation:
+        return {}
+    bands = expectation.get("window_return_pct") or {}
+    return {
+        "backtest_start": expectation.get("start"),
+        "backtest_until": expectation.get("until"),
+        "cagr_pct": expectation.get("cagr_pct"),
+        "excess_sharpe": expectation.get("excess_sharpe"),
+        "max_drawdown_pct": expectation.get("max_drawdown_pct"),
+        "horizon_days": horizon_days,
+        "band_pct": bands.get(str(horizon_days)) or {},
+    }
 
 
 # ------------------------------------------------------------------ Alpaca paper

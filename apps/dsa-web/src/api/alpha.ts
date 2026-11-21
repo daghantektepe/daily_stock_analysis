@@ -332,12 +332,68 @@ export interface QuantPaperBookItem {
   } | null;
 }
 
+export type ForwardValidationStatus =
+  | 'NOT_FROZEN'
+  | 'COLLECTING'
+  | 'PASS'
+  | 'PASS_PENDING_SLIPPAGE'
+  | 'FAIL'
+  | 'INVALIDATED';
+
+export interface ForwardValidationGate {
+  min_trading_days: number;
+  min_excess_sharpe: number;
+  max_drawdown_pct: number;
+  max_slippage_bps: number;
+  max_late_ratio: number;
+  min_slippage_fills: number;
+}
+
+export interface ForwardValidationItem {
+  strategy_key?: string | null;
+  label?: string | null;
+  status: ForwardValidationStatus;
+  frozen_date?: string | null;
+  fingerprint?: string | null;
+  forward_days: number;
+  late_days: number;
+  late_ratio: number;
+  forward_return_pct?: number | null;
+  benchmark_return_pct?: number | null;
+  excess_sharpe?: number | null;
+  excess_sharpe_se?: number | null;
+  max_drawdown_pct?: number | null;
+  backtest_percentile?: number | null;
+  slippage: { fills: number; avg_bps?: number | null; worst_bps?: number | null };
+  gate: Partial<ForwardValidationGate>;
+  expectation: {
+    backtest_start?: string | null;
+    backtest_until?: string | null;
+    cagr_pct?: number | null;
+    excess_sharpe?: number | null;
+    max_drawdown_pct?: number | null;
+    horizon_days?: number | null;
+    band_pct: Record<string, number>;
+  };
+  reasons: string[];
+  warnings: string[];
+}
+
+export interface ForwardValidationResponse {
+  ok: boolean;
+  simulated_only: boolean;
+  items: ForwardValidationItem[];
+  report_text: string;
+  error?: string | null;
+}
+
 export interface QuantPaperBooksResponse {
   ok: boolean;
   simulated_only: boolean;
   strategies: string[];
   total_new_trades: number;
   books: QuantPaperBookItem[];
+  forward_validation?: ForwardValidationItem[];
   report_text: string;
   error?: string | null;
 }
@@ -486,6 +542,13 @@ export const alphaApi = {
   async getQuantPaperBooks(autoStep = true): Promise<QuantPaperBooksResponse> {
     const res = await apiClient.get<QuantPaperBooksResponse>('/api/v1/alpha/quant-paper', {
       params: { auto_step: autoStep },
+      timeout: 60000,
+    });
+    return res.data;
+  },
+
+  async getForwardValidation(): Promise<ForwardValidationResponse> {
+    const res = await apiClient.get<ForwardValidationResponse>('/api/v1/alpha/forward-validation', {
       timeout: 60000,
     });
     return res.data;

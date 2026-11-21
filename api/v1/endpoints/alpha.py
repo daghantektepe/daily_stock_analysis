@@ -30,6 +30,7 @@ from api.v1.schemas.alpha import (
     PeadStudyRequest,
     PeadStudyResponse,
     PeadUnbiasedStudyRequest,
+    ForwardValidationResponse,
     QuantPaperBooksResponse,
     QuantPaperStepRequest,
     TournamentResponse,
@@ -488,6 +489,29 @@ def get_quant_paper_books(
         auto_step_if_empty=auto_step,
     )
     return QuantPaperBooksResponse(**data)
+
+
+@router.get("/forward-validation", response_model=ForwardValidationResponse)
+def get_forward_validation() -> ForwardValidationResponse:
+    """Forward (live paper) validation gate for the frozen PAA / Meta-Portfolio A books (read-only)."""
+    from src.config import get_config
+    from src.quant.forward_validation import format_forward_report, run_forward_validation
+
+    cfg = get_config()
+    try:
+        items = run_forward_validation(
+            strategies=tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+            auto_freeze=False,
+            paper_settings={
+                "initial_capital": float(getattr(cfg, "quant_paper_capital", 10000.0)),
+                "cost_bps": float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+                "rebalance_mode": str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - surface as a soft error card, not a 500
+        logger.warning("[alpha] forward validation failed: %s", exc)
+        return ForwardValidationResponse(ok=False, error=f"İleri doğrulama okunamadı: {exc}")
+    return ForwardValidationResponse(items=items, report_text=format_forward_report(items))
 
 
 @router.post("/quant-paper/step", response_model=QuantPaperBooksResponse)

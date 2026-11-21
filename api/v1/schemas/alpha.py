@@ -262,11 +262,58 @@ class QuantPaperStepRequest(BaseModel):
     force_refresh_prices: bool = Field(False, description="Force refresh US ETF prices from Yahoo Finance")
 
 
+class ForwardSlippage(BaseModel):
+    fills: int = 0
+    avg_bps: Optional[float] = None
+    worst_bps: Optional[float] = None
+
+
+class ForwardExpectation(BaseModel):
+    backtest_start: Optional[str] = None
+    backtest_until: Optional[str] = None
+    cagr_pct: Optional[float] = None
+    excess_sharpe: Optional[float] = None
+    max_drawdown_pct: Optional[float] = None
+    horizon_days: Optional[int] = None
+    band_pct: Dict[str, float] = Field(default_factory=dict, description="Return percentiles (p5..p95) for the gate horizon")
+
+
+class ForwardValidationItem(BaseModel):
+    strategy_key: Optional[str] = None
+    label: Optional[str] = None
+    status: str = "NOT_FROZEN"
+    frozen_date: Optional[str] = None
+    fingerprint: Optional[str] = None
+    forward_days: int = 0
+    late_days: int = 0
+    late_ratio: float = 0.0
+    forward_return_pct: Optional[float] = None
+    benchmark_return_pct: Optional[float] = None
+    excess_sharpe: Optional[float] = None
+    excess_sharpe_se: Optional[float] = None
+    max_drawdown_pct: Optional[float] = None
+    backtest_percentile: Optional[float] = None
+    slippage: ForwardSlippage = Field(default_factory=ForwardSlippage)
+    gate: Dict[str, float] = Field(default_factory=dict)
+    expectation: ForwardExpectation = Field(default_factory=ForwardExpectation)
+    reasons: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ForwardValidationResponse(BaseModel):
+    ok: bool = True
+    simulated_only: bool = True
+    items: List[ForwardValidationItem] = Field(default_factory=list)
+    report_text: str = ""
+    error: Optional[str] = None
+
+
 class QuantPaperBooksResponse(BaseModel):
     ok: bool = True
     simulated_only: bool = True
     strategies: List[str] = Field(default_factory=list)
     total_new_trades: int = 0
     books: List[QuantPaperBookItem] = Field(default_factory=list)
+    forward_validation: List[ForwardValidationItem] = Field(default_factory=list)
     report_text: str = ""
     error: Optional[str] = None

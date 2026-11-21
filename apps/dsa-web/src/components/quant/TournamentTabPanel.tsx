@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, ShieldCheck, Sparkles, Terminal, Trophy } from 'lucide-react';
 import {
   alphaApi,
+  type ForwardValidationItem,
   type PaaSignalResponse,
   type QuantPaperBookItem,
   type TournamentResponse,
@@ -10,6 +11,7 @@ import {
 import { getParsedApiError, type ParsedApiError } from '../../api/error';
 import { ApiErrorAlert, Button, SectionCard, StatCard } from '../common';
 import { openCopilotDrawer } from '../chat/copilotEvents';
+import { ForwardValidationCard } from './ForwardValidationCard';
 import { QuantPaperBookCard } from './QuantPaperBookCard';
 import { StrategyEquityChart } from './StrategyEquityChart';
 import { TournamentLeaderboard } from './TournamentLeaderboard';
@@ -18,6 +20,8 @@ export const TournamentTabPanel: React.FC = () => {
   const [tournament, setTournament] = useState<TournamentResponse | null>(null);
   const [paa, setPaa] = useState<PaaSignalResponse | null>(null);
   const [paperBooks, setPaperBooks] = useState<QuantPaperBookItem[]>([]);
+  const [forwardItems, setForwardItems] = useState<ForwardValidationItem[]>([]);
+  const [forwardError, setForwardError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [steppingPaper, setSteppingPaper] = useState(false);
@@ -27,14 +31,19 @@ export const TournamentTabPanel: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [tData, paaData, paperData] = await Promise.all([
+      const [tData, paaData, paperData, forwardData] = await Promise.all([
         alphaApi.getTournament(true),
         alphaApi.getPaaSignal(false).catch(() => null),
         alphaApi.getQuantPaperBooks(true).catch(() => null),
+        alphaApi.getForwardValidation().catch(() => null),
       ]);
       setTournament(tData);
       if (paaData) setPaa(paaData);
       if (paperData && Array.isArray(paperData.books)) setPaperBooks(paperData.books);
+      if (forwardData) {
+        setForwardItems(Array.isArray(forwardData.items) ? forwardData.items : []);
+        setForwardError(forwardData.ok ? null : forwardData.error ?? 'İleri doğrulama okunamadı.');
+      }
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -61,6 +70,10 @@ export const TournamentTabPanel: React.FC = () => {
       setTournament(tData);
       if (paaData) setPaa(paaData);
       if (paperData && Array.isArray(paperData.books)) setPaperBooks(paperData.books);
+      if (paperData && Array.isArray(paperData.forward_validation) && paperData.forward_validation.length > 0) {
+        setForwardItems(paperData.forward_validation);
+        setForwardError(null);
+      }
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -78,6 +91,10 @@ export const TournamentTabPanel: React.FC = () => {
       });
       if (Array.isArray(res.books)) {
         setPaperBooks(res.books);
+      }
+      if (Array.isArray(res.forward_validation) && res.forward_validation.length > 0) {
+        setForwardItems(res.forward_validation);
+        setForwardError(null);
       }
     } catch (err) {
       setError(getParsedApiError(err));
@@ -209,6 +226,9 @@ export const TournamentTabPanel: React.FC = () => {
               stepping={steppingPaper}
               onStep={(opts) => void handleStepPaper(opts)}
             />
+
+            {/* Forward validation gate for the frozen PAA / Meta-A books */}
+            <ForwardValidationCard items={forwardItems} error={forwardError} />
 
             {/* OOS Equity / Drawdown Comparison Chart */}
             <StrategyEquityChart

@@ -219,3 +219,39 @@ def test_daily_step_reports_forward_gate(tmp_path, monkeypatch) -> None:
     assert res["ok"] and res["forward_validation"][0]["status"] == STATUS_COLLECTING
     assert "İleri doğrulama" in res["report_text"]
     assert (tmp_path / "forward_validation.json").exists()  # stored next to the books
+
+
+def test_forward_validation_api_returns_items_and_soft_errors(monkeypatch) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from api.v1.endpoints import alpha
+
+    app = FastAPI()
+    app.include_router(alpha.router, prefix="/api/v1/alpha")
+    fake = [{
+        "strategy_key": "meta_a", "label": "Meta-A", "status": STATUS_COLLECTING, "frozen_date": "2026-11-20",
+        "fingerprint": "37a7ab36a0d9", "forward_days": 12, "forward_return_pct": 0.8, "excess_sharpe": 0.4,
+        "excess_sharpe_se": 4.58, "max_drawdown_pct": -1.2, "slippage": {"fills": 0}, "gate": dict(vars(ForwardGate())),
+        "expectation": {"horizon_days": 120, "band_pct": {"p5": -3.2, "p50": 4.9, "p95": 16.5}},
+        "reasons": ["12/120 ileri işlem günü toplandı."], "warnings": [],
+    }]
+    monkeypatch.setattr(fv, "run_forward_validation", lambda **_k: fake)
+    body = TestClient(app).get("/api/v1/alpha/forward-validation").json()
+    assert body["ok"] is True and body["items"][0]["expectation"]["band_pct"]["p95"] == 16.5
+    assert "İleri doğrulama" in body["report_text"]
+
+    def boom(**_k):
+        raise RuntimeError("no prices")
+
+    monkeypatch.setattr(fv, "run_forward_validation", boom)
+    body = TestClient(app).get("/api/v1/alpha/forward-validation").json()
+    assert body["ok"] is False and "no prices" in body["error"]
+
+
+def test_run_forward_validation_adds_expectation_summary() -> None:
+    summary = fv.expectation_summary(
+        {"start": "2018-01-02", "until": "2026-11-20", "cagr_pct": 10.1, "excess_sharpe": 0.83,
+         "max_drawdown_pct": -8.3, "window_return_pct": {"120": {"p5": -3.2, "p50": 4.9, "p95": 16.5}}}, 120)
+    assert summary["band_pct"]["p50"] == 4.9 and summary["horizon_days"] == 120
+    assert fv.expectation_summary({}, 120) == {}
