@@ -324,7 +324,7 @@ describe('useRunFlowSnapshot', () => {
     ));
 
     expect(fallbackEdge).toBeDefined();
-    expect(fallbackEdge?.label).toBe('降级');
+    expect(fallbackEdge?.label).toBe('Yedek');
     expect(result.current.snapshot?.summary).toEqual(expect.objectContaining({
       failedAttempts: 1,
       fallbackCount: 1,

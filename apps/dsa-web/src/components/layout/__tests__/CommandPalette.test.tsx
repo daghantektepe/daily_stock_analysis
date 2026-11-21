@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommandPalette } from '../CommandPalette';
+import { openCommandPalette } from '../commandPaletteEvents';
 
 const navigateMock = vi.fn();
 
@@ -14,38 +15,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../../hooks/useStockIndex', () => ({
-  useStockIndex: () => ({
-    index: [
-      {
-        canonicalCode: 'NVDA',
-        displayCode: 'NVDA',
-        nameZh: 'NVIDIA',
-        nameEn: 'NVIDIA Corp',
-        pinyinFull: 'nvidia',
-        pinyinAbbr: 'nvda',
-        aliases: [],
-        market: 'US',
-        assetType: 'stock',
-        active: true,
-        popularity: 100,
-      },
-      {
-        canonicalCode: 'THYAO.IS',
-        displayCode: 'THYAO',
-        nameZh: 'Türk Hava Yolları',
-        nameEn: 'Turk Hava Yollari',
-        pinyinFull: 'thyao',
-        pinyinAbbr: 'thy',
-        aliases: [],
-        market: 'TR',
-        assetType: 'stock',
-        active: true,
-        popularity: 95,
-      },
-    ],
-    loading: false,
-    loaded: true,
-  }),
+  useStockIndex: () => ({ index: [], loading: false }),
 }));
 
 describe('CommandPalette', () => {
@@ -53,33 +23,41 @@ describe('CommandPalette', () => {
     vi.clearAllMocks();
   });
 
-  it('opens on Ctrl+K, filters by market, and navigates to Home with autoAnalyze', async () => {
+  it('opens on custom event, switches BIST suffix, navigates to manual stock analysis, and closes on Escape', () => {
     render(
       <MemoryRouter>
         <CommandPalette />
       </MemoryRouter>,
     );
 
-    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const input = await screen.findByPlaceholderText(/Hisse kodu \/ şirket adı yazın/i);
-    expect(input).toBeInTheDocument();
-
-    fireEvent.change(input, { target: { value: 'NVDA' } });
-
-    await waitFor(() => {
-      expect(screen.getByText('NVIDIA')).toBeInTheDocument();
+    act(() => {
+      openCommandPalette();
     });
+    expect(screen.getByRole('dialog', { name: 'Hızlı Arama ve Komut Paleti' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('NVIDIA'));
+    fireEvent.click(screen.getByRole('button', { name: 'BIST (TR)' }));
+    const input = screen.getByPlaceholderText(/Hisse kodu/i);
+    fireEvent.change(input, { target: { value: 'THYAO' } });
+
+    const manualItem = screen.getByRole('button', { name: /THYAO\.IS kodunu doğrudan analiz et/i });
+    fireEvent.click(manualItem);
 
     expect(navigateMock).toHaveBeenCalledWith('/', {
-      state: {
-        stockCode: 'NVDA',
-        stockName: 'NVIDIA',
+      state: expect.objectContaining({
+        stockCode: 'THYAO.IS',
         autoAnalyze: true,
-        selectionSource: 'autocomplete',
-      },
+      }),
     });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // Re-open and close cleanly via Escape
+    act(() => {
+      openCommandPalette();
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

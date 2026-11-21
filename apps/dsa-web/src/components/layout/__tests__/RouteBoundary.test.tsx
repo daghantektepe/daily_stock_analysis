@@ -48,15 +48,15 @@ describe('RouteOutletBoundary', () => {
         </MemoryRouter>,
       );
 
-      expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument();
-      expect(await screen.findByRole('heading', { name: '页面加载失败' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '重新加载页面' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '返回首页' })).toBeInTheDocument();
+      expect(screen.getByRole('navigation', { name: 'Ana menü' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Page failed to load' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Reload page' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Back home' })).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('link', { name: '持仓' }));
+      fireEvent.click(screen.getByRole('link', { name: 'Portföy' }));
 
       expect(await screen.findByTestId('portfolio-page')).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: '页面加载失败' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Page failed to load' })).not.toBeInTheDocument();
     } finally {
       consoleError.mockRestore();
     }

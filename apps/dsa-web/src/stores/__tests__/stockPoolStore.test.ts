@@ -521,7 +521,7 @@ describe('stockPoolStore', () => {
     await useStockPoolStore.getState().submitAnalysis();
 
     const state = useStockPoolStore.getState();
-    expect(state.inputError).toBe('请输入有效的股票代码或股票名称');
+    expect(state.inputError).toContain('Lütfen geçerli bir hisse kodu veya adı');
     expect(state.isAnalyzing).toBe(false);
     expect(analysisApi.analyzeAsync).not.toHaveBeenCalled();
   });

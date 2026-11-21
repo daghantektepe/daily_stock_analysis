@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Bell, Compass, Download, Search, ShieldAlert, Terminal, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { alphaApi, type AlphaOverviewResponse } from '../../api/alpha';
-import { OPEN_COMMAND_PALETTE_EVENT } from './CommandPalette';
+import { OPEN_COMMAND_PALETTE_EVENT } from './commandPaletteEvents';
 import { openCopilotDrawer } from '../chat/copilotEvents';
 
 const POLL_INTERVAL_MS = 30000;

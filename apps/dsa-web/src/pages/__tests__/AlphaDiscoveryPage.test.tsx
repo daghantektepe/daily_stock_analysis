@@ -64,6 +64,7 @@ describe('AlphaDiscoveryPage', () => {
       </MemoryRouter>,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /ABD Yüksek Alfa/i }));
     fireEvent.click(screen.getByRole('button', { name: /^Taramayı Başlat$/i }));
 
     await waitFor(() => {

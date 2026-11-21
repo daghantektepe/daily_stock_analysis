@@ -41,13 +41,16 @@ export const ReportPriceChart: React.FC<ReportPriceChartProps> = ({
   takeProfit,
   idealBuy,
 }) => {
-  const [bars, setBars] = useState<KLineItem[]>([]);
+  const [chartState, setChartState] = useState<{ key: string; bars: KLineItem[] }>({
+    key: '',
+    bars: [],
+  });
   const [days, setDays] = useState<number>(90);
+  const code = stockCode.trim();
+  const requestKey = code ? `${code}:${days}` : '';
 
   useEffect(() => {
-    const code = stockCode.trim();
     if (!code) {
-      setBars([]);
       return;
     }
 
@@ -57,20 +60,28 @@ export const ReportPriceChart: React.FC<ReportPriceChartProps> = ({
         params: { period: 'daily', days },
       })
       .then((res) => {
-        if (!cancelled && Array.isArray(res.data?.data)) {
-          setBars(res.data.data);
+        if (!cancelled) {
+          setChartState({
+            key: requestKey,
+            bars: Array.isArray(res.data?.data) ? res.data.data : [],
+          });
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setBars([]);
+          setChartState({ key: requestKey, bars: [] });
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [stockCode, days]);
+  }, [code, days, requestKey]);
+
+  const bars = useMemo(
+    () => (chartState.key === requestKey ? chartState.bars : []),
+    [chartState, requestKey]
+  );
 
   const domain = useMemo(() => {
     if (bars.length === 0) return ['auto', 'auto'] as const;

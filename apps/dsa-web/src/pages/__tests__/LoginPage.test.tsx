@@ -38,14 +38,14 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByLabelText('管理员密码'), { target: { value: 'passwd6' } });
-    fireEvent.change(screen.getByLabelText('确认密码'), { target: { value: 'passwd7' } });
-    fireEvent.click(screen.getByRole('button', { name: '完成设置并登录' }));
+    fireEvent.change(screen.getByLabelText('Admin password'), { target: { value: 'passwd6' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'passwd7' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Finish setup and sign in' }));
 
-    expect(await screen.findByText('两次输入的密码不一致')).toBeInTheDocument();
+    expect(await screen.findByText('The two passwords do not match')).toBeInTheDocument();
     expect(login).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('管理员密码')).toHaveAttribute('data-appearance', 'login');
-    expect(screen.getByLabelText('确认密码')).toHaveAttribute('data-appearance', 'login');
+    expect(screen.getByLabelText('Admin password')).toHaveAttribute('data-appearance', 'login');
+    expect(screen.getByLabelText('Confirm password')).toHaveAttribute('data-appearance', 'login');
   });
 
   it('navigates to redirect after a successful login', async () => {
@@ -57,11 +57,11 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByLabelText('登录密码'), { target: { value: 'passwd6' } });
-    fireEvent.click(screen.getByRole('button', { name: '授权进入工作台' }));
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'passwd6' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enter workspace' }));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/settings', { replace: true }));
-    expect(screen.getByLabelText('登录密码')).toHaveAttribute('data-appearance', 'login');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('data-appearance', 'login');
   });
 
   it('does not override login theme tokens inline so light mode can take effect', () => {

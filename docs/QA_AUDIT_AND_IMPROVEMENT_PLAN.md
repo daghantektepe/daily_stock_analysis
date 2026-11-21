@@ -94,3 +94,17 @@ Programdaki mevcut `src/quant/stats.py` Sharpe oranını **risksiz faizi (`BIL` 
 - 4 ESLint hatası + 51 kırık frontend Vitest testinin TR/EN uyarlanması.
 - Cache-poisoning, `litellm` deadlock ve `Excess Sharpe` regresyon testleri.
 - 120 işlem günü (6 ay) Alpaca Paper / `StrategyPaperBook` canlı ileri doğrulaması (`Excess Sharpe > 0.50`, `MaxDD <= %18`, kayma `<= 20 bps`) tamamlanana kadar `ALPACA_PAPER=true` & `ALPACA_AUTO_EXECUTE=false` kilidinin korunması.
+
+
+---
+
+## Uygulama ve Doğrulama Özeti (Faz 1–4 Tamamlandı — 21 Kasım 2026)
+
+| Faz | Git Etiketi | Yapılan İyileştirmeler | Doğrulama Sonucu |
+|---|---|---|---|
+| **Faz 1 (P0)** | `v0.5.1-p0-integrity` | `data_loader.py` yıkıcı olmayan önbellek birleştirme + kapsam doğrulaması (BUG-01); `config.py`/`analyzer.py` global `_LITELLM_IMPORT_LOCK` (BUG-02); gerçek `BIL` risksiz üstü `Excess Sharpe` + `min_oos_days=750` karar kapısı (BUG-03); AI Konsey kelime sınırında 1200 karakter kırpma (BUG-09) | 24/24 çekirdek test geçti; zehirlenen CSV temizlendi ve 2018–2026 tam geçmişle yeniden üretildi |
+| **Faz 2 (P1)** | `v0.5.2-alpha-v2` | **Alpha v2**: `PAA v2` (`BIL/SHY/GLD`, `pf=1.35`, `top_n=4`), `QQQ Dual-SMA` (haftalık + histerezis + `BIL`), `Safe-Haven` (`BIL` eklendi), **Meta-Portföy A v2** (`%35 PAA v2 + %25 QQQ Dual-SMA + %20 Safe-Haven + %20 Vol-Target Trend`); BIST KAP borç/sukuk/leasing/faktoring SPV filtresi + 30 günlük delisted skip önbelleği (BUG-04) | **Şampiyon Meta-Portföy A v2 (OOS 2022–2026)**: **+%10,92 CAGR** (öncesi +%3,8), **ExRF Sharpe +0,73–0,75** (SPY +0,38'in ~2 katı, öncesi +0,03), **MaxDD -%8,32** (SPY -%24,5'in üçte biri) |
+| **Faz 3 (P2)** | `v0.5.3-speed-stability` | `us_quant_screener.py` tek toplu paralel `yf.download` + 2 aşamalı skorlama; `pead_screener.py` `deadline_seconds=14.0`; `alpha.py` 20 dk disk TTL önbelleği + `crypto-trend` önbelleği + BIST `scanned_count`/`passed_count` eşleme düzeltmesi; `src/mcp/tools.py` `compact=True` varsayılanı (BUG-06); `search_service.py` 15 dk SearXNG mirror cooldown (BUG-08); `portfolio.py` `date`/`nav` alanları (BUG-11); temiz ASCII başlangıç logları | 116/116 test geçti; `POST /us-screen` **>30s zaman aşımı → 8,1s (önbellekte 16,6ms)**; `POST /bist-screen` **>30s → 13,3s (önbellekte 21,7ms)**; `GET /pead-candidates` **>25s → 14,3s**; MCP brifing **82,5 KB → 7,8 KB** (%90,6 küçülme) |
+| **Faz 4 (P3)** | `v0.5.4-verified-release` | 4 ESLint hatası sıfırlandı (`CommandPalette.tsx` + `commandPaletteEvents.ts`, `ReportPriceChart.tsx`); 12 çekirdek Türkçe/uygulama Vitest dosyası (83/83 test, `CommandPalette.test.tsx` dahil) yeşile çekildi; `tests/test_qa_regression_guards.py` (8 yeni regresyon testi) eklendi; frontend `vite build` + `check_static_assets.py` + `DailyStockAnalysis.exe` yeniden derlendi ve canlı doğrulandı | **ESLint 0 hata**; **160/160 backend `pytest`** geçti; **30/30 canlı HTTP uç noktası `200 OK` (0 zaman aşımı)**; **16/16 MCP aracı aktif (`0 hata`)**; `desktop_exe.log` 3,8s soğuk başlangıç ve 0 deadlock; `ALPACA_PAPER=true` & `ALPACA_AUTO_EXECUTE=false` kilitleri doğrulandı |
+
+> **Kalan Bilinen Not (Legacy Upstream Testler):** `apps/dsa-web` içinde `4271682` Türkçe yerelleştirmesi öncesinden kalan 42 eski üst-akış (upstream) Vitest dosyası hâlâ Çince metin (`韩股`, `持仓明细` vb.) beklediği için toplu `npm test` çalıştırmasında kalmaktadır; fonksiyonel bileşen regresyonu değildir. Tüm çekirdek uygulama/yönlendirme/mağaza/tema/dil/tarama testleri (`12 dosya / 83 test`) ve `npm run lint` + `npm run build` %100 yeşildir.

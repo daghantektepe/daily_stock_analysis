@@ -21,14 +21,7 @@ import { useStockIndex } from '../../hooks/useStockIndex';
 import type { Market, StockSuggestion } from '../../types/stockIndex';
 import { searchStocks } from '../../utils/searchStocks';
 import { cn } from '../../utils/cn';
-
-export const OPEN_COMMAND_PALETTE_EVENT = 'dsa:open-command-palette';
-
-export function openCommandPalette() {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT));
-  }
-}
+import { OPEN_COMMAND_PALETTE_EVENT } from './commandPaletteEvents';
 
 type MarketFilter = 'ALL' | 'US' | 'TR' | 'HK' | 'CN';
 
@@ -143,33 +136,46 @@ export const CommandPalette: React.FC = () => {
   // Lazy load stock index only after user opens the command palette
   const { index, loading } = useStockIndex(isOpen);
 
+  const openPalette = useCallback(() => {
+    setActiveIndex(0);
+    setIsOpen(true);
+  }, []);
+
+  const closePalette = useCallback(() => {
+    setIsOpen(false);
+    setQuery('');
+    setActiveIndex(0);
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setIsOpen((prev) => !prev);
+        setIsOpen((prev) => {
+          if (prev) {
+            setQuery('');
+          }
+          setActiveIndex(0);
+          return !prev;
+        });
       } else if (event.key === 'Escape' && isOpen) {
         event.preventDefault();
-        setIsOpen(false);
+        closePalette();
       }
     };
-    const onCustomOpen = () => setIsOpen(true);
 
     window.addEventListener('keydown', onKeyDown);
-    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, onCustomOpen);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, openPalette);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, onCustomOpen);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, openPalette);
     };
-  }, [isOpen]);
+  }, [closePalette, isOpen, openPalette]);
 
   useEffect(() => {
-    if (isOpen) {
-      setActiveIndex(0);
-      window.setTimeout(() => inputRef.current?.focus(), 20);
-    } else {
-      setQuery('');
-    }
+    if (!isOpen) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 20);
+    return () => window.clearTimeout(timer);
   }, [isOpen]);
 
   const filteredRoutes = useMemo(() => {
@@ -234,13 +240,11 @@ export const CommandPalette: React.FC = () => {
     return list;
   }, [filteredRoutes, manualSymbol, stockMatches]);
 
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [query, market]);
+  const safeActiveIndex = entries.length > 0 ? Math.min(activeIndex, entries.length - 1) : 0;
 
   const executeEntry = useCallback(
     (entry: PaletteEntry) => {
-      setIsOpen(false);
+      closePalette();
       if (entry.kind === 'stock' || entry.kind === 'manual') {
         navigate('/', {
           state: {
@@ -254,7 +258,7 @@ export const CommandPalette: React.FC = () => {
         navigate(entry.route.to);
       }
     },
-    [navigate]
+    [closePalette, navigate]
   );
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -267,7 +271,7 @@ export const CommandPalette: React.FC = () => {
       setActiveIndex((prev) => (prev - 1 + entries.length) % entries.length);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const target = entries[activeIndex] ?? entries[0];
+      const target = entries[safeActiveIndex] ?? entries[0];
       if (target) executeEntry(target);
     }
   };
@@ -277,7 +281,7 @@ export const CommandPalette: React.FC = () => {
   const modal = (
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 px-3 pt-[10vh] backdrop-blur-sm"
-      onClick={() => setIsOpen(false)}
+      onClick={closePalette}
     >
       <div
         role="dialog"
@@ -292,14 +296,17 @@ export const CommandPalette: React.FC = () => {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveIndex(0);
+            }}
             onKeyDown={handleInputKeyDown}
             placeholder="Hisse kodu / şirket adı yazın (örn. NVDA, AAPL, THYAO) veya sayfa arayın..."
             className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-text focus:outline-none"
           />
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={closePalette}
             className="rounded-lg p-1 text-secondary-text hover:bg-hover hover:text-foreground"
             aria-label="Kapat"
           >
@@ -313,7 +320,10 @@ export const CommandPalette: React.FC = () => {
               <button
                 key={pill.id}
                 type="button"
-                onClick={() => setMarket(pill.id)}
+                onClick={() => {
+                  setMarket(pill.id);
+                  setActiveIndex(0);
+                }}
                 className={cn(
                   'rounded-lg px-2.5 py-1 font-medium transition-colors',
                   market === pill.id
@@ -336,7 +346,7 @@ export const CommandPalette: React.FC = () => {
           ) : (
             <div className="space-y-1">
               {entries.map((entry, idx) => {
-                const active = idx === activeIndex;
+                const active = idx === safeActiveIndex;
                 if (entry.kind === 'stock' || entry.kind === 'manual') {
                   return (
                     <button
