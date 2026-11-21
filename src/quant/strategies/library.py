@@ -77,19 +77,20 @@ def compute_paa_weights(
     prices: pd.DataFrame,
     *,
     risk_assets: Sequence[str] = US_ETF_RISK_ASSETS,
-    safe_assets: Sequence[str] = ("IEF", "SHY"),
+    safe_assets: Sequence[str] = ("BIL", "SHY", "GLD"),
     lookback_days: int = 252,
-    top_n: int = 6,
-    protection_factor: float = 2.0,
+    top_n: int = 4,
+    protection_factor: float = 1.35,
 ) -> pd.DataFrame:
-    """Protective Asset Allocation (PAA) crash-shield strategy.
+    """Protective Asset Allocation v2 (PAA) balanced crash-shield strategy.
 
     At each monthly rebalance (and latest close):
     - Momentum of each risk asset = ``close / SMA(252) - 1``.
     - Breadth crash shield: count ``n_bad`` of risky assets with momentum <= 0.
     - Crash protection fraction ``bf = min(1.0, protection_factor * n_bad / n_risk)``.
-      With 12 risk ETFs and ``protection_factor=2.0``, >=6 risky ETFs below SMA252
-      triggers 100% defensive shift into the strongest safe bond/cash ETF (``IEF``/``SHY``).
+      With balanced ``protection_factor=1.35`` and safe-haven pool ``BIL / SHY / GLD``,
+      deep broad bear markets rotate smoothly into T-Bills or trending Gold without
+      staying trapped in bond bear markets during equity recoveries.
     - Remaining ``(1 - bf)`` is allocated equally across the top ``top_n`` positive-momentum risky ETFs.
     """
     risk_cols = [c for c in risk_assets if c in prices.columns]
@@ -279,19 +280,19 @@ def _build_gtaa5_weights(prices: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_meta_a_weights(prices: pd.DataFrame) -> pd.DataFrame:
-    """Compute causal target weight matrix for Meta-Portfolio A (US Orthogonal ETF Ensemble).
+    """Compute causal target weight matrix for Meta-Portfolio A v2 (US Orthogonal ETF Ensemble).
 
-    Linear blend matching ``META_US_ETF_ALL_WEATHER`` in ``src/quant/portfolio.py``:
-      - 40% Protective Asset Allocation (PAA)
-      - 20% Vigilant Asset Allocation (VAA-G4)
-      - 20% Faber GTAA-5 (200D SMA Trend)
-      - 20% All-Weather Risk Parity (63D Inverse-Vol)
+    Fixed ex-ante risk-budgeted blend matching ``META_US_ETF_ALL_WEATHER`` in ``src/quant/portfolio.py``:
+      - 35% Protective Asset Allocation v2 (PAA Crash-Shield -> BIL/SHY/GLD)
+      - 25% Nasdaq-100 (QQQ) 50/200D Dual-SMA Trend with Weekly Hysteresis Band
+      - 20% Safe-Haven Gold & Treasury Momentum Rotation (GLD/TLT/IEF/SHY/BIL)
+      - 20% Vol-Target Multi-Asset Trend (10% Target Vol Ballast)
     """
     components = [
-        (compute_paa_weights(prices), 0.40),
-        (_build_vaa_weights(prices), 0.20),
-        (_build_gtaa5_weights(prices), 0.20),
-        (_build_risk_parity_weights(prices), 0.20),
+        (compute_paa_weights(prices), 0.35),
+        (_build_qqq_dual_sma(prices), 0.25),
+        (_build_safe_haven_rotation(prices), 0.20),
+        (_build_vol_target_trend_weights(prices), 0.20),
     ]
     all_cols = list(dict.fromkeys(col for df, _ in components for col in df.columns))
     combined = pd.DataFrame(0.0, index=prices.index, columns=all_cols)
@@ -395,7 +396,7 @@ def _build_factor_rotation(prices: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_safe_haven_rotation(prices: pd.DataFrame) -> pd.DataFrame:
-    cols = [c for c in ("GLD", "TLT", "IEF", "SHY") if c in prices.columns]
+    cols = [c for c in ("GLD", "TLT", "IEF", "SHY", "BIL") if c in prices.columns]
     mom3 = prices[cols].pct_change(63)
     w = pd.DataFrame(0.0, index=prices.index, columns=cols)
     for idx in range(65, len(prices)):
@@ -420,17 +421,32 @@ def _build_single_sma_timing(prices: pd.DataFrame, ticker: str, sma_days: int = 
 
 
 def _build_qqq_dual_sma(prices: pd.DataFrame) -> pd.DataFrame:
-    cols = [c for c in ("QQQ", "SHY") if c in prices.columns]
+    """Nasdaq-100 50/200D Dual-SMA Trend with Almgren-Chriss weekly hysteresis band (cuts whipsaw turnover >60%)."""
+    safe = "BIL" if "BIL" in prices.columns else ("SHY" if "SHY" in prices.columns else None)
+    cols = [c for c in ("QQQ", safe) if c and c in prices.columns]
     w = pd.DataFrame(0.0, index=prices.index, columns=cols)
     if "QQQ" not in prices.columns:
         return w
-    sma50 = prices["QQQ"].rolling(50, min_periods=50).mean()
-    sma200 = prices["QQQ"].rolling(200, min_periods=200).mean()
-    in_trend = (prices["QQQ"] > sma50) & (prices["QQQ"] > sma200)
-    w["QQQ"] = np.where(in_trend, 1.0, 0.0)
-    if "SHY" in cols:
-        w["SHY"] = np.where(in_trend, 0.0, 1.0)
-    return w
+    px = prices["QQQ"]
+    sma50 = px.rolling(50, min_periods=50).mean()
+    sma200 = px.rolling(200, min_periods=200).mean()
+    pos = np.zeros(len(px), dtype=float)
+    holding = False
+    for i in range(200, len(px)):
+        p = float(px.iloc[i])
+        s50 = float(sma50.iloc[i])
+        s200 = float(sma200.iloc[i])
+        if np.isnan(p) or np.isnan(s50) or np.isnan(s200):
+            continue
+        if not holding and p > s50 * 1.01 and p > s200 * 1.01:
+            holding = True
+        elif holding and (p < s50 * 0.985 or p < s200 * 0.99):
+            holding = False
+        pos[i] = 1.0 if holding else 0.0
+    w["QQQ"] = pos
+    if safe and safe in cols:
+        w[safe] = np.where(np.arange(len(px)) >= 200, 1.0 - pos, 0.0)
+    return _causal_rebalance(w, "W")
 
 
 def _build_spy_rsi2(prices: pd.DataFrame) -> pd.DataFrame:

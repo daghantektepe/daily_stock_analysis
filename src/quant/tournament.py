@@ -83,17 +83,19 @@ def format_tournament_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## Turnuva Liderlik Tablosu (OOS Net)",
+            "## Turnuva Liderlik Tablosu (OOS Net · Risksiz Faiz `BIL` Üstü Excess Sharpe)",
             "",
-            "| Strateji | Evren | Karar | OOS CAGR | OOS Sharpe | OOS MaxDD | Recovery | DSR (`N=25`) | Güncel Hedef |",
-            "| :--- | :---: | :---: | ---: | ---: | ---: | ---: | ---: | :--- |",
+            "| Strateji | Evren | Karar | OOS CAGR | ExRF CAGR | ExRF Sharpe | MaxDD | Recovery | DSR (`N=25`) | Güncel Hedef |",
+            "| :--- | :---: | :---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |",
         ]
     )
     for row in strategies:
         oos = row.get("oos") or {}
+        ex_cagr = f"{oos.get('excess_cagr_pct', 0):+.1f}%" if row.get("currency") == "USD" else "TRY"
+        ex_sr = f"{oos.get('excess_sharpe', oos.get('sharpe', 0)):+.2f}" if row.get("currency") == "USD" else f"{oos.get('sharpe', 0):.2f} (TL)"
         lines.append(
             f"| **{row.get('name')}** | `{row.get('universe')}` | `{row.get('verdict')}` | "
-            f"{oos.get('cagr_pct', 0):+.1f}% | {oos.get('sharpe', 0):.2f} | "
+            f"{oos.get('cagr_pct', 0):+.1f}% | {ex_cagr} | {ex_sr} | "
             f"{oos.get('max_drawdown_pct', 0):.1f}% | {oos.get('recovery_factor', 0):.2f}x | "
             f"%{oos.get('dsr_pct', 0):.1f} | {row.get('signal_summary', '')} |"
         )
@@ -303,8 +305,14 @@ def get_live_paa_signal(
         return {"ok": False, "error": "Insufficient ETF price history for PAA (need >= 252 trading days)."}
 
     risk_cols = [c for c in US_ETF_RISK_ASSETS if c in closes.columns]
-    safe_cols = [c for c in ("IEF", "SHY") if c in closes.columns]
-    weights = compute_paa_weights(closes, risk_assets=risk_cols, safe_assets=safe_cols)
+    safe_cols = [c for c in ("BIL", "SHY", "GLD") if c in closes.columns]
+    weights = compute_paa_weights(
+        closes,
+        risk_assets=risk_cols,
+        safe_assets=safe_cols,
+        top_n=4,
+        protection_factor=1.35,
+    )
 
     sma252 = closes[risk_cols].rolling(252, min_periods=252).mean()
     last_close = closes.iloc[-1]
@@ -331,7 +339,7 @@ def get_live_paa_signal(
 
     last_w = weights.iloc[-1]
     target_weights = {str(col): round(float(val) * 100.0, 1) for col, val in last_w.items() if float(val) > 0.001}
-    crash_protection_pct = round(min(100.0, (2.0 * bad_count / max(1, len(risk_cols))) * 100.0), 1)
+    crash_protection_pct = round(min(100.0, (1.35 * bad_count / max(1, len(risk_cols))) * 100.0), 1)
     as_of = closes.index[-1].strftime("%Y-%m-%d") if hasattr(closes.index[-1], "strftime") else str(closes.index[-1])
 
     return {

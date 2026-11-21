@@ -96,8 +96,9 @@ def test_paa_crash_shield_shifts_100_pct_defensive_when_half_assets_below_sma252
     prices = _synthetic_etf_prices(360, crash_tail=True)
     w = compute_paa_weights(prices)
     last = w.iloc[-1]
-    defensive_sum = float(last.get("IEF", 0.0) + last.get("SHY", 0.0))
-    offensive_sum = float(last.drop(labels=[c for c in ("IEF", "SHY") if c in last.index]).sum())
+    safe_cols = ("BIL", "SHY", "IEF", "GLD")
+    defensive_sum = float(sum(last.get(c, 0.0) for c in safe_cols))
+    offensive_sum = float(last.drop(labels=[c for c in safe_cols if c in last.index]).sum())
     assert defensive_sum >= 0.999
     assert offensive_sum <= 0.001
 

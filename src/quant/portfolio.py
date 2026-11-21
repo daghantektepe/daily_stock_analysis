@@ -32,23 +32,24 @@ def build_meta_portfolios(
     """Construct Meta-Portfolio A (US Orthogonal ETF Ensemble) & Meta-Portfolio B (Global ETF + Crypto Trend)."""
     meta_results: Dict[str, StrategyResult] = {}
 
-    # Meta-Portfolio A: Orthogonal US ETF Ensemble (PAA 40% + VAA 20% + Faber GTAA-5 20% + Risk Parity 20%)
+    # Meta-Portfolio A v2: Orthogonal Positive-Excess-Sharpe US ETF Ensemble
+    # (35% PAA v2 + 25% QQQ Dual-SMA Hysteresis + 20% Safe-Haven Rotation + 20% Vol-Target Trend)
     meta_a_spec = StrategySpec(
         strategy_id="META_US_ETF_ALL_WEATHER",
-        name="Meta-Portföy A (ABD Ortogonal ETF Ensemble)",
+        name="Meta-Portföy A v2 (ABD Ortogonal ETF Ensemble)",
         universe="meta",
         category="Meta-Portfolio",
-        description="PAA (%40) + VAA (%20) + Faber GTAA-5 (%20) + All-Weather Risk Parity (%20) ortogonal ETF birleşimi.",
+        description="PAA v2 (%35) + QQQ Çift-SMA Histerezis (%25) + Safe-Haven Altın/Tahvil (%20) + Vol-Target Trend (%20) ortogonal ETF birleşimi.",
         cost_bps=5.0,
         trading_days_per_year=252,
     )
     meta_a_components = [
         (base_results[sid], w)
         for sid, w in (
-            ("PROTECTIVE_ASSET_ALLOCATION_PAA", 0.40),
-            ("VIGILANT_ASSET_ALLOCATION_VAA", 0.20),
-            ("ETF_TREND_10M_SMA", 0.20),
-            ("ALL_WEATHER_RISK_PARITY", 0.20),
+            ("PROTECTIVE_ASSET_ALLOCATION_PAA", 0.35),
+            ("QQQ_DUAL_SMA_50_200", 0.25),
+            ("SAFE_HAVEN_ROTATION", 0.20),
+            ("ETF_VOL_TARGET_TREND", 0.20),
         )
         if sid in base_results
     ]

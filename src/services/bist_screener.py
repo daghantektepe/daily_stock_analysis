@@ -23,8 +23,11 @@ Fail-open: network errors return an empty selection so callers can fall back to
 from __future__ import annotations
 
 import csv
+import json
 import logging
 import math
+import re
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
@@ -35,10 +38,87 @@ from src.services.market_symbol_utils import is_tr_suffix_symbol
 logger = logging.getLogger(__name__)
 
 DEFAULT_SEED_CSV = Path(__file__).resolve().parents[2] / "scripts" / "stock_index_seeds" / "stock_list_tr.csv"
+DEFAULT_DELISTED_CACHE_PATH = Path("data") / "cache" / "bist_delisted_skip.json"
+_DELISTED_TTL_SECONDS = 30 * 86400
 DEFAULT_TOP_N = 8
 DEFAULT_MIN_SCORE = 25.0
 DEFAULT_MIN_TURNOVER_TRY = 5_000_000.0
 DEFAULT_KAP_DAYS = 2
+
+# Known publicly traded BIST equities whose company titles resemble financial/leasing/brokerage issuers
+_KNOWN_TRADED_FINANCIAL_EQUITIES = frozenset(
+    {
+        "A1CAP.IS", "AKBNK.IS", "ALBRK.IS", "BRKVY.IS", "CRDFA.IS", "GARAN.IS",
+        "GARFA.IS", "GEDIK.IS", "GLCVY.IS", "HALKB.IS", "ICBCT.IS", "INFO.IS",
+        "ISCTR.IS", "ISFIN.IS", "ISMEN.IS", "KLNMA.IS", "LIDFA.IS", "OSMEN.IS",
+        "OYYAT.IS", "QNBFK.IS", "QNBTR.IS", "SEKFK.IS", "SKBNK.IS", "TERA.IS",
+        "TSKB.IS", "ULUFA.IS", "VAKBN.IS", "VAKFN.IS", "YKBNK.IS",
+    }
+)
+# Non-equity KAP debt / sukuk / asset-leasing / factoring / financing SPVs that do NOT trade as equities
+_NON_EQUITY_NAME_RE = re.compile(
+    r"VARLIK\s+K[İI]RALAMA|SUKUK|VARLIK\s+YÖNET[İI]M|FAKTOR[İI]NG|F[İI]NANSAL\s+K[İI]RALAMA|"
+    r"F[İI]NANSMAN\s+A\.?Ş|PORTFÖY\s+YÖNET[İI]M|YATIRIM\s+MENKUL|MENKUL\s+DEĞERLER|"
+    r"KATILIM\s+BANKASI|YATIRIM\s+BANKASI|KALKINMA\s+BANKASI",
+    re.IGNORECASE,
+)
+_NON_EQUITY_SUFFIX_RE = re.compile(r"(?:VK|VKS|FL|FK|FN|VY|FA|YB)\.IS$", re.IGNORECASE)
+
+# High-liquidity BIST core leaders scanned first so fast/capped API scans always cover market leaders
+BIST_CORE_LEADERS: tuple[str, ...] = (
+    "THYAO.IS", "ASELS.IS", "TUPRS.IS", "KCHOL.IS", "BIMAS.IS", "AKBNK.IS",
+    "GARAN.IS", "ISCTR.IS", "YKBNK.IS", "EREGL.IS", "FROTO.IS", "SISE.IS",
+    "SAHOL.IS", "TCELL.IS", "TOASO.IS", "PGSUS.IS", "ENKAI.IS", "MGROS.IS",
+    "KRDMD.IS", "ARCLK.IS", "HALKB.IS", "VAKBN.IS", "EKGYO.IS", "PETKM.IS",
+    "SASA.IS", "HEKTS.IS", "ASTOR.IS", "KONTR.IS", "DOAS.IS", "TTKOM.IS",
+    "AEFES.IS", "CCOLA.IS", "ULKER.IS", "KOZAL.IS", "KOZAA.IS", "TAVHL.IS",
+    "GUBRF.IS", "OYAKC.IS", "CIMSA.IS", "AKSEN.IS", "ENJSA.IS", "ODAS.IS",
+    "ALARK.IS", "VESTL.IS", "OTKAR.IS", "BRSAN.IS", "MAVI.IS", "SOKM.IS",
+    "MPARK.IS", "ISMEN.IS", "AGHOL.IS", "ISGYO.IS", "TRGYO.IS", "TTRAK.IS",
+)
+
+
+def is_non_equity_kap_issuer(symbol: str, name: str = "") -> bool:
+    """Return True if a KAP entity is a non-equity bond/sukuk/leasing/factoring issuer."""
+    sym = str(symbol or "").strip().upper()
+    if sym in _KNOWN_TRADED_FINANCIAL_EQUITIES:
+        return False
+    if _NON_EQUITY_SUFFIX_RE.search(sym):
+        return True
+    if name and _NON_EQUITY_NAME_RE.search(name):
+        return True
+    return False
+
+
+def _load_delisted_skip_set(path: Path = DEFAULT_DELISTED_CACHE_PATH) -> set[str]:
+    if not path.is_file():
+        return set()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            return set()
+        now = time.time()
+        return {k.upper() for k, ts in raw.items() if isinstance(ts, (int, float)) and (now - ts) < _DELISTED_TTL_SECONDS}
+    except (OSError, ValueError):
+        return set()
+
+
+def _record_delisted_skip(missing: Sequence[str], path: Path = DEFAULT_DELISTED_CACHE_PATH) -> None:
+    if not missing:
+        return
+    try:
+        existing: Dict[str, float] = {}
+        if path.is_file():
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                existing = {str(k).upper(): float(v) for k, v in loaded.items() if isinstance(v, (int, float))}
+        now = time.time()
+        for sym in missing:
+            existing[str(sym).upper()] = now
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
+    except (OSError, ValueError):
+        pass
 
 CATALYST_KAP_TAGS = frozenset({"contract", "buyback", "bonus_issue", "dividend", "earnings"})
 SECONDARY_KAP_TAGS = frozenset({"ownership", "rating"})
@@ -51,8 +131,9 @@ def load_bist_universe(
     *,
     seed_path: Optional[Path] = None,
     kap_fetcher: Any = None,
+    max_symbols: Optional[int] = None,
 ) -> List[Dict[str, str]]:
-    """Return ``[{"symbol": "THYAO.IS", "name": "Türk Hava Yolları A.O."}, ...]``."""
+    """Return equity-only ``[{"symbol": "THYAO.IS", "name": "..."}, ...]`` prioritizing liquid BIST leaders."""
     target = Path(seed_path or DEFAULT_SEED_CSV)
     rows: List[Dict[str, str]] = []
     seen = set()
@@ -61,28 +142,36 @@ def load_bist_universe(
             with open(target, "r", encoding="utf-8") as handle:
                 for row in csv.DictReader(handle):
                     symbol = str(row.get("symbol") or row.get("ts_code") or "").strip().upper()
+                    name = str(row.get("name") or symbol).strip()
                     if not symbol or not is_tr_suffix_symbol(symbol) or symbol in seen:
                         continue
+                    if is_non_equity_kap_issuer(symbol, name):
+                        continue
                     seen.add(symbol)
-                    rows.append({"symbol": symbol, "name": str(row.get("name") or symbol).strip()})
+                    rows.append({"symbol": symbol, "name": name})
         except OSError as exc:
             logger.info("[bist-screener] seed CSV read failed: %s", exc)
-    if rows:
-        return rows
+    if not rows:
+        try:
+            if kap_fetcher is None:
+                from data_provider.kap_fetcher import KapDisclosureFetcher
 
-    try:
-        if kap_fetcher is None:
-            from data_provider.kap_fetcher import KapDisclosureFetcher
+                kap_fetcher = KapDisclosureFetcher()
+            table = kap_fetcher._company_table()
+            for ticker in sorted(table):
+                symbol = f"{ticker}.IS"
+                name = str(table[ticker].get("title") or symbol).strip()
+                if symbol not in seen and not is_non_equity_kap_issuer(symbol, name):
+                    seen.add(symbol)
+                    rows.append({"symbol": symbol, "name": name})
+        except Exception as exc:  # noqa: BLE001 - fail-open
+            logger.info("[bist-screener] KAP universe fallback failed: %s", exc)
 
-            kap_fetcher = KapDisclosureFetcher()
-        table = kap_fetcher._company_table()
-        for ticker in sorted(table):
-            symbol = f"{ticker}.IS"
-            if symbol not in seen:
-                seen.add(symbol)
-                rows.append({"symbol": symbol, "name": str(table[ticker].get("title") or symbol).strip()})
-    except Exception as exc:  # noqa: BLE001 - fail-open
-        logger.info("[bist-screener] KAP universe fallback failed: %s", exc)
+    # Prioritize liquid BIST core leaders first so capped scans stay fast and high-quality
+    priority = {sym: idx for idx, sym in enumerate(BIST_CORE_LEADERS)}
+    rows.sort(key=lambda r: (priority.get(r["symbol"], 10_000), r["symbol"]))
+    if max_symbols is not None and max_symbols > 0:
+        return rows[:max_symbols]
     return rows
 
 
@@ -92,8 +181,9 @@ def yfinance_batch_bars(
     period: str = "3mo",
     chunk_size: int = 100,
 ) -> Dict[str, List[Dict[str, Any]]]:
-    """Download daily OHLCV bars in batches from Yahoo Finance (fail-open per batch)."""
-    clean_symbols = [str(s).strip().upper() for s in symbols if str(s or "").strip()]
+    """Download daily OHLCV bars in batches from Yahoo Finance (fail-open per batch, skips known delisted)."""
+    skip_set = _load_delisted_skip_set()
+    clean_symbols = [str(s).strip().upper() for s in symbols if str(s or "").strip() and str(s).strip().upper() not in skip_set]
     if not clean_symbols:
         return {}
     try:
@@ -102,6 +192,7 @@ def yfinance_batch_bars(
         return {}
 
     out: Dict[str, List[Dict[str, Any]]] = {}
+    missing_from_yf: List[str] = []
     step = max(1, int(chunk_size))
     for offset in range(0, len(clean_symbols), step):
         chunk = clean_symbols[offset : offset + step]
@@ -120,10 +211,12 @@ def yfinance_batch_bars(
             continue
         if frame is None or getattr(frame, "empty", True):
             continue
+        found_in_chunk = 0
         for symbol in chunk:
             try:
                 sub = frame[symbol] if len(chunk) > 1 or symbol in getattr(frame, "columns", []) else frame
             except KeyError:
+                missing_from_yf.append(symbol)
                 continue
             bars: List[Dict[str, Any]] = []
             for idx, row in sub.iterrows():
@@ -142,6 +235,14 @@ def yfinance_batch_bars(
                 })
             if bars:
                 out[symbol] = bars
+                found_in_chunk += 1
+            else:
+                missing_from_yf.append(symbol)
+        # Only persist missing symbols if chunk mostly succeeded (avoids recording transient rate-limit failures)
+        if found_in_chunk < max(1, len(chunk) // 3):
+            missing_from_yf = [s for s in missing_from_yf if s not in chunk]
+    if missing_from_yf:
+        _record_delisted_skip(missing_from_yf)
     return out
 
 
@@ -303,12 +404,13 @@ def screen_bist_stocks(
     min_turnover_try: float = DEFAULT_MIN_TURNOVER_TRY,
     kap_days: int = DEFAULT_KAP_DAYS,
     include_kap: bool = True,
+    max_symbols: Optional[int] = None,
     bars_provider: BarsProvider = yfinance_batch_bars,
     kap_fetcher: Any = None,
     today: Optional[date] = None,
 ) -> Dict[str, Any]:
     """Scan BIST stocks and return the top ``top_n`` candidates sorted by score."""
-    entries = list(universe) if universe is not None else load_bist_universe(kap_fetcher=kap_fetcher)
+    entries = list(universe) if universe is not None else load_bist_universe(kap_fetcher=kap_fetcher, max_symbols=max_symbols)
     symbols = [entry["symbol"] for entry in entries if entry.get("symbol")]
     name_map = {entry["symbol"]: entry.get("name") or entry["symbol"] for entry in entries if entry.get("symbol")}
 

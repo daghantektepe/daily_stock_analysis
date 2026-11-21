@@ -63,7 +63,7 @@ def test_quant_paper_book_initial_deploy_idempotency_and_cost_deduction(tmp_path
     assert paa_book["nav"] < 10_000.0
     assert paa_book["nav"] > 9_990.0
     assert paa_book["cash"] >= 0.0
-    assert set(paa_book["weights_pct"].keys()).issubset({"IEF", "SHY"})
+    assert set(paa_book["weights_pct"].keys()).issubset({"BIL", "IEF", "SHY", "GLD"})
 
     # Meta-Portfolio A blends PAA + VAA + GTAA-5 + Risk Parity across multiple ETFs
     assert meta_book["days"] == 1
@@ -116,7 +116,7 @@ def test_quant_paper_book_advances_daily_and_rebalances_on_new_month(tmp_path: P
     assert len(book.state["trades"]) > day1_trades
     summary = book.summary()
     assert summary["days"] == 30
-    assert set(summary["weights_pct"].keys()).issubset({"IEF", "SHY"})
+    assert set(summary["weights_pct"].keys()).issubset({"BIL", "IEF", "SHY", "GLD"})
     # Caught-up days older than 3 calendar days are marked late
     assert summary["late_days"] > 0
     report = format_quant_book_report(summary)

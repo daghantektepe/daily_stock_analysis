@@ -96,9 +96,11 @@ def test_screener_ranks_catalyst_and_technical_breakout_while_penalizing_ceiling
 
 def test_load_bist_universe_reads_seed_csv() -> None:
     universe = load_bist_universe()
-    assert len(universe) >= 700
+    assert len(universe) >= 550
     symbols = {item["symbol"] for item in universe}
     assert "THYAO.IS" in symbols and "ASELS.IS" in symbols
+    # Non-equity KAP sukuk/factoring/financing SPVs must be filtered out
+    assert "AKTVK.IS" not in symbols and "HALKF.IS" not in symbols
 
 
 def test_main_bist_screener_hook_selects_or_falls_back() -> None:
