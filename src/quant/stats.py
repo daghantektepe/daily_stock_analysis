@@ -258,14 +258,23 @@ def classify_strategy_verdict(
     universe: str,
     is_benchmark: bool = False,
     min_oos_days: int = 0,
+    usd_oos: Optional[PerformanceMetrics] = None,
 ) -> str:
-    """Assign an objective out-of-sample verdict badge anchored on risk-free excess alpha."""
+    """Assign an objective out-of-sample verdict badge anchored on risk-free excess alpha.
+
+    ``usd_oos`` is the USD view of a TRY strategy (BIST). When present, BIST is
+    judged on real-dollar excess return over BIL — the same hurdle as PASS_SOLID —
+    instead of its lira-inflated TL Sharpe.
+    """
     if is_benchmark:
         return "BENCHMARK"
     if min_oos_days > 0 and oos.trading_days < min_oos_days:
         return "FAIL_WEAK"
     if universe == "bist":
-        # Current-constituent BIST universe carries survivorship & TRY-inflation caveat
+        # Current-constituent BIST universe always carries the survivorship caveat
+        if usd_oos is not None and usd_oos.trading_days >= 20:
+            beats_cash = usd_oos.excess_sharpe >= 0.15 and usd_oos.excess_cagr_pct > 0.0
+            return "CAVEAT_SURVIVORSHIP" if beats_cash else "FAIL_WEAK"
         return "CAVEAT_SURVIVORSHIP" if oos.sharpe >= 0.5 else "FAIL_WEAK"
 
     has_rf_benchmark = oos.rf_cagr_pct > 0.05

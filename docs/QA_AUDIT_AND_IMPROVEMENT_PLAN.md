@@ -118,3 +118,49 @@ Programdaki mevcut `src/quant/stats.py` Sharpe oranını **risksiz faizi (`BIL` 
 - Kapı (Faz 4 kriterleri koda bağlandı): ≥120 ileri işlem günü, BIL üstü Sharpe ≥0,50 (± standart hata ile raporlanır), MaxDD ≤%18 (aşılırsa erken `FAIL`), sonradan işlenen gün ≤%10, Alpaca sanal dolumlarında ortalama kayma ≤20 bps.
 - **Not:** 2022–2026 penceresi PAA v2 / QQQ histerezisi / Meta-A v2 karışımı ayarlanırken görüldüğü için Meta-A v2'nin +%10,92 CAGR'ı örneklem dışı kanıt sayılmaz; kanıt bu ileri kayıttan gelecektir.
 - Canlı veriyle ilk dondurma (bulut doğrulaması, 20 Kasım 2026 kapanışı): Meta-A donmuş backtest 120 günlük getiri bandı p5 %−3,2 · p50 %+4,9 · p95 %+16,5; iki strateji de risk-off modda (BIL/SHY).
+- Web: Strateji Turnuvası sekmesinde "İleri Doğrulama Kapısı" kartı ve `GET /api/v1/alpha/forward-validation`.
+
+## Faz 5 (B) — BIST Dolar Bazlı Metrikler ve AI Konseyi v2 (21 Kasım 2026)
+
+### BIST gerçek dolar karşılığı
+
+- `src/quant/bist_usd.py`: BIST stratejilerinin net günlük TL getirisi `TRY=X` ile USD'ye çevrilir. Formül `r_usd = (1+r_tl)/(1+r_kur) − 1`; kur BIST takvimine ileri doldurulur, böylece bayram günündeki kur hareketi kaybolmaz.
+- USD metrikleri ABD stratejileriyle aynı eşikle, `BIL` üstü getiriyle hesaplanır.
+- Kararda artık TL Sharpe ≥0,5 değil, USD BIL üstü Sharpe ≥0,15 ve pozitif USD fazla getiri aranır (`CAVEAT_SURVIVORSHIP`). DSR ve sıralama da bu USD serisini kullanır.
+- Kur verisi yoksa eski TL kuralı geçerlidir.
+
+**Canlı veriyle sonuç (OOS 2022-01 → 2026-11-20):** USD/TRY 13,36 → 50,56, yıllık %+31,4.
+
+| | TL CAGR | USD CAGR | USD MaxDD | BIL üstü USD Sharpe | 2022 | 2023 | 2024 | 2025 | 2026 (USD) |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| XU100 (referans) | +43,7% | +9,8% | −36,4% | +0,17 | +110,7% | −14,1% | +10,0% | −5,8% | −16,0% |
+| BIST 52H Zirve + Düşük-Vol Top-5 | +60,3% | +22,6% | −43,5% | +0,51 | +176,3% | +7,4% | +29,7% | −15,4% | −17,3% |
+| BIST 6-1A Momentum Top-5 | +50,5% | +15,4% | −39,8% | +0,33 | +92,8% | −4,1% | +7,7% | +2,1% | −1,2% |
+
+**Değerlendirme:**
+- İki BIST stratejisinin dolar getirisinin çoğu 2022'den geliyor.
+- 2025–2026'da 52H stratejisi dolar bazında kayıpta; Momentum ise yatay.
+- Evren bugünkü likit hisselerden oluştuğu için hayatta kalma yanlılığı sürüyor.
+
+### AI Konseyi v2
+
+`council_v2_robustness()` bir tüzüğe "PASS" vermek için üç koşul arar:
+- `BIL` üstü OOS kararı `PASS_ELITE` veya `PASS_SOLID` olmalı;
+- 25 bps maliyette BIL üstü Sharpe ≥0,15 ve pozitif fazla getiri olmalı (50 bps yalnızca bilgi olarak raporlanır);
+- 2022 takvim yılında SPY'dan az kaybetmeli. 2022 verisi eksikse sonuç FAIL olur.
+
+Diğer değişiklikler:
+- `run_ai_strategy_council.py reevaluate`: kayıtlı tüzükleri CLI çağırmadan yeniden değerlendirir; kurallar ve sanal defterler değişmez.
+- CLI istemine v2 kriterleri eklendi.
+- Web kartı Rf=0 Sharpe yerine BIL üstü Sharpe ve v2 rozetini gösterir.
+- Turnuva tablosu ve MCP özeti de BIL üstü Sharpe ile sıralar ve raporlar; böylece "Rf=0 Sharpe tuzağı" arayüzden kalktı.
+
+**Denetimdeki tüzük tiplerinin örnek parametrelerle değerlendirmesi:**
+
+| Tüzük | Sonuç | 25 bps'de BIL üstü Sharpe | 2022 |
+| :--- | :--- | ---: | :--- |
+| vol-target %8 | FAIL | −0,12 | −3,1% (SPY −18,2%) |
+| vol-target %10 | FAIL | −0,05 | −2,9% |
+| PAA custom pf=1,0 | FAIL (Rf=0 döneminde PASS_SOLID idi) | +0,04 | −13,6% |
+
+Gerçek tüzükler için E:\ üzerinde `reevaluate` çalıştırılmalıdır.

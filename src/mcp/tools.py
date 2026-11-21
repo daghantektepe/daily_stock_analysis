@@ -644,14 +644,23 @@ def _compact_tournament_summary(raw: Dict[str, Any]) -> Dict[str, Any]:
     compact_rows = []
     for row in raw.get("strategies") or []:
         oos = row.get("oos") or {}
+        usd = row.get("usd") or {}
         compact_rows.append(
             {
                 "strategy_id": row.get("strategy_id"),
                 "name": row.get("name"),
                 "universe": row.get("universe"),
+                "currency": row.get("currency"),
                 "verdict": row.get("verdict"),
                 "oos_cagr_pct": oos.get("cagr_pct"),
                 "oos_sharpe": oos.get("sharpe"),
+                # Sharpe over BIL is what verdicts use; Rf=0 Sharpe flatters cash-heavy strategies
+                "oos_excess_sharpe": oos.get("excess_sharpe") if row.get("currency") == "USD" else None,
+                "oos_excess_cagr_pct": oos.get("excess_cagr_pct") if row.get("currency") == "USD" else None,
+                "usd_cagr_pct": usd.get("cagr_pct"),
+                "usd_excess_sharpe": usd.get("excess_sharpe"),
+                "usd_max_drawdown_pct": usd.get("max_drawdown_pct"),
+                "usd_yearly_returns_pct": row.get("usd_yearly_returns_pct") or None,
                 "oos_max_drawdown_pct": oos.get("max_drawdown_pct"),
                 "oos_recovery": oos.get("recovery_factor"),
                 "oos_dsr_pct": oos.get("dsr_pct"),
@@ -672,6 +681,7 @@ def _compact_tournament_summary(raw: Dict[str, Any]) -> Dict[str, Any]:
         "paa": raw.get("paa"),
         "meta_portfolio_a": raw.get("meta_portfolio_a"),
         "meta_portfolio_b": raw.get("meta_portfolio_b"),
+        "bist_usd_reference": raw.get("bist_usd_reference"),
         "leaderboard": compact_rows,
     }
 

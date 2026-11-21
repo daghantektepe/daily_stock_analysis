@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import tempfile
+from dataclasses import replace as dc_replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
@@ -481,7 +482,11 @@ def _build_council_prompt(member_key: str, context: Dict[str, Any]) -> str:
         "2. `rule_engine` alanı mutlaka `allowed_rule_engines` anahtarlarından biri olmalı.\n"
         "3. Tüm ETF sembolleri mutlaka `allowed_etf_universe` içinden seçilmeli.\n"
         "4. `strategy_name`, `thesis` ve `risk_rules` alanları net ve kısa Türkçe olmalı.\n"
-        "5. `rebalance_mode` alanı `'monthly'` veya `'daily'` olmalı (genellikle `'monthly'` maliyet-verimli).\n\n"
+        "5. `rebalance_mode` alanı `'monthly'` veya `'daily'` olmalı (genellikle `'monthly'` maliyet-verimli).\n"
+        "6. Stratejin Konsey v2 kapısıyla değerlendirilecek: 2022+ OOS'ta risksiz nakit `BIL` üstü Excess Sharpe "
+        ">= 0.15 ve pozitif fazla getiri, aynı eşiği 25 bps maliyette de koruması ve 2022 ayı piyasasında SPY'dan az "
+        "kaybetmesi gerekir. Çoğunlukla nakitte bekleyip yüksek (Rf=0) Sharpe göstermek kapıyı geçmez; sık işlem "
+        "maliyet stresinde elenir.\n\n"
         "BEKLENEN JSON ŞEMASI:\n"
         "{\n"
         '  "strategy_name": "Kısa Türkçe strateji adı",\n'
@@ -702,6 +707,166 @@ def _trim_text(raw: Any, max_len: int) -> str:
     return f"{cut}..." if cut else text[:max_len]
 
 
+# ---------------------------------------------------------------------------
+# Council v2 robustness gate (BIL hurdle + cost stress + 2022 bear market)
+# ---------------------------------------------------------------------------
+
+COUNCIL_V2_VERSION = 2
+COUNCIL_V2_STRESS_BPS: tuple[float, ...] = (25.0, 50.0)
+COUNCIL_V2_GATE_BPS = 25.0
+COUNCIL_V2_MIN_EXCESS_SHARPE = 0.15
+COUNCIL_V2_BEAR_YEAR = 2022
+COUNCIL_V2_BENCHMARK = "SPY"
+
+
+def _calendar_year_stats(daily_returns: Optional[pd.Series], year: int) -> Optional[Dict[str, float]]:
+    """Return and max drawdown of one full calendar year, or None if the year is not fully covered."""
+    if daily_returns is None or daily_returns.empty:
+        return None
+    r = pd.to_numeric(daily_returns, errors="coerce").dropna()
+    r = r.loc[r.index.year == year]
+    if r.empty or r.index[0] > pd.Timestamp(f"{year}-01-15") or r.index[-1] < pd.Timestamp(f"{year}-12-15"):
+        return None
+    equity = (1.0 + r).cumprod()
+    drawdown = equity / equity.cummax().clip(lower=1.0) - 1.0
+    return {
+        "return_pct": round((float(equity.iloc[-1]) - 1.0) * 100.0, 2),
+        "max_drawdown_pct": round(float(drawdown.min()) * 100.0, 2),
+    }
+
+
+def council_v2_robustness(
+    prices: pd.DataFrame,
+    weights_df: pd.DataFrame,
+    spec: StrategySpec,
+    base_result: Any,
+    base_verdict: str,
+    *,
+    rf_returns: Optional[pd.Series] = None,
+) -> Dict[str, Any]:
+    """Judge a council charter on what it would really have earned.
+
+    PASS needs all of: the BIL-hurdle OOS verdict (PASS_ELITE / PASS_SOLID),
+    still beating BIL at ``COUNCIL_V2_GATE_BPS`` costs, and losing less than
+    SPY in the 2022 bear market. 50 bps is reported for information only.
+    """
+    stress: Dict[str, Dict[str, Any]] = {}
+    for bps in (float(spec.cost_bps), *COUNCIL_V2_STRESS_BPS):
+        if bps == float(spec.cost_bps):
+            res = base_result
+        else:
+            res = backtest_weight_matrix(
+                prices, weights_df, dc_replace(spec, cost_bps=bps),
+                oos_start=DEFAULT_OOS_START, n_trials=28, rf_returns=rf_returns,
+            )
+        stress[f"{bps:g}"] = {
+            "cagr_pct": res.oos.cagr_pct,
+            "excess_cagr_pct": res.oos.excess_cagr_pct,
+            "excess_sharpe": res.oos.excess_sharpe,
+            "max_drawdown_pct": res.oos.max_drawdown_pct,
+            "annual_turnover": res.oos.annual_turnover,
+        }
+
+    year = COUNCIL_V2_BEAR_YEAR
+    strat_bear = _calendar_year_stats(base_result.daily_returns, year)
+    bench_bear = None
+    if COUNCIL_V2_BENCHMARK in prices.columns:
+        bench_bear = _calendar_year_stats(prices[COUNCIL_V2_BENCHMARK].pct_change(), year)
+
+    gate = stress.get(f"{COUNCIL_V2_GATE_BPS:g}") or {}
+    checks: List[Dict[str, Any]] = [
+        {
+            "key": "oos_verdict",
+            "label": "OOS kararı (BIL üstü, 2022+)",
+            "value": base_verdict,
+            "target": "PASS_ELITE / PASS_SOLID",
+            "ok": base_verdict in ("PASS_ELITE", "PASS_SOLID"),
+        },
+        {
+            "key": "cost_stress",
+            "label": f"{COUNCIL_V2_GATE_BPS:g} bps maliyette BIL üstü Sharpe",
+            "value": gate.get("excess_sharpe"),
+            "target": f">= {COUNCIL_V2_MIN_EXCESS_SHARPE:.2f} ve pozitif fazla getiri",
+            "ok": bool(gate)
+            and float(gate.get("excess_sharpe") or 0.0) >= COUNCIL_V2_MIN_EXCESS_SHARPE
+            and float(gate.get("excess_cagr_pct") or 0.0) > 0.0,
+        },
+        {
+            "key": "bear_market",
+            "label": f"{year} ayı piyasası ({COUNCIL_V2_BENCHMARK}'a göre)",
+            "value": strat_bear["return_pct"] if strat_bear else None,
+            "target": f"> {COUNCIL_V2_BENCHMARK} {bench_bear['return_pct']:+.1f}%" if bench_bear else f"{year} verisi gerekli",
+            "ok": bool(strat_bear and bench_bear and strat_bear["return_pct"] > bench_bear["return_pct"]),
+        },
+    ]
+    return {
+        "version": COUNCIL_V2_VERSION,
+        "verdict": "PASS" if all(c["ok"] for c in checks) else "FAIL",
+        "checks": checks,
+        "cost_stress": stress,
+        "bear_market": {
+            "year": year,
+            "strategy": strat_bear,
+            "benchmark_symbol": COUNCIL_V2_BENCHMARK,
+            "benchmark": bench_bear,
+        },
+        "data_end": base_result.oos.end_date,
+        "evaluated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def _backtest_charter(
+    charter: Dict[str, Any],
+    prices: pd.DataFrame,
+    *,
+    name: str,
+    cost_bps: float,
+) -> Dict[str, Any]:
+    """OOS backtest + BIL-hurdle verdict + v2 robustness for one normalized charter."""
+    weight_fn = compile_council_weight_fn(charter)
+    weights_df = weight_fn(prices)
+    rf_returns = prices["BIL"].dropna().pct_change().dropna() if "BIL" in prices.columns else None
+    spec = StrategySpec(
+        strategy_id=str(charter.get("strategy_id") or "COUNCIL"),
+        name=name,
+        universe="us_etf",
+        category="AI Council",
+        description=str(charter.get("thesis") or ""),
+        cost_bps=cost_bps,
+        trading_days_per_year=252,
+    )
+    bt = backtest_weight_matrix(
+        prices,
+        weights_df,
+        spec,
+        oos_start=DEFAULT_OOS_START,
+        n_trials=28,
+        rf_returns=rf_returns,
+    )
+    verdict = classify_strategy_verdict(
+        bt.oos,
+        universe="us_etf",
+        min_oos_days=750 if len(prices) >= 900 else 0,
+    )
+    robustness = council_v2_robustness(prices, weights_df, spec, bt, verdict, rf_returns=rf_returns)
+    return {"weight_fn": weight_fn, "backtest": bt, "verdict": verdict, "council_v2": robustness}
+
+
+def _council_meta(member_key: str, charter: Dict[str, Any]) -> Dict[str, Any]:
+    meta = COUNCIL_MEMBER_META[member_key]
+    return {
+        "member_key": member_key,
+        "engine_label": meta["engine_label"],
+        "model": charter.get("model"),
+        "rule_engine": charter.get("rule_engine"),
+        "thesis": charter.get("thesis"),
+        "risk_rules": charter.get("risk_rules"),
+        "oos_backtest": charter.get("oos_backtest"),
+        "verdict": charter.get("verdict"),
+        "council_v2": charter.get("council_v2"),
+    }
+
+
 def evaluate_and_register_charter(
     member_key: str,
     raw_charter: Dict[str, Any],
@@ -738,33 +903,17 @@ def evaluate_and_register_charter(
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
-    weight_fn = compile_council_weight_fn(normalized_charter)
-    weights_df = weight_fn(prices)
-    rf_returns = prices["BIL"].dropna().pct_change().dropna() if "BIL" in prices.columns else None
-    spec = StrategySpec(
-        strategy_id=normalized_charter["strategy_id"],
-        name=f"{meta['engine_label']} · {normalized_charter['strategy_name']}",
-        universe="us_etf",
-        category="AI Council",
-        description=normalized_charter["thesis"],
-        cost_bps=cost_bps,
-        trading_days_per_year=252,
-    )
-    bt = backtest_weight_matrix(
+    evaluated = _backtest_charter(
+        normalized_charter,
         prices,
-        weights_df,
-        spec,
-        oos_start=DEFAULT_OOS_START,
-        n_trials=28,
-        rf_returns=rf_returns,
+        name=f"{meta['engine_label']} · {normalized_charter['strategy_name']}",
+        cost_bps=cost_bps,
     )
-    verdict = classify_strategy_verdict(
-        bt.oos,
-        universe="us_etf",
-        min_oos_days=750 if len(prices) >= 900 else 0,
-    )
+    weight_fn = evaluated["weight_fn"]
+    bt = evaluated["backtest"]
     normalized_charter["oos_backtest"] = bt.oos.to_dict()
-    normalized_charter["verdict"] = verdict
+    normalized_charter["verdict"] = evaluated["verdict"]
+    normalized_charter["council_v2"] = evaluated["council_v2"]
     normalized_charter["live_signal_summary"] = bt.signal_summary
     normalized_charter["live_target_weights_pct"] = dict(bt.current_weights)
 
@@ -785,16 +934,7 @@ def evaluate_and_register_charter(
     summary["processed_days"] = int(step_res.get("processed_days") or 0)
     summary["new_trades"] = list(step_res.get("new_trades") or [])
     summary["report_text"] = format_quant_book_report(summary)
-    summary["council_meta"] = {
-        "member_key": member_key,
-        "engine_label": meta["engine_label"],
-        "model": normalized_charter["model"],
-        "rule_engine": engine,
-        "thesis": normalized_charter["thesis"],
-        "risk_rules": normalized_charter["risk_rules"],
-        "oos_backtest": normalized_charter["oos_backtest"],
-        "verdict": normalized_charter["verdict"],
-    }
+    summary["council_meta"] = _council_meta(member_key, normalized_charter)
 
     return {"charter": normalized_charter, "book_summary": summary}
 
@@ -869,6 +1009,102 @@ def convene_ai_strategy_council(
     }
 
 
+def reevaluate_council_charters(
+    *,
+    prices: Optional[pd.DataFrame] = None,
+    cost_bps: float = 5.0,
+    force_refresh_prices: bool = False,
+    book_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Re-run the v2 gate on stored charters without calling any AI CLI.
+
+    Only the evaluation fields (``oos_backtest``, ``verdict``, ``council_v2``)
+    change; the rules, and therefore the live paper books, stay as they are.
+    """
+    stored = load_council_charters(book_dir)
+    members = stored.get("members") or {}
+    if not members:
+        return {"ok": False, "error": "Kayıtlı AI Konseyi tüzüğü yok; önce `convene` çalıştırın.", "results": []}
+    price_frame = prices if prices is not None else load_council_etf_prices(force_refresh=force_refresh_prices)
+    if price_frame is None or price_frame.empty:
+        return {"ok": False, "error": "ETF fiyat verisi yüklenemedi.", "results": []}
+
+    results: List[Dict[str, Any]] = []
+    for member_key, charter in members.items():
+        if member_key not in COUNCIL_MEMBER_META or not isinstance(charter, dict):
+            continue
+        meta = COUNCIL_MEMBER_META[member_key]
+        evaluated = _backtest_charter(
+            charter,
+            price_frame,
+            name=f"{meta['engine_label']} · {charter.get('strategy_name') or meta['engine_label']}",
+            cost_bps=cost_bps,
+        )
+        previous_verdict = charter.get("verdict")
+        charter["oos_backtest"] = evaluated["backtest"].oos.to_dict()
+        charter["verdict"] = evaluated["verdict"]
+        charter["council_v2"] = evaluated["council_v2"]
+        results.append(
+            {
+                "member_key": member_key,
+                "engine_label": meta["engine_label"],
+                "strategy_name": charter.get("strategy_name"),
+                "rule_engine": charter.get("rule_engine"),
+                "previous_verdict": previous_verdict,
+                "verdict": charter["verdict"],
+                "oos_backtest": charter["oos_backtest"],
+                "council_v2": charter["council_v2"],
+            }
+        )
+
+    stored["members"] = members
+    stored["reevaluated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    save_council_charters(stored, book_dir)
+    return {"ok": True, "results": results}
+
+
+def format_council_v2_report(results: Sequence[Dict[str, Any]]) -> str:
+    """Turkish plain-text summary of council v2 verdicts."""
+    lines = ["=== AI Konseyi v2 Sağlamlık Değerlendirmesi ==="]
+    if not results:
+        lines.append("Değerlendirilecek tüzük yok.")
+    for item in results:
+        v2 = item.get("council_v2") or {}
+        oos = item.get("oos_backtest") or {}
+        lines.append(
+            f"\n[{item.get('engine_label')}] {item.get('strategy_name')} ({item.get('rule_engine')}) -> "
+            f"Konsey v2: {v2.get('verdict', '—')} | OOS kararı: {item.get('verdict')}"
+        )
+        lines.append(
+            f"  OOS 2022+ : CAGR {oos.get('cagr_pct', 0):+.1f}% | BIL üstü {oos.get('excess_cagr_pct', 0):+.1f}% "
+            f"| BIL üstü Sharpe {oos.get('excess_sharpe', 0):+.2f} | MaxDD {oos.get('max_drawdown_pct', 0):.1f}%"
+        )
+        stress = v2.get("cost_stress") or {}
+        if stress:
+            lines.append(
+                "  Maliyet   : "
+                + " | ".join(
+                    f"{bps} bps -> BIL üstü {row.get('excess_cagr_pct', 0):+.1f}%, Sharpe {row.get('excess_sharpe', 0):+.2f}"
+                    for bps, row in stress.items()
+                )
+            )
+        bear = v2.get("bear_market") or {}
+        if bear.get("strategy") and bear.get("benchmark"):
+            lines.append(
+                f"  {bear.get('year')} ayı : strateji {bear['strategy']['return_pct']:+.1f}% "
+                f"(MaxDD {bear['strategy']['max_drawdown_pct']:.1f}%) vs {bear.get('benchmark_symbol')} "
+                f"{bear['benchmark']['return_pct']:+.1f}%"
+            )
+        for check in v2.get("checks") or []:
+            if not check.get("ok"):
+                lines.append(f"  ✗ {check.get('label')}: {check.get('value')} (hedef {check.get('target')})")
+    lines.append(
+        "\nNot: v2 PASS için BIL üstü OOS kararı, 25 bps maliyette de BIL'i yenmek ve 2022'de SPY'dan az kaybetmek gerekir. "
+        "Tüzük kuralları ve sanal defterler değişmez; yalnızca değerlendirme güncellenir."
+    )
+    return "\n".join(lines)
+
+
 def step_active_council_books(
     *,
     prices: Optional[pd.DataFrame] = None,
@@ -910,16 +1146,7 @@ def step_active_council_books(
         summary["processed_days"] = int(step_res.get("processed_days") or 0)
         summary["new_trades"] = list(step_res.get("new_trades") or [])
         summary["report_text"] = format_quant_book_report(summary)
-        summary["council_meta"] = {
-            "member_key": member_key,
-            "engine_label": meta["engine_label"],
-            "model": charter.get("model"),
-            "rule_engine": charter.get("rule_engine"),
-            "thesis": charter.get("thesis"),
-            "risk_rules": charter.get("risk_rules"),
-            "oos_backtest": charter.get("oos_backtest"),
-            "verdict": charter.get("verdict"),
-        }
+        summary["council_meta"] = _council_meta(member_key, charter)
         out.append(summary)
     return out
 
@@ -953,15 +1180,6 @@ def get_active_council_books_status(
         summary["processed_days"] = 0
         summary["new_trades"] = []
         summary["report_text"] = format_quant_book_report(summary)
-        summary["council_meta"] = {
-            "member_key": member_key,
-            "engine_label": meta["engine_label"],
-            "model": charter.get("model"),
-            "rule_engine": charter.get("rule_engine"),
-            "thesis": charter.get("thesis"),
-            "risk_rules": charter.get("risk_rules"),
-            "oos_backtest": charter.get("oos_backtest"),
-            "verdict": charter.get("verdict"),
-        }
+        summary["council_meta"] = _council_meta(member_key, charter)
         out.append(summary)
     return out

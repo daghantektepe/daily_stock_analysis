@@ -6,6 +6,7 @@
     python scripts/run_ai_strategy_council.py convene --members claude,codex,gemini
     python scripts/run_ai_strategy_council.py status
     python scripts/run_ai_strategy_council.py step
+    python scripts/run_ai_strategy_council.py reevaluate   # v2 gate on stored charters, no CLI calls
 """
 
 from __future__ import annotations
@@ -56,6 +57,12 @@ def cmd_convene(args: argparse.Namespace) -> int:
             f"  OOS 2022+    : CAGR {oos.get('cagr_pct', 0):+.1f}% | Sharpe {oos.get('sharpe', 0):.2f} "
             f"| MaxDD {oos.get('max_drawdown_pct', 0):.1f}% | DSR %{oos.get('dsr_pct', 0):.1f}"
         )
+        v2 = ch.get("council_v2") or {}
+        stress25 = (v2.get("cost_stress") or {}).get("25") or {}
+        print(
+            f"  Konsey v2    : {v2.get('verdict', '—')} | BIL üstü Sharpe {oos.get('excess_sharpe', 0):+.2f} "
+            f"(25 bps: {stress25.get('excess_sharpe', 0):+.2f})"
+        )
         print(f"  Tez          : {ch['thesis']}")
         print(f"  Canlı Defter : NAV ${book['nav']:,.2f} | İşlem: {book['trade_count']} | Dağılım: {book['weights_pct']}")
     return 0 if res.get("ok") else 1
@@ -90,6 +97,22 @@ def cmd_step(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_reevaluate(args: argparse.Namespace) -> int:
+    from src.config import get_config
+    from src.quant.ai_council import format_council_v2_report, reevaluate_council_charters
+
+    cfg = get_config()
+    res = reevaluate_council_charters(
+        cost_bps=float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
+        force_refresh_prices=bool(args.refresh),
+    )
+    if not res.get("ok"):
+        print(res.get("error"))
+        return 1
+    print(format_council_v2_report(res.get("results") or []))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="3-AI Quantitative Strategy Council (Claude, Codex, Gemini)")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -107,9 +130,12 @@ def main() -> int:
     st.add_argument("--force-rebalance", action="store_true")
     st.add_argument("--refresh", action="store_true")
 
+    rev = sub.add_parser("reevaluate", help="Re-run the council v2 gate (BIL, cost stress, 2022) on stored charters")
+    rev.add_argument("--refresh", action="store_true")
+
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
-    return {"convene": cmd_convene, "status": cmd_status, "step": cmd_step}[args.command](args)
+    return {"convene": cmd_convene, "status": cmd_status, "step": cmd_step, "reevaluate": cmd_reevaluate}[args.command](args)
 
 
 if __name__ == "__main__":

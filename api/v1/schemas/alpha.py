@@ -195,6 +195,9 @@ class TournamentResponse(BaseModel):
     featured_strategy_ids: List[str] = Field(default_factory=list)
     strategies: List[Dict[str, Any]] = Field(default_factory=list)
     paper_snapshot: Optional[Dict[str, Any]] = None
+    bist_usd_reference: Optional[Dict[str, Any]] = Field(
+        None, description="USDTRY change and XU100 in TL vs USD over the OOS window (BIST rows are judged in USD)"
+    )
 
 
 class PaaSignalResponse(BaseModel):

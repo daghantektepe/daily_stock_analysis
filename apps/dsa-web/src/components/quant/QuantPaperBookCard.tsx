@@ -98,14 +98,41 @@ export const QuantPaperBookCard: React.FC<QuantPaperBookCardProps> = ({
                         {book.council_meta.rule_engine}
                       </span>
                     ) : null}
+                    {book.council_meta?.council_v2 ? (
+                      <span
+                        data-testid={`council-v2-${book.strategy_key}`}
+                        className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                          book.council_meta.council_v2.verdict === 'PASS'
+                            ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                            : 'border-rose-500/40 bg-rose-500/15 text-rose-300'
+                        }`}
+                      >
+                        Konsey v2: {book.council_meta.council_v2.verdict === 'PASS' ? 'geçti' : 'kaldı'}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-0.5 font-mono text-[10px] text-secondary-text">
                     {book.start_date || '—'} → {book.last_date || '—'} · {book.days} gün · mod:{' '}
                     {book.rebalance_mode} · {book.cost_bps} bps
                     {book.council_meta?.oos_backtest
-                      ? ` · OOS Sharpe ${Number(book.council_meta.oos_backtest.sharpe ?? 0).toFixed(2)} · MaxDD ${Number(book.council_meta.oos_backtest.max_drawdown_pct ?? 0).toFixed(1)}%`
+                      ? ` · ${
+                          book.council_meta.oos_backtest.excess_sharpe !== undefined
+                            ? `OOS BIL üstü Sharpe ${Number(book.council_meta.oos_backtest.excess_sharpe).toFixed(2)}`
+                            : `OOS Sharpe (Rf=0) ${Number(book.council_meta.oos_backtest.sharpe ?? 0).toFixed(2)}`
+                        } · MaxDD ${Number(book.council_meta.oos_backtest.max_drawdown_pct ?? 0).toFixed(1)}%`
                       : ''}
                   </p>
+                  {book.council_meta?.council_v2?.checks?.some((check) => !check.ok) ? (
+                    <ul className="mt-1 space-y-0.5 text-[10px] leading-snug text-rose-300">
+                      {book.council_meta.council_v2.checks
+                        .filter((check) => !check.ok)
+                        .map((check) => (
+                          <li key={check.key}>
+                            ✗ {check.label}: {check.value ?? '—'} (hedef {check.target})
+                          </li>
+                        ))}
+                    </ul>
+                  ) : null}
                   {book.council_meta?.thesis ? (
                     <p className="mt-1 text-[11px] leading-snug text-secondary-text">
                       {book.council_meta.thesis}

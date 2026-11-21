@@ -182,8 +182,12 @@ export interface StrategyPerformanceMetrics {
   trading_days: number;
   total_return_pct: number;
   cagr_pct: number;
+  rf_cagr_pct?: number;
+  excess_cagr_pct?: number;
   vol_pct: number;
   sharpe: number;
+  /** Sharpe over the BIL T-bill hurdle (what tournament verdicts use). */
+  excess_sharpe?: number;
   sortino: number;
   max_drawdown_pct: number;
   calmar: number;
@@ -216,6 +220,22 @@ export interface TournamentStrategyRow {
   latest_date?: string | null;
   signal_summary: string;
   equity_oos_points?: StrategyEquityPoint[];
+  yearly_returns_pct?: Record<string, number>;
+  /** USD view of TRY (BIST) strategies, USDTRY-adjusted and measured over BIL. */
+  usd?: StrategyPerformanceMetrics | null;
+  usd_yearly_returns_pct?: Record<string, number>;
+}
+
+export interface BistUsdReference {
+  fx_symbol?: string;
+  start_date?: string;
+  end_date?: string;
+  usdtry_start?: number;
+  usdtry_end?: number;
+  usdtry_annual_change_pct?: number;
+  index_symbol?: string;
+  index_try_cagr_pct?: number;
+  index_usd?: StrategyPerformanceMetrics;
 }
 
 export interface TournamentResponse {
@@ -234,6 +254,7 @@ export interface TournamentResponse {
   featured_strategy_ids: string[];
   strategies: TournamentStrategyRow[];
   paper_snapshot?: Record<string, unknown> | null;
+  bist_usd_reference?: BistUsdReference | null;
 }
 
 export interface PaaSignalResponse {
@@ -325,11 +346,35 @@ export interface QuantPaperBookItem {
     verdict?: string;
     oos_backtest?: {
       cagr_pct?: number;
+      excess_cagr_pct?: number;
       sharpe?: number;
+      excess_sharpe?: number;
       max_drawdown_pct?: number;
       dsr_pct?: number;
     };
+    council_v2?: CouncilV2Evaluation | null;
   } | null;
+}
+
+export interface CouncilV2Check {
+  key: string;
+  label: string;
+  value?: string | number | null;
+  target: string;
+  ok: boolean;
+}
+
+export interface CouncilV2Evaluation {
+  version: number;
+  verdict: 'PASS' | 'FAIL';
+  checks: CouncilV2Check[];
+  cost_stress?: Record<string, { excess_cagr_pct?: number; excess_sharpe?: number; annual_turnover?: number }>;
+  bear_market?: {
+    year: number;
+    strategy?: { return_pct: number; max_drawdown_pct: number } | null;
+    benchmark_symbol?: string;
+    benchmark?: { return_pct: number; max_drawdown_pct: number } | null;
+  };
 }
 
 export type ForwardValidationStatus =

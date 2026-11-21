@@ -216,7 +216,11 @@ Web arayüzü: <http://127.0.0.1:8000>. Ağda başkalarına açacaksan `ADMIN_AU
 Web arayüzünün arama kutusu yaklaşık 800 BIST hissesini tanır: `THYAO`, `Türk Hava`, `turk hava yollari` yazman yeterli; seçince `THYAO.IS` olarak eklenir. Liste KAP'tan üretilir; yeni halka arzlar için güncellemek istersen:
 
 ```bash
-python scripts/fetch_kap_stock_list.py && python scripts/generate_index_from_csv.py --merge-markets TR
+python scripts/fetch_kap_stock_list.py
+```
+
+```bash
+python scripts/generate_index_from_csv.py --merge-markets TR
 ```
 
 ### 4.2 Haberler: nereden geliyor, nasıl doğrulanıyor?
@@ -309,6 +313,7 @@ Tarama veri çekemezse veya eşiği geçen aday bulamazsa sistem otomatik olarak
 | `timeout` | Uzun prompt, yavaş yanıt | `GENERATION_BACKEND_TIMEOUT_SECONDS=900` |
 | Rapor Çince/İngilizce çıkıyor | `REPORT_LANGUAGE` okunmamış | `.env`'de `REPORT_LANGUAGE=tr` olduğundan emin ol, servisi yeniden başlat |
 | KAP bildirimi yok | KAP geçici erişilemez | Analiz durmaz; birkaç dakika sonra tekrar dener (5 dk devre kesici) |
+| `The token '&&' is not a valid statement separator` | Windows PowerShell 5.1 `&&` desteklemez | Komutları ayrı satırlarda çalıştır (örn. önce `cd apps/dsa-web`, sonra `npm run build`) ya da PowerShell 7 (`pwsh`) kullan |
 | Abonelik limiti doldu | Claude Pro kullanım limiti | Zincir otomatik olarak Gemini → Codex → API'ye geçer; log'da `trying next fallback backend` görünür |
 
 ## 7. Gerçek parayla işlemden önce: ölç
@@ -459,6 +464,40 @@ python scripts/quant_forward.py alpaca-reconcile
 - **Komutların işi:** `alpaca-plan` yalnızca okur ve emir planını gösterir. `alpaca-submit-paper` onay ister, emirleri **yalnızca sanal hesaba** gönderir, gerçek hesapta reddeder. `alpaca-reconcile` dolum fiyatını, gönderim anındaki fiyatla karşılaştırıp kaymayı kaydeder.
 - **Kilitler:** Zamanlanmış görev hiçbir zaman emir göndermez. `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` değişmez.
 - **Hata payı:** 120 günlük bir Sharpe tahmininin hata payı ±1,4 civarındadır. Kapıyı geçmek kanıtın başlangıcıdır, garantisi değil.
+
+### 7.4 BIST stratejileri dolar bazında
+
+TL getirisi lira değer kaybını da içerir. 2022–2026'da USD/TRY yaklaşık 13,4'ten 50,6'ya çıktı (yıllık ~%31). Bu yüzden TL'de %50 kazandıran bir strateji dolar bazında çok daha az kazanmış olabilir.
+
+- **Turnuvada BIST:** Turnuva BIST stratejilerinin günlük TL getirisini `TRY=X` kuruyla dolara çevirir ve ABD stratejileriyle aynı eşikle, `BIL` üstü Sharpe ile değerlendirir.
+- **Karar kuralı:** `CAVEAT_SURVIVORSHIP` için kur etkisi çıkarılmış getirinin BIL üstü Sharpe'ı ≥ 0,15 olmalı ve dolar getirisi BIL'i aşmalı. Değilse karar `FAIL_WEAK` olur. Kur verisi alınamazsa eski TL kuralı geçerli kalır.
+- **Nerede görünür:**
+  - Web turnuva tablosu: BIST satırlarında CAGR, BIL üstü Sharpe, MaxDD ve Recovery dolar bazındadır; TL CAGR altta küçük yazılır. Tablonun altında kur ve XU100 TL/USD karşılaştırması bulunur.
+  - Rapor: `docs/STRATEGY_TOURNAMENT_REPORT.md` içinde "Gerçek Dolar (USD) Karşılığı" bölümü, yıllara göre dolar getirileriyle.
+  - MCP: `dsa_get_strategy_tournament` aracındaki `usd_*` alanları.
+- **Güncelleme:** Turnuvayı web arayüzünden yenile ya da şunu çalıştır:
+
+```bash
+python scripts/run_strategy_tournament.py
+```
+
+### 7.5 AI Konseyi v2: tüzükleri yeniden değerlendir
+
+Claude, Codex ve Gemini'nin yazdığı tüzükler artık üç kontrolle değerlendirilir. "Konsey v2: geçti" için üçü de sağlanmalı:
+
+1. 2022+ örneklem dışı kararı `PASS_ELITE` ya da `PASS_SOLID` olmalı. Bu karar `BIL` üstü getiriye göre verilir.
+2. 25 bps işlem maliyetinde de BIL üstü Sharpe ≥ 0,15 ve pozitif fazla getiri olmalı. 50 bps yalnızca bilgi olarak raporlanır.
+3. 2022 ayı piyasasında SPY'dan az kaybetmeli.
+
+Önceden kurulmuş tüzükleri CLI'ları yeniden çağırmadan değerlendirmek için:
+
+```bash
+python scripts/run_ai_strategy_council.py reevaluate
+```
+
+- **Ne değişir:** Yalnızca değerlendirme alanları (`oos_backtest`, `verdict`, `council_v2`). Tüzük kuralları ve sanal defterler değişmez.
+- **Nerede görünür:** Sonuç web'deki sanal defter kartında "Konsey v2: geçti/kaldı" rozeti ve kalınan kontrollerle gösterilir. Kartta artık Rf=0 Sharpe değil, BIL üstü Sharpe yer alır.
+- **Yeni tüzükler:** `convene` ile kurulan yeni tüzükler v2 ile değerlendirilir. CLI'lara giden istemde bu kriterler açıkça yazar.
 
 ## 8. Sonraki adımlar
 

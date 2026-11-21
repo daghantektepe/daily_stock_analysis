@@ -158,7 +158,7 @@ export const TournamentTabPanel: React.FC = () => {
                 value={tournament.paa ? `${tournament.paa.oos.cagr_pct >= 0 ? '+' : ''}${tournament.paa.oos.cagr_pct.toFixed(1)}%` : '--'}
                 hint={
                   tournament.paa
-                    ? `Sharpe ${tournament.paa.oos.sharpe.toFixed(2)} · MaxDD ${tournament.paa.oos.max_drawdown_pct.toFixed(1)}%`
+                    ? `BIL üstü Sharpe ${(tournament.paa.oos.excess_sharpe ?? tournament.paa.oos.sharpe).toFixed(2)} · MaxDD ${tournament.paa.oos.max_drawdown_pct.toFixed(1)}%`
                     : ''
                 }
                 icon={<ShieldCheck className="h-4 w-4 text-emerald-400" />}
@@ -173,7 +173,7 @@ export const TournamentTabPanel: React.FC = () => {
                 }
                 hint={
                   tournament.meta_portfolio_b
-                    ? `Sharpe ${tournament.meta_portfolio_b.oos.sharpe.toFixed(2)} · MaxDD ${tournament.meta_portfolio_b.oos.max_drawdown_pct.toFixed(1)}%`
+                    ? `BIL üstü Sharpe ${(tournament.meta_portfolio_b.oos.excess_sharpe ?? tournament.meta_portfolio_b.oos.sharpe).toFixed(2)} · MaxDD ${tournament.meta_portfolio_b.oos.max_drawdown_pct.toFixed(1)}%`
                     : ''
                 }
                 icon={<Sparkles className="h-4 w-4 text-sky-400" />}
@@ -181,7 +181,7 @@ export const TournamentTabPanel: React.FC = () => {
               />
               <StatCard
                 label="Genel OOS Şampiyon"
-                value={tournament.champion ? `Sharpe ${tournament.champion.oos.sharpe.toFixed(2)}` : '--'}
+                value={tournament.champion ? `BIL üstü Sharpe ${(tournament.champion.oos.excess_sharpe ?? tournament.champion.oos.sharpe).toFixed(2)}` : '--'}
                 hint={tournament.champion?.name || ''}
                 icon={<Trophy className="h-4 w-4 text-amber-400" />}
                 tone="warning"
@@ -238,6 +238,17 @@ export const TournamentTabPanel: React.FC = () => {
 
             {/* Full 25-Strategy Sortable Leaderboard */}
             <TournamentLeaderboard strategies={tournament.strategies} />
+            {tournament.bist_usd_reference?.usdtry_start ? (
+              <p className="text-[11px] text-secondary-text" data-testid="bist-usd-reference">
+                BIST satırları dolar bazlıdır: USD/TRY {tournament.bist_usd_reference.usdtry_start.toFixed(2)} →{' '}
+                {tournament.bist_usd_reference.usdtry_end?.toFixed(2)} (yıllık %
+                {(tournament.bist_usd_reference.usdtry_annual_change_pct ?? 0).toFixed(1)} kur artışı)
+                {tournament.bist_usd_reference.index_usd
+                  ? `; ${tournament.bist_usd_reference.index_symbol} TL %${(tournament.bist_usd_reference.index_try_cagr_pct ?? 0).toFixed(1)} → USD %${tournament.bist_usd_reference.index_usd.cagr_pct.toFixed(1)} yıllık`
+                  : ''}
+                . Karar, kur etkisi çıkarılmış getirinin BIL üstü Sharpe&apos;ı ile verilir.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="py-8 text-center text-xs text-secondary-text">

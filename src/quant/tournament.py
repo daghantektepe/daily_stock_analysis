@@ -9,6 +9,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.quant.bist_usd import (
+    BIST_FX_SYMBOL,
+    build_bist_usd_reference,
+    load_bist_usd_reference,
+    usd_oos_metrics,
+    yearly_returns_pct,
+)
 from src.quant.data_loader import (
     DEFAULT_CACHE_DIR,
     US_ETF_RISK_ASSETS,
@@ -41,6 +48,58 @@ def _verdict_rank(verdict: str) -> int:
         "FAIL_WEAK": 4,
     }
     return order.get(verdict, 5)
+
+
+def _ranking_sharpe(res: StrategyResult) -> float:
+    """Sharpe used for ranking: over BIL for USD strategies, USD-over-BIL for TRY ones."""
+    if res.usd is not None:
+        return res.usd.excess_sharpe
+    return res.oos.excess_sharpe if res.currency == "USD" else res.oos.sharpe
+
+
+def _format_bist_usd_section(payload: Dict[str, Any]) -> List[str]:
+    """BIST strategies in TL vs real dollars (USDTRY-adjusted, over BIL)."""
+    ref = payload.get("bist_usd_reference") or {}
+    rows = [r for r in payload.get("strategies") or [] if r.get("currency") == "TRY" and r.get("usd")]
+    if not ref and not rows:
+        return []
+    lines = ["", "## BIST Stratejilerinin Gerçek Dolar (USD) Karşılığı", ""]
+    if ref:
+        lines.append(
+            f"- **USD/TRY:** `{ref.get('usdtry_start')} → {ref.get('usdtry_end')}` "
+            f"({ref.get('start_date')} → {ref.get('end_date')}, yıllık `%{ref.get('usdtry_annual_change_pct', 0):+.1f}` kur değişimi)"
+        )
+        idx_usd = ref.get("index_usd") or {}
+        if idx_usd:
+            lines.append(
+                f"- **Referans {ref.get('index_symbol')}:** TL CAGR `{ref.get('index_try_cagr_pct', 0):+.1f}%` → "
+                f"USD CAGR `{idx_usd.get('cagr_pct', 0):+.1f}%`, BIL üstü USD Sharpe `{idx_usd.get('excess_sharpe', 0):+.2f}`, "
+                f"USD MaxDD `{idx_usd.get('max_drawdown_pct', 0):.1f}%`"
+            )
+    if rows:
+        years = sorted({y for r in rows for y in (r.get("usd_yearly_returns_pct") or {})})
+        lines.extend(
+            [
+                "",
+                "| BIST Stratejisi | TL CAGR | USD CAGR | USD MaxDD | BIL üstü USD Sharpe | Karar | "
+                + " | ".join(f"{y} USD" for y in years) + " |",
+                "| :--- | ---: | ---: | ---: | ---: | :---: | " + " | ".join("---:" for _ in years) + " |",
+            ]
+        )
+        for r in rows:
+            usd = r.get("usd") or {}
+            yearly = r.get("usd_yearly_returns_pct") or {}
+            year_cells = " | ".join(f"{yearly[y]:+.1f}%" if y in yearly else "—" for y in years)
+            lines.append(
+                f"| **{r.get('name')}** | {(r.get('oos') or {}).get('cagr_pct', 0):+.1f}% | {usd.get('cagr_pct', 0):+.1f}% | "
+                f"{usd.get('max_drawdown_pct', 0):.1f}% | {usd.get('excess_sharpe', 0):+.2f} | `{r.get('verdict')}` | {year_cells} |"
+            )
+    lines.append("")
+    lines.append(
+        "> *BIST kararı TL Sharpe ile değil, kur etkisi çıkarılmış USD getirinin `BIL` üstü Sharpe'ı ile verilir "
+        "(`≥ 0.15` ve pozitif USD fazla getiri). Evren bugünkü likit hisselerden oluştuğu için hayatta kalma yanlılığı sürer.*"
+    )
+    return lines
 
 
 def format_tournament_markdown(payload: Dict[str, Any]) -> str:
@@ -91,14 +150,23 @@ def format_tournament_markdown(payload: Dict[str, Any]) -> str:
     )
     for row in strategies:
         oos = row.get("oos") or {}
-        ex_cagr = f"{oos.get('excess_cagr_pct', 0):+.1f}%" if row.get("currency") == "USD" else "TRY"
-        ex_sr = f"{oos.get('excess_sharpe', oos.get('sharpe', 0)):+.2f}" if row.get("currency") == "USD" else f"{oos.get('sharpe', 0):.2f} (TL)"
+        usd = row.get("usd") or {}
+        if row.get("currency") == "USD":
+            ex_cagr = f"{oos.get('excess_cagr_pct', 0):+.1f}%"
+            ex_sr = f"{oos.get('excess_sharpe', oos.get('sharpe', 0)):+.2f}"
+        elif usd:
+            ex_cagr = f"{usd.get('excess_cagr_pct', 0):+.1f}% (USD)"
+            ex_sr = f"{usd.get('excess_sharpe', 0):+.2f} (USD)"
+        else:
+            ex_cagr = "TRY"
+            ex_sr = f"{oos.get('sharpe', 0):.2f} (TL)"
         lines.append(
             f"| **{row.get('name')}** | `{row.get('universe')}` | `{row.get('verdict')}` | "
             f"{oos.get('cagr_pct', 0):+.1f}% | {ex_cagr} | {ex_sr} | "
             f"{oos.get('max_drawdown_pct', 0):.1f}% | {oos.get('recovery_factor', 0):.2f}x | "
             f"%{oos.get('dsr_pct', 0):.1f} | {row.get('signal_summary', '')} |"
         )
+    lines.extend(_format_bist_usd_section(payload))
     lines.append("")
     lines.append("> *Not: Tüm sonuçlar geriye dönük ampirik simülasyondur; BIST stratejileri hayatta kalma yanlılığı ve TL enflasyonu nedeniyle `CAVEAT_SURVIVORSHIP` etiketi taşır. Yatırım tavsiyesi değildir.*")
     return "\n".join(lines) + "\n"
@@ -141,29 +209,57 @@ def run_tournament(
     all_map: Dict[str, StrategyResult] = {**base_results, **meta_results}
     n_trials = len(all_map)
 
-    # Recompute cross-sectional DSR across all N tournament trials on OOS excess returns
-    oos_series_list = []
+    # USD view of TRY (BIST) strategies: lira depreciation removed, judged vs BIL
+    bist_reference = load_bist_usd_reference(
+        start_date=start_date,
+        cache_dir=target_cache_dir,
+        force_refresh=force_refresh,
+    )
+    usdtry = bist_reference[BIST_FX_SYMBOL] if BIST_FX_SYMBOL in bist_reference.columns else None
     for res in all_map.values():
         if res.oos_returns is not None and not res.oos_returns.empty:
-            if res.currency == "USD" and rf_returns is not None and not rf_returns.empty:
-                aligned_rf = rf_returns.reindex(res.oos_returns.index).fillna(0.0)
-                oos_series_list.append(res.oos_returns - aligned_rf)
-            else:
-                oos_series_list.append(res.oos_returns)
+            res.yearly_returns_pct = yearly_returns_pct(res.oos_returns)
+        if res.currency == "TRY" and usdtry is not None and res.daily_returns is not None:
+            metrics, usd_series = usd_oos_metrics(
+                res.daily_returns,
+                usdtry,
+                oos_start=oos_start,
+                rf_returns=rf_returns,
+                turnover_series=res.turnover_series,
+                n_trials=n_trials,
+            )
+            if metrics is not None:
+                res.usd = metrics
+                res.usd_oos_returns = usd_series
+                res.usd_yearly_returns_pct = yearly_returns_pct(usd_series)
+    bist_usd_reference = build_bist_usd_reference(bist_reference, oos_start=oos_start, rf_returns=rf_returns)
+
+    def _excess_eval_series(res: StrategyResult) -> Optional[Any]:
+        """OOS returns over the risk-free rate in the currency the verdict is judged in."""
+        has_rf = rf_returns is not None and not rf_returns.empty
+        if res.usd_oos_returns is not None and not res.usd_oos_returns.empty:
+            series = res.usd_oos_returns
+            return series - rf_returns.reindex(series.index).fillna(0.0) if has_rf else series
+        if res.oos_returns is None or res.oos_returns.empty:
+            return None
+        if res.currency == "USD" and has_rf:
+            return res.oos_returns - rf_returns.reindex(res.oos_returns.index).fillna(0.0)
+        return res.oos_returns
+
+    # Recompute cross-sectional DSR across all N tournament trials on OOS excess returns
+    oos_series_list = [s for s in (_excess_eval_series(r) for r in all_map.values()) if s is not None]
     sr_var = compute_cross_sectional_sr_variance(oos_series_list)
 
     for res in all_map.values():
-        if res.oos_returns is not None and not res.oos_returns.empty:
-            eval_oos = (
-                res.oos_returns - rf_returns.reindex(res.oos_returns.index).fillna(0.0)
-                if (res.currency == "USD" and rf_returns is not None and not rf_returns.empty)
-                else res.oos_returns
-            )
+        eval_oos = _excess_eval_series(res)
+        if eval_oos is not None:
             res.oos.dsr_pct = deflated_sharpe_ratio(
                 eval_oos,
                 n_trials=n_trials,
                 sr_variance=sr_var,
             )
+            if res.usd is not None:
+                res.usd.dsr_pct = res.oos.dsr_pct
         if res.daily_returns is not None and not res.daily_returns.empty:
             eval_full = (
                 res.daily_returns - rf_returns.reindex(res.daily_returns.index).fillna(0.0)
@@ -180,13 +276,14 @@ def run_tournament(
             universe=res.universe,
             is_benchmark=res.is_benchmark,
             min_oos_days=750 if res.oos.trading_days >= 200 else 0,
+            usd_oos=res.usd,
         )
 
     ordered = sorted(
         all_map.values(),
         key=lambda r: (
             _verdict_rank(r.verdict),
-            -float(r.oos.excess_sharpe if r.currency == "USD" else r.oos.sharpe),
+            -float(_ranking_sharpe(r)),
             -float(r.oos.cagr_pct),
         ),
     )
@@ -240,6 +337,7 @@ def run_tournament(
         "meta_portfolio_b": meta_b.to_public_dict(include_curve=False) if meta_b else None,
         "featured_strategy_ids": [sid for sid in featured_ids if sid in all_map],
         "strategies": [r.to_public_dict(include_curve=(r.strategy_id in featured_ids)) for r in ordered],
+        "bist_usd_reference": bist_usd_reference or None,
     }
 
     if update_paper_snapshot:

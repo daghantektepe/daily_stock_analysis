@@ -58,11 +58,17 @@ class StrategyResult:
     latest_date: Optional[str] = None
     signal_summary: str = ""
     equity_oos_points: List[Dict[str, Any]] = field(default_factory=list)
+    # Calendar-year OOS returns in the strategy currency (filled by the tournament)
+    yearly_returns_pct: Dict[str, float] = field(default_factory=dict)
+    # USD view of TRY strategies (BIST): OOS metrics vs BIL and USD calendar-year returns
+    usd: Optional[PerformanceMetrics] = None
+    usd_yearly_returns_pct: Dict[str, float] = field(default_factory=dict)
     # Non-serialized internal series used for meta-portfolio construction & cross-sectional DSR
     daily_returns: Optional[pd.Series] = field(default=None, repr=False)
     oos_returns: Optional[pd.Series] = field(default=None, repr=False)
     turnover_series: Optional[pd.Series] = field(default=None, repr=False)
     equity_curve: Optional[pd.Series] = field(default=None, repr=False)
+    usd_oos_returns: Optional[pd.Series] = field(default=None, repr=False)
 
     def to_public_dict(self, *, include_curve: bool = True) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
@@ -82,6 +88,11 @@ class StrategyResult:
             "latest_date": self.latest_date,
             "signal_summary": self.signal_summary,
         }
+        if self.yearly_returns_pct:
+            payload["yearly_returns_pct"] = dict(self.yearly_returns_pct)
+        if self.usd is not None:
+            payload["usd"] = self.usd.to_dict()
+            payload["usd_yearly_returns_pct"] = dict(self.usd_yearly_returns_pct)
         if include_curve:
             payload["equity_oos_points"] = list(self.equity_oos_points)
         return payload

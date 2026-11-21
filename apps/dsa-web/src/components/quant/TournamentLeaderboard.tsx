@@ -25,8 +25,42 @@ const UNIVERSE_LABELS: Record<string, string> = {
   meta: 'Meta-Portföy',
   us_sectors: 'ABD Sektör/Faktör',
   crypto: 'Kripto',
-  bist: 'BIST (TL)',
+  bist: 'BIST (USD bazlı)',
 };
+
+interface HurdleView {
+  cagr: number;
+  sharpe: number;
+  maxdd: number;
+  recovery: number;
+  /** TL CAGR shown under the USD one for BIST rows. */
+  tlCagr?: number;
+}
+
+/**
+ * Metrics on the same footing as the verdicts: Sharpe over BIL for USD strategies,
+ * USDTRY-adjusted dollar metrics over BIL for BIST. Rf=0 Sharpe flatters strategies
+ * that sit in T-bills, so it is never used for ranking.
+ */
+const hurdleView = (row: TournamentStrategyRow): HurdleView => {
+  if (row.usd) {
+    return {
+      cagr: row.usd.cagr_pct,
+      sharpe: row.usd.excess_sharpe ?? row.usd.sharpe,
+      maxdd: row.usd.max_drawdown_pct,
+      recovery: row.usd.recovery_factor,
+      tlCagr: row.oos.cagr_pct,
+    };
+  }
+  return {
+    cagr: row.oos.cagr_pct,
+    sharpe: row.currency === 'USD' ? (row.oos.excess_sharpe ?? row.oos.sharpe) : row.oos.sharpe,
+    maxdd: row.oos.max_drawdown_pct,
+    recovery: row.oos.recovery_factor,
+  };
+};
+
+const fmtSigned = (value: number, digits = 1): string => `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`;
 
 export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ strategies }) => {
   const [universeFilter, setUniverseFilter] = useState<string>('all');
@@ -43,17 +77,19 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
         ? strategies
         : strategies.filter((s) => s.universe === universeFilter);
     return [...base].sort((a, b) => {
-      if (sortBy === 'cagr') return b.oos.cagr_pct - a.oos.cagr_pct;
-      if (sortBy === 'maxdd') return b.oos.max_drawdown_pct - a.oos.max_drawdown_pct;
+      const va = hurdleView(a);
+      const vb = hurdleView(b);
+      if (sortBy === 'cagr') return vb.cagr - va.cagr;
+      if (sortBy === 'maxdd') return vb.maxdd - va.maxdd;
       if (sortBy === 'dsr') return b.oos.dsr_pct - a.oos.dsr_pct;
-      if (sortBy === 'recovery') return b.oos.recovery_factor - a.oos.recovery_factor;
-      return b.oos.sharpe - a.oos.sharpe;
+      if (sortBy === 'recovery') return vb.recovery - va.recovery;
+      return vb.sharpe - va.sharpe;
     });
   }, [sortBy, strategies, universeFilter]);
 
   const askCopilot = (row: TournamentStrategyRow) => {
     openCopilotDrawer(
-      `Turnuva stratejisi "${row.name}" (${row.strategy_id}, karar: ${row.verdict}, OOS CAGR ${row.oos.cagr_pct}%, Sharpe ${row.oos.sharpe}, MaxDD ${row.oos.max_drawdown_pct}%, güncel hedef: ${row.signal_summary}) bugünkü canlı piyasa rejimine göre uygulanmalı mı? Risklerini ve alternatifini analiz et.`,
+      `Turnuva stratejisi "${row.name}" (${row.strategy_id}, karar: ${row.verdict}, OOS CAGR ${hurdleView(row).cagr}%${row.usd ? ' (USD)' : ''}, BIL üstü Sharpe ${hurdleView(row).sharpe}, MaxDD ${hurdleView(row).maxdd}%, güncel hedef: ${row.signal_summary}) bugünkü canlı piyasa rejimine göre uygulanmalı mı? Risklerini ve alternatifini analiz et.`,
     );
   };
 
@@ -83,7 +119,7 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
           <span>Sırala:</span>
           {(
             [
-              ['sharpe', 'Sharpe'],
+              ['sharpe', 'BIL üstü Sharpe'],
               ['cagr', 'CAGR'],
               ['maxdd', 'En Az Düşüş'],
               ['dsr', 'DSR'],
@@ -115,7 +151,7 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
               <th className="px-2 py-2 text-center">Evren</th>
               <th className="px-2 py-2 text-center">Karar</th>
               <th className="px-2 py-2 text-right">OOS CAGR</th>
-              <th className="px-2 py-2 text-right">Sharpe</th>
+              <th className="px-2 py-2 text-right">BIL üstü Sharpe</th>
               <th className="px-2 py-2 text-right">MaxDD</th>
               <th className="px-2 py-2 text-right">Recovery</th>
               <th className="px-2 py-2 text-right">DSR</th>
@@ -124,7 +160,9 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
-            {filtered.map((row) => (
+            {filtered.map((row) => {
+              const view = hurdleView(row);
+              return (
               <tr key={row.strategy_id} className="transition-colors hover:bg-hover/40">
                 <td className="py-2.5 pr-3">
                   <div className="font-semibold text-foreground">{row.name}</div>
@@ -150,19 +188,22 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
                 <td
                   className={cn(
                     'px-2 py-2.5 text-right font-mono font-semibold',
-                    row.oos.cagr_pct >= 0 ? 'text-emerald-400' : 'text-rose-400',
+                    view.cagr >= 0 ? 'text-emerald-400' : 'text-rose-400',
                   )}
                 >
-                  {row.oos.cagr_pct >= 0 ? `+${row.oos.cagr_pct.toFixed(1)}%` : `${row.oos.cagr_pct.toFixed(1)}%`}
+                  {fmtSigned(view.cagr)}%{row.usd ? ' USD' : ''}
+                  {view.tlCagr !== undefined ? (
+                    <div className="text-[10px] font-normal text-secondary-text">TL {fmtSigned(view.tlCagr)}%</div>
+                  ) : null}
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-foreground">
-                  {row.oos.sharpe.toFixed(2)}
+                  {fmtSigned(view.sharpe, 2)}
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-rose-400">
-                  {row.oos.max_drawdown_pct.toFixed(1)}%
+                  {view.maxdd.toFixed(1)}%
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-foreground">
-                  {row.oos.recovery_factor.toFixed(2)}x
+                  {view.recovery.toFixed(2)}x
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-secondary-text">
                   %{row.oos.dsr_pct.toFixed(1)}
@@ -184,7 +225,8 @@ export const TournamentLeaderboard: React.FC<TournamentLeaderboardProps> = ({ st
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
