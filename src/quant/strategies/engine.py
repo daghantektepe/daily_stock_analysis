@@ -140,6 +140,7 @@ def backtest_weight_matrix(
     *,
     oos_start: str = DEFAULT_OOS_START,
     n_trials: int = 25,
+    rf_returns: Optional[pd.Series] = None,
 ) -> StrategyResult:
     """Execute a strictly zero-lookahead backtest from close-of-day ``target_weights``."""
     clean_prices = prices.sort_index().ffill()
@@ -190,16 +191,19 @@ def backtest_weight_matrix(
     oos_returns = net_returns.loc[oos_equity.index]
     oos_turnover = turnover.loc[oos_equity.index]
 
+    effective_rf = rf_returns if spec.currency == "USD" else None
     full_metrics = compute_performance_metrics(
         equity,
         trading_days_per_year=spec.trading_days_per_year,
         turnover_series=turnover,
+        rf_returns=effective_rf,
         n_trials=n_trials,
     )
     oos_metrics = compute_performance_metrics(
         oos_equity,
         trading_days_per_year=spec.trading_days_per_year,
         turnover_series=oos_turnover,
+        rf_returns=effective_rf,
         n_trials=n_trials,
     )
 
@@ -237,6 +241,7 @@ def combine_strategy_returns(
     *,
     oos_start: str = DEFAULT_OOS_START,
     n_trials: int = 25,
+    rf_returns: Optional[pd.Series] = None,
 ) -> StrategyResult:
     """Combine already net-of-cost strategy return streams into a Meta-Portfolio ensemble."""
     valid = [(res, float(weight)) for res, weight in components if res.daily_returns is not None and not res.daily_returns.empty and weight > 0]
@@ -284,16 +289,19 @@ def combine_strategy_returns(
     oos_returns = combined_ret.loc[oos_equity.index]
     oos_turnover = combined_to.loc[oos_equity.index]
 
+    effective_rf = rf_returns if spec.currency == "USD" else None
     full_metrics = compute_performance_metrics(
         equity,
         trading_days_per_year=spec.trading_days_per_year,
         turnover_series=combined_to,
+        rf_returns=effective_rf,
         n_trials=n_trials,
     )
     oos_metrics = compute_performance_metrics(
         oos_equity,
         trading_days_per_year=spec.trading_days_per_year,
         turnover_series=oos_turnover,
+        rf_returns=effective_rf,
         n_trials=n_trials,
     )
 

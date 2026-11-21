@@ -405,7 +405,9 @@ def build_council_market_context(prices: Optional[pd.DataFrame] = None) -> Dict[
                 "name": row.get("name"),
                 "verdict": row.get("verdict"),
                 "oos_cagr_pct": oos.get("cagr_pct"),
+                "oos_excess_cagr_vs_bil_pct": oos.get("excess_cagr_pct"),
                 "oos_sharpe": oos.get("sharpe"),
+                "oos_excess_sharpe_vs_bil": oos.get("excess_sharpe"),
                 "oos_max_dd_pct": oos.get("max_drawdown_pct"),
                 "oos_dsr_pct": oos.get("dsr_pct"),
                 "current_signal": row.get("signal_summary"),
@@ -691,6 +693,15 @@ def save_council_charters(payload: Dict[str, Any], book_dir: Optional[Path] = No
     return path
 
 
+def _trim_text(raw: Any, max_len: int) -> str:
+    """Trim descriptive text cleanly on a word boundary instead of cutting mid-word."""
+    text = str(raw or "").strip()
+    if len(text) <= max_len:
+        return text
+    cut = text[:max_len].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return f"{cut}..." if cut else text[:max_len]
+
+
 def evaluate_and_register_charter(
     member_key: str,
     raw_charter: Dict[str, Any],
@@ -718,17 +729,18 @@ def evaluate_and_register_charter(
         "strategy_id": f"COUNCIL_{member_key.upper()}",
         "engine_label": meta["engine_label"],
         "model": model or "cli-default",
-        "strategy_name": str(raw_charter.get("strategy_name") or f"{meta['engine_label']} Stratejisi").strip()[:90],
+        "strategy_name": _trim_text(raw_charter.get("strategy_name") or f"{meta['engine_label']} Stratejisi", 100),
         "rule_engine": engine,
         "rebalance_mode": rebalance_mode,
         "params": params,
-        "thesis": str(raw_charter.get("thesis") or "").strip()[:600],
-        "risk_rules": str(raw_charter.get("risk_rules") or "").strip()[:400],
+        "thesis": _trim_text(raw_charter.get("thesis") or "", 1200),
+        "risk_rules": _trim_text(raw_charter.get("risk_rules") or "", 1200),
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
     weight_fn = compile_council_weight_fn(normalized_charter)
     weights_df = weight_fn(prices)
+    rf_returns = prices["BIL"].dropna().pct_change().dropna() if "BIL" in prices.columns else None
     spec = StrategySpec(
         strategy_id=normalized_charter["strategy_id"],
         name=f"{meta['engine_label']} · {normalized_charter['strategy_name']}",
@@ -738,8 +750,19 @@ def evaluate_and_register_charter(
         cost_bps=cost_bps,
         trading_days_per_year=252,
     )
-    bt = backtest_weight_matrix(prices, weights_df, spec, oos_start=DEFAULT_OOS_START, n_trials=28)
-    verdict = classify_strategy_verdict(bt.oos, universe="us_etf")
+    bt = backtest_weight_matrix(
+        prices,
+        weights_df,
+        spec,
+        oos_start=DEFAULT_OOS_START,
+        n_trials=28,
+        rf_returns=rf_returns,
+    )
+    verdict = classify_strategy_verdict(
+        bt.oos,
+        universe="us_etf",
+        min_oos_days=750 if len(prices) >= 900 else 0,
+    )
     normalized_charter["oos_backtest"] = bt.oos.to_dict()
     normalized_charter["verdict"] = verdict
     normalized_charter["live_signal_summary"] = bt.signal_summary

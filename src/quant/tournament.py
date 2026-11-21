@@ -118,26 +118,58 @@ def run_tournament(
         cache_dir=target_cache_dir,
         force_refresh=force_refresh,
     )
-    base_results = run_all_base_strategies(universes, oos_start=oos_start, n_trials=25)
-    meta_results = build_meta_portfolios(base_results, oos_start=oos_start, n_trials=25)
+    us_etf_frame = universes.get("us_etf")
+    rf_returns = None
+    if us_etf_frame is not None and not us_etf_frame.empty and "BIL" in us_etf_frame.columns:
+        rf_returns = us_etf_frame["BIL"].dropna().pct_change().dropna()
+
+    base_results = run_all_base_strategies(
+        universes,
+        oos_start=oos_start,
+        n_trials=25,
+        rf_returns=rf_returns,
+    )
+    meta_results = build_meta_portfolios(
+        base_results,
+        oos_start=oos_start,
+        n_trials=25,
+        rf_returns=rf_returns,
+    )
 
     all_map: Dict[str, StrategyResult] = {**base_results, **meta_results}
     n_trials = len(all_map)
 
-    # Recompute cross-sectional DSR across all N tournament trials on OOS returns
-    oos_series_list = [res.oos_returns for res in all_map.values() if res.oos_returns is not None and not res.oos_returns.empty]
+    # Recompute cross-sectional DSR across all N tournament trials on OOS excess returns
+    oos_series_list = []
+    for res in all_map.values():
+        if res.oos_returns is not None and not res.oos_returns.empty:
+            if res.currency == "USD" and rf_returns is not None and not rf_returns.empty:
+                aligned_rf = rf_returns.reindex(res.oos_returns.index).fillna(0.0)
+                oos_series_list.append(res.oos_returns - aligned_rf)
+            else:
+                oos_series_list.append(res.oos_returns)
     sr_var = compute_cross_sectional_sr_variance(oos_series_list)
 
     for res in all_map.values():
         if res.oos_returns is not None and not res.oos_returns.empty:
+            eval_oos = (
+                res.oos_returns - rf_returns.reindex(res.oos_returns.index).fillna(0.0)
+                if (res.currency == "USD" and rf_returns is not None and not rf_returns.empty)
+                else res.oos_returns
+            )
             res.oos.dsr_pct = deflated_sharpe_ratio(
-                res.oos_returns,
+                eval_oos,
                 n_trials=n_trials,
                 sr_variance=sr_var,
             )
         if res.daily_returns is not None and not res.daily_returns.empty:
+            eval_full = (
+                res.daily_returns - rf_returns.reindex(res.daily_returns.index).fillna(0.0)
+                if (res.currency == "USD" and rf_returns is not None and not rf_returns.empty)
+                else res.daily_returns
+            )
             res.full.dsr_pct = deflated_sharpe_ratio(
-                res.daily_returns,
+                eval_full,
                 n_trials=n_trials,
                 sr_variance=sr_var,
             )
@@ -145,11 +177,16 @@ def run_tournament(
             res.oos,
             universe=res.universe,
             is_benchmark=res.is_benchmark,
+            min_oos_days=750 if res.oos.trading_days >= 200 else 0,
         )
 
     ordered = sorted(
         all_map.values(),
-        key=lambda r: (_verdict_rank(r.verdict), -float(r.oos.sharpe), -float(r.oos.cagr_pct)),
+        key=lambda r: (
+            _verdict_rank(r.verdict),
+            -float(r.oos.excess_sharpe if r.currency == "USD" else r.oos.sharpe),
+            -float(r.oos.cagr_pct),
+        ),
     )
 
     # Select champion among non-benchmark USD/meta elite strategies (preferring PAA / highest OOS Sharpe)
@@ -256,9 +293,9 @@ def get_live_paa_signal(
 ) -> Dict[str, Any]:
     """Compute the live Protective Asset Allocation (PAA) crash-shield target weights right now."""
     closes = load_universe_closes(
-        "us_etf_and_sectors",
+        "us_etf",
         US_ETF_UNIVERSE,
-        start_date="2023-01-01",
+        start_date="2018-01-01",
         cache_dir=cache_dir,
         force_refresh=force_refresh,
     )

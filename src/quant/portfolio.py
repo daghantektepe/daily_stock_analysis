@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import pandas as pd
+
 from src.quant.strategies.engine import (
     DEFAULT_OOS_START,
     StrategyResult,
@@ -25,6 +27,7 @@ def build_meta_portfolios(
     *,
     oos_start: str = DEFAULT_OOS_START,
     n_trials: int = 25,
+    rf_returns: Optional[pd.Series] = None,
 ) -> Dict[str, StrategyResult]:
     """Construct Meta-Portfolio A (US Orthogonal ETF Ensemble) & Meta-Portfolio B (Global ETF + Crypto Trend)."""
     meta_results: Dict[str, StrategyResult] = {}
@@ -54,6 +57,7 @@ def build_meta_portfolios(
         meta_a_spec,
         oos_start=oos_start,
         n_trials=n_trials,
+        rf_returns=rf_returns,
     )
     meta_results[meta_a.strategy_id] = meta_a
 
@@ -75,6 +79,7 @@ def build_meta_portfolios(
         meta_b_spec,
         oos_start=oos_start,
         n_trials=n_trials,
+        rf_returns=rf_returns,
     )
     meta_results[meta_b.strategy_id] = meta_b
 

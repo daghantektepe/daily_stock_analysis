@@ -7,7 +7,7 @@ All weight builders compute target allocations using strictly trailing closes
 
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -781,6 +781,7 @@ def run_all_base_strategies(
     *,
     oos_start: str = DEFAULT_OOS_START,
     n_trials: int = 25,
+    rf_returns: Optional[pd.Series] = None,
 ) -> Dict[str, StrategyResult]:
     """Run all 23 base strategies on their respective loaded price universes."""
     results: Dict[str, StrategyResult] = {}
@@ -807,5 +808,6 @@ def run_all_base_strategies(
             spec,
             oos_start=oos_start,
             n_trials=n_trials,
+            rf_returns=rf_returns,
         )
     return results

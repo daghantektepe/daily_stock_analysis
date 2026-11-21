@@ -70,6 +70,24 @@ def _extract_close_frame(raw: pd.DataFrame, tickers: Sequence[str]) -> pd.DataFr
     return closes.dropna(how="all")
 
 
+def _merge_close_frames(existing: pd.DataFrame, fresh: pd.DataFrame) -> pd.DataFrame:
+    """Non-destructively merge fresh closes onto existing history (never drops older dates or extra columns)."""
+    if existing is None or existing.empty:
+        return fresh.sort_index()
+    if fresh is None or fresh.empty:
+        return existing.sort_index()
+    old = existing.copy()
+    new = fresh.copy()
+    old.columns = [str(c).upper() for c in old.columns]
+    new.columns = [str(c).upper() for c in new.columns]
+    all_idx = old.index.union(new.index).sort_values()
+    all_cols = list(dict.fromkeys([*old.columns, *new.columns]))
+    merged = new.reindex(index=all_idx, columns=all_cols).combine_first(
+        old.reindex(index=all_idx, columns=all_cols)
+    )
+    return merged.sort_index().dropna(how="all")
+
+
 def load_universe_closes(
     universe_name: str,
     tickers: Sequence[str],
@@ -79,51 +97,80 @@ def load_universe_closes(
     cache_ttl_hours: float = DEFAULT_CACHE_TTL_HOURS,
     force_refresh: bool = False,
 ) -> pd.DataFrame:
-    """Download or load cached adjusted daily closes for a symbol universe."""
+    """Download or load cached adjusted daily closes for a symbol universe.
+
+    Cache integrity guarantees:
+    - Cached data is accepted only if it covers the requested ``start_date``
+      (within a 21-day holiday/inception tolerance) and at least 85% of the
+      requested tickers.
+    - Writing back to disk always non-destructively merges with any existing
+      wider/longer cache so a narrow call can never poison a shared universe CSV.
+    """
     target_dir = Path(cache_dir or DEFAULT_CACHE_DIR)
     target_dir.mkdir(parents=True, exist_ok=True)
     cache_path = target_dir / f"closes_{universe_name}.csv"
-
-    if not force_refresh and cache_path.is_file():
-        age_hours = (time.time() - cache_path.stat().st_mtime) / 3600.0
-        if age_hours <= cache_ttl_hours:
-            try:
-                cached = pd.read_csv(cache_path, index_col=0, parse_dates=True)
-                cached.columns = [str(c).upper() for c in cached.columns]
-                if not cached.empty and len(cached) >= 100:
-                    return cached.sort_index()
-            except Exception as exc:  # noqa: BLE001
-                logger.debug("[quant] cache read failed for %s: %s", universe_name, exc)
-
     unique_tickers = list(dict.fromkeys(str(t).strip().upper() for t in tickers if str(t).strip()))
     if not unique_tickers:
         return pd.DataFrame()
 
+    existing_cached: Optional[pd.DataFrame] = None
+    if cache_path.is_file():
+        try:
+            loaded = pd.read_csv(cache_path, index_col=0, parse_dates=True)
+            loaded.columns = [str(c).upper() for c in loaded.columns]
+            if not loaded.empty:
+                existing_cached = loaded.sort_index()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[quant] cache read failed for %s: %s", universe_name, exc)
+
+    req_start_ts = pd.Timestamp(start_date)
+    if not force_refresh and existing_cached is not None and len(existing_cached) >= 100:
+        age_hours = (time.time() - cache_path.stat().st_mtime) / 3600.0
+        cached_cols = set(existing_cached.columns)
+        present_count = sum(1 for t in unique_tickers if t in cached_cols)
+        covers_cols = present_count >= max(1, int(len(unique_tickers) * 0.85))
+        # Accept cache start if it begins at or near req_start_ts (or <= 2018-01-15 for 2016 requests on 2018 ETFs)
+        earliest_ok = existing_cached.index[0] <= max(req_start_ts + pd.Timedelta(days=21), pd.Timestamp("2018-01-15"))
+        if req_start_ts >= pd.Timestamp("2018-01-01"):
+            earliest_ok = existing_cached.index[0] <= req_start_ts + pd.Timedelta(days=21)
+        if age_hours <= cache_ttl_hours and covers_cols and earliest_ok:
+            sel = [c for c in unique_tickers if c in cached_cols]
+            sub = existing_cached.loc[existing_cached.index >= req_start_ts, sel].copy()
+            if not sub.empty:
+                return sub
+
+    # Determine effective download start: preserve earliest existing cache start so merged file stays complete
+    fetch_start = start_date
+    if existing_cached is not None and not existing_cached.empty:
+        existing_start_str = existing_cached.index[0].strftime("%Y-%m-%d")
+        if existing_start_str < fetch_start:
+            fetch_start = existing_start_str
+    fetch_tickers = list(dict.fromkeys([*unique_tickers, *(list(existing_cached.columns) if existing_cached is not None else [])]))
+
     import yfinance as yf
 
     raw = yf.download(
-        tickers=unique_tickers,
-        start=start_date,
+        tickers=fetch_tickers,
+        start=fetch_start,
         interval="1d",
         auto_adjust=True,
         progress=False,
         threads=True,
     )
-    closes = _extract_close_frame(raw, unique_tickers)
-    if closes.empty and cache_path.is_file():
-        # Fail-open to stale cache if Yahoo Finance is temporarily unavailable
-        try:
-            return pd.read_csv(cache_path, index_col=0, parse_dates=True).sort_index()
-        except Exception:  # noqa: BLE001
-            return pd.DataFrame()
+    closes = _extract_close_frame(raw, fetch_tickers)
+    if closes.empty and existing_cached is not None:
+        sel = [c for c in unique_tickers if c in existing_cached.columns]
+        return existing_cached.loc[existing_cached.index >= req_start_ts, sel].copy()
 
-    if not closes.empty:
+    merged = _merge_close_frames(existing_cached, closes)
+    if not merged.empty:
         try:
-            closes.to_csv(cache_path)
+            merged.to_csv(cache_path)
         except OSError as exc:
             logger.debug("[quant] cache write failed for %s: %s", universe_name, exc)
 
-    return closes
+    sel = [c for c in unique_tickers if c in merged.columns]
+    return merged.loc[merged.index >= req_start_ts, sel].copy() if sel else merged
 
 
 def load_all_tournament_universes(

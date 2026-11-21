@@ -94,7 +94,7 @@ def build_quant_paper_book(
 def load_quant_paper_prices(
     *,
     force_refresh: bool = False,
-    start_date: str = "2024-01-01",
+    start_date: str = "2018-01-01",
     cache_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
     """Load completed daily closes for the US ETF universe (drops today's unfinished bar)."""

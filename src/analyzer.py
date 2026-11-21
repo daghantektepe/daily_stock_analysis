@@ -18,9 +18,11 @@ import time
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List, Tuple, Callable
 
-import litellm
+from src.config import _LITELLM_IMPORT_LOCK
+with _LITELLM_IMPORT_LOCK:
+    import litellm
+    from litellm import Router
 from json_repair import repair_json
-from litellm import Router
 
 from src.agent.llm_adapter import (
     get_thinking_extra_body,

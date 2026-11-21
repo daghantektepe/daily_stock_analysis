@@ -82,15 +82,18 @@ def norm_ppf(p: float) -> float:
 
 @dataclass
 class PerformanceMetrics:
-    """Normalized strategy return, risk, and multiple-testing diagnostics."""
+    """Normalized strategy return, risk, risk-free excess, and multiple-testing diagnostics."""
 
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     trading_days: int = 0
     total_return_pct: float = 0.0
     cagr_pct: float = 0.0
+    rf_cagr_pct: float = 0.0
+    excess_cagr_pct: float = 0.0
     vol_pct: float = 0.0
     sharpe: float = 0.0
+    excess_sharpe: float = 0.0
     sortino: float = 0.0
     max_drawdown_pct: float = 0.0
     calmar: float = 0.0
@@ -161,10 +164,11 @@ def compute_performance_metrics(
     *,
     trading_days_per_year: int = 252,
     turnover_series: Optional[pd.Series] = None,
+    rf_returns: Optional[pd.Series] = None,
     n_trials: int = 25,
     sr_variance: Optional[float] = None,
 ) -> PerformanceMetrics:
-    """Compute full return/risk/DSR summary from a daily equity curve."""
+    """Compute full return/risk/risk-free-excess/DSR summary from a daily equity curve."""
     eq = pd.to_numeric(equity, errors="coerce").dropna()
     if len(eq) < 5 or float(eq.iloc[0]) <= 0:
         return PerformanceMetrics()
@@ -182,6 +186,27 @@ def compute_performance_metrics(
     vol = float(returns.std(ddof=1)) * math.sqrt(trading_days_per_year)
     ann_mean = float(returns.mean()) * trading_days_per_year
     sharpe = ann_mean / vol if vol > 1e-12 else 0.0
+
+    # Risk-free excess return & true Excess Sharpe (above BIL / T-Bill) when provided
+    rf_cagr = 0.0
+    excess_cagr = cagr
+    excess_sharpe = sharpe
+    dsr_series = returns
+    if rf_returns is not None and not rf_returns.empty:
+        aligned_rf = pd.to_numeric(rf_returns.reindex(returns.index), errors="coerce").dropna()
+        if len(aligned_rf) >= 20:
+            aligned_s = returns.reindex(aligned_rf.index).dropna()
+            aligned_rf = aligned_rf.reindex(aligned_s.index).fillna(0.0)
+            if len(aligned_s) >= 20:
+                rf_mult = float((1.0 + aligned_rf).prod())
+                rf_years = max(len(aligned_rf) / float(trading_days_per_year), 1e-9)
+                rf_cagr = (rf_mult ** (1.0 / rf_years) - 1.0) if rf_mult > 0 else 0.0
+                excess_cagr = cagr - rf_cagr
+                ex_daily = aligned_s - aligned_rf
+                ex_vol = float(ex_daily.std(ddof=1)) * math.sqrt(trading_days_per_year)
+                ex_mean = float(ex_daily.mean()) * trading_days_per_year
+                excess_sharpe = ex_mean / ex_vol if ex_vol > 1e-12 else 0.0
+                dsr_series = ex_daily
 
     downside = returns[returns < 0]
     down_std = float(np.sqrt(np.mean(np.square(downside)))) * math.sqrt(trading_days_per_year) if len(downside) > 0 else 0.0
@@ -201,7 +226,7 @@ def compute_performance_metrics(
         aligned_to = pd.to_numeric(turnover_series.reindex(returns.index).fillna(0.0), errors="coerce").fillna(0.0)
         ann_turnover = float(aligned_to.mean()) * trading_days_per_year
 
-    dsr_pct = deflated_sharpe_ratio(returns, n_trials=n_trials, sr_variance=sr_variance)
+    dsr_pct = deflated_sharpe_ratio(dsr_series, n_trials=n_trials, sr_variance=sr_variance)
 
     start_str = eq.index[0].strftime("%Y-%m-%d") if hasattr(eq.index[0], "strftime") else str(eq.index[0])
     end_str = eq.index[-1].strftime("%Y-%m-%d") if hasattr(eq.index[-1], "strftime") else str(eq.index[-1])
@@ -212,8 +237,11 @@ def compute_performance_metrics(
         trading_days=n_obs,
         total_return_pct=round(total_ret * 100.0, 2),
         cagr_pct=round(cagr * 100.0, 2),
+        rf_cagr_pct=round(rf_cagr * 100.0, 2),
+        excess_cagr_pct=round(excess_cagr * 100.0, 2),
         vol_pct=round(vol * 100.0, 2),
         sharpe=round(sharpe, 2),
+        excess_sharpe=round(excess_sharpe, 2),
         sortino=round(sortino, 2),
         max_drawdown_pct=round(max_dd * 100.0, 2),
         calmar=round(calmar, 2),
@@ -229,13 +257,26 @@ def classify_strategy_verdict(
     *,
     universe: str,
     is_benchmark: bool = False,
+    min_oos_days: int = 0,
 ) -> str:
-    """Assign an objective out-of-sample verdict badge."""
+    """Assign an objective out-of-sample verdict badge anchored on risk-free excess alpha."""
     if is_benchmark:
         return "BENCHMARK"
+    if min_oos_days > 0 and oos.trading_days < min_oos_days:
+        return "FAIL_WEAK"
     if universe == "bist":
         # Current-constituent BIST universe carries survivorship & TRY-inflation caveat
         return "CAVEAT_SURVIVORSHIP" if oos.sharpe >= 0.5 else "FAIL_WEAK"
+
+    has_rf_benchmark = oos.rf_cagr_pct > 0.05
+    if has_rf_benchmark:
+        # Strict risk-free hurdle: must beat T-Bills (BIL) with meaningful Excess Sharpe
+        if oos.excess_sharpe >= 0.40 and oos.excess_cagr_pct >= 2.5 and oos.max_drawdown_pct >= -35.0:
+            return "PASS_ELITE"
+        if oos.excess_sharpe >= 0.15 and oos.excess_cagr_pct > 0.0 and oos.max_drawdown_pct >= -35.0:
+            return "PASS_SOLID"
+        return "FAIL_WEAK"
+
     if oos.sharpe >= 0.65 and oos.cagr_pct >= 6.0 and oos.max_drawdown_pct >= -35.0:
         return "PASS_ELITE"
     if oos.sharpe >= 0.45 and oos.cagr_pct > 0.0:

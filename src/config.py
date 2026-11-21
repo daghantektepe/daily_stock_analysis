@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import re
+import threading
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple
@@ -433,27 +434,31 @@ def is_supported_llm_channel_api_surface_value(value: Optional[str]) -> bool:
     return not canonical or canonical in SUPPORTED_LLM_CHANNEL_API_SURFACES
 
 
+_LITELLM_IMPORT_LOCK = threading.Lock()
+
+
 @lru_cache(maxsize=1)
 def get_litellm_model_providers() -> frozenset[str]:
     """Return provider identifiers from the installed LiteLLM routing enum.
 
-    LiteLLM adds direct providers independently of this repository. Loading
-    its enum keeps channel validation aligned with the actual router instead
-    of relying on a permanently incomplete local allow-list. The fallback is
-    only for lightweight test stubs or a broken optional import; a production
-    installation gets the complete provider set from its pinned LiteLLM.
+    Serialized via ``_LITELLM_IMPORT_LOCK`` so concurrent HTTP requests and
+    background scheduler threads never deadlock inside Python's per-module
+    import lock (``litellm._logging`` / ``litellm._uuid`` circular import race).
     """
     providers = set(_FALLBACK_LITELLM_MODEL_PROVIDERS)
-    try:
-        from litellm.types.utils import LlmProviders
+    os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
+    with _LITELLM_IMPORT_LOCK:
+        try:
+            import litellm  # noqa: F401
+            from litellm.types.utils import LlmProviders
 
-        providers.update(
-            str(provider.value).strip().lower()
-            for provider in LlmProviders
-            if str(getattr(provider, "value", "")).strip()
-        )
-    except Exception:
-        logger.debug("LiteLLM provider metadata unavailable; using the compatibility fallback")
+            providers.update(
+                str(provider.value).strip().lower()
+                for provider in LlmProviders
+                if str(getattr(provider, "value", "")).strip()
+            )
+        except Exception:
+            logger.debug("LiteLLM provider metadata unavailable; using the compatibility fallback")
     return frozenset(providers)
 
 
