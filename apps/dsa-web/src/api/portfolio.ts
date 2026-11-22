@@ -260,6 +260,10 @@ export const portfolioApi = {
     return toCamelCase<PortfolioImportBrokerListResponse>(response.data);
   },
 
+  getCsvTemplateUrl(broker: string): string {
+    return `/api/v1/portfolio/imports/csv/template?broker=${encodeURIComponent(broker)}`;
+  },
+
   async parseCsvImport(broker: string, file: File): Promise<PortfolioImportParseResponse> {
     const formData = new FormData();
     formData.append('broker', broker);

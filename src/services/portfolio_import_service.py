@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import io
 import logging
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
@@ -23,14 +24,20 @@ from src.services.portfolio_service import (
 
 logger = logging.getLogger(__name__)
 
+_TR_TICKER_RE = re.compile(r"^[A-Z][A-Z0-9]{2,5}$")
+
+
 @dataclass(frozen=True)
 class CsvParserSpec:
-    """CSV parser specification for one broker."""
+    """CSV/XLSX parser specification for one broker."""
 
     broker: str
     aliases: Tuple[str, ...]
     display_name: str
     column_hints: Dict[str, Tuple[str, ...]]
+    default_currency: Optional[str] = None
+    default_market_suffix: Optional[str] = None
+    sample_csv: str = ""
 
 
 DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (
@@ -46,6 +53,11 @@ DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (
             "price": ("成交均价", "成交价格", "价格", "成交价", "均价"),
             "trade_uid": ("成交编号", "成交序号", "流水号"),
         },
+        default_currency="CNY",
+        sample_csv=(
+            "成交日期,证券代码,买卖标志,成交数量,成交均价,成交编号,手续费,印花税\n"
+            "2026-11-18,600519,买入,100,1520.00,HT-20261118-01,5.0,0.0\n"
+        ),
     ),
     CsvParserSpec(
         broker="citic",
@@ -59,6 +71,11 @@ DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (
             "price": ("成交价格", "成交均价", "价格", "成交价"),
             "trade_uid": ("合同编号", "成交编号", "委托编号"),
         },
+        default_currency="CNY",
+        sample_csv=(
+            "发生日期,证券代码,买卖方向,成交数量,成交价格,合同编号\n"
+            "2026-11-18,000001,买入,200,11.25,ZX-001\n"
+        ),
     ),
     CsvParserSpec(
         broker="cmb",
@@ -72,6 +89,88 @@ DEFAULT_PARSER_SPECS: Tuple[CsvParserSpec, ...] = (
             "price": ("成交价", "成交价格", "成交均价", "均价"),
             "trade_uid": ("流水号", "成交编号", "成交序号"),
         },
+        default_currency="CNY",
+        sample_csv=(
+            "日期,证券代码,交易方向,成交股数,成交价,流水号\n"
+            "2026-11-18,600036,买入,100,36.80,CMB-001\n"
+        ),
+    ),
+    CsvParserSpec(
+        broker="midas_bist",
+        aliases=("midas", "midas_tr"),
+        display_name="Midas BIST",
+        column_hints={
+            "trade_date": ("İşlem Tarihi", "Islem Tarihi", "Tarih", "Takas Tarihi", "Date"),
+            "symbol": ("Hisse Kodu", "Sembol", "Varlık", "Varlik", "Enstrüman", "Symbol", "Ticker"),
+            "side": ("İşlem Türü", "Islem Turu", "Yön", "Yon", "Tip", "İşlem", "Side", "Type"),
+            "quantity": ("Adet", "Lot", "Miktar", "Quantity", "Amount"),
+            "price": ("Birim Fiyat", "Fiyat", "İşlem Fiyatı", "Price", "Avg Price"),
+            "trade_uid": ("Referans No", "Emir No", "İşlem No", "Order ID", "Ref"),
+        },
+        default_currency="TRY",
+        default_market_suffix=".IS",
+        sample_csv=(
+            "İşlem Tarihi;Hisse Kodu;İşlem Türü;Adet;Birim Fiyat;Komisyon;Referans No\n"
+            "20.11.2026;THYAO;Alış;10;312,50;0,00;MDS-BIST-001\n"
+            "20.11.2026;TUPRS.IS;Alış;5;158,40;0,00;MDS-BIST-002\n"
+        ),
+    ),
+    CsvParserSpec(
+        broker="midas_us",
+        aliases=("midas_abd", "midas_usa"),
+        display_name="Midas ABD / ETF",
+        column_hints={
+            "trade_date": ("Transaction Date", "Trade Date", "İşlem Tarihi", "Islem Tarihi", "Date", "Tarih"),
+            "symbol": ("Ticker", "Symbol", "Hisse", "Hisse Kodu", "Sembol"),
+            "side": ("Side", "Type", "Transaction Type", "İşlem Türü", "Islem Turu", "Action"),
+            "quantity": ("Shares", "Quantity", "Qty", "Adet", "Miktar"),
+            "price": ("Execution Price", "Price", "Unit Price", "Birim Fiyat", "Fiyat"),
+            "trade_uid": ("Order ID", "Trade ID", "Ref", "Referans No", "Emir No"),
+        },
+        default_currency="USD",
+        sample_csv=(
+            "Transaction Date,Ticker,Side,Shares,Execution Price,Fee,Order ID\n"
+            "2026-11-20,BIL,Buy,20,91.50,1.50,MDS-US-001\n"
+            "2026-11-20,UUP,Buy,15,28.90,1.50,MDS-US-002\n"
+        ),
+    ),
+    CsvParserSpec(
+        broker="binance_spot",
+        aliases=("binance", "binance_tr"),
+        display_name="Binance Spot / TR",
+        column_hints={
+            "trade_date": ("Date(UTC)", "Date", "Time", "Tarih", "Trade Time"),
+            "symbol": ("Pair", "Market", "Symbol", "Çift", "Sembol"),
+            "side": ("Side", "Type", "Yön", "Operation"),
+            "quantity": ("Executed", "Amount", "Qty", "Quantity", "Miktar"),
+            "price": ("Price", "AvgPrice", "Average Price", "Fiyat"),
+            "trade_uid": ("Order ID", "Trade ID", "Id", "No"),
+        },
+        default_currency="USDT",
+        sample_csv=(
+            "Date(UTC),Pair,Side,Price,Executed,Amount,Fee,Order ID\n"
+            "2026-11-20 14:30:00,BTCUSDT,BUY,88500.00,0.015BTC,1327.50USDT,1.32,BNC-001\n"
+            "2026-11-20 14:35:00,ETHUSDT,BUY,3120.00,0.25ETH,780.00USDT,0.78,BNC-002\n"
+        ),
+    ),
+    CsvParserSpec(
+        broker="generic_tr",
+        aliases=("genel_tr", "banka", "tr_csv"),
+        display_name="Genel TR (CSV / Excel)",
+        column_hints={
+            "trade_date": ("Tarih", "İşlem Tarihi", "Trade Date", "Date"),
+            "symbol": ("Kod", "Sembol", "Hisse", "Hisse Kodu", "Symbol", "Ticker"),
+            "side": ("İşlem", "İşlem Türü", "Yön", "Side", "Type"),
+            "quantity": ("Adet", "Lot", "Miktar", "Quantity", "Shares"),
+            "price": ("Fiyat", "Birim Fiyat", "Price"),
+            "trade_uid": ("İşlem No", "Referans", "Ref", "Trade ID", "Order ID"),
+        },
+        default_currency="TRY",
+        sample_csv=(
+            "Tarih;Kod;İşlem;Adet;Fiyat;Komisyon;Para Birimi;İşlem No\n"
+            "20.11.2026;ASELS.IS;AL;25;72,40;1,50;TRY;TR-001\n"
+            "20.11.2026;SPY;BUY;2;590,00;1,50;USD;TR-002\n"
+        ),
     ),
 )
 
@@ -122,9 +221,22 @@ class PortfolioImportService:
             aliases=new_aliases,
             display_name=spec.display_name or broker,
             column_hints=dict(spec.column_hints or {}),
+            default_currency=spec.default_currency,
+            default_market_suffix=spec.default_market_suffix,
+            sample_csv=spec.sample_csv,
         )
         for alias in self._parser_registry[broker].aliases:
             self._broker_alias_map[alias] = broker
+
+    def get_csv_template(self, broker: str) -> Tuple[str, str]:
+        """Return ``(filename, csv_text)`` example template for the given broker."""
+        broker_norm = self._normalize_broker(broker)
+        spec = self._parser_registry[broker_norm]
+        csv_text = spec.sample_csv or (
+            "Tarih;Kod;İşlem;Adet;Fiyat;Komisyon;Para Birimi;İşlem No\n"
+            "20.11.2026;THYAO.IS;AL;10;312,50;0,00;TRY;TR-001\n"
+        )
+        return f"{broker_norm}_ornek_sablon.csv", csv_text
 
     def list_supported_brokers(self) -> List[Dict[str, Any]]:
         """List canonical broker ids and aliases for frontend selector."""
@@ -278,12 +390,24 @@ class PortfolioImportService:
         return broker
 
     @staticmethod
-    def _read_csv(content: bytes) -> pd.DataFrame:
-        for encoding in ("utf-8-sig", "gbk", "gb18030"):
+    def _detect_csv_sep(text: str) -> str:
+        first_line = text.splitlines()[0] if text else ""
+        if first_line.count(";") > first_line.count(","):
+            return ";"
+        return ","
+
+    @classmethod
+    def _read_csv(cls, content: bytes) -> pd.DataFrame:
+        if content.lstrip()[:4] == b"PK\x03\x04":
+            df = pd.read_excel(io.BytesIO(content), engine="openpyxl", dtype=str)
+            return df.fillna("")
+        for encoding in ("utf-8-sig", "gbk", "gb18030", "cp1254"):
             try:
+                decoded = content.decode(encoding)
+                sep = cls._detect_csv_sep(decoded)
                 return pd.read_csv(
-                    io.BytesIO(content),
-                    encoding=encoding,
+                    io.StringIO(decoded),
+                    sep=sep,
                     dtype=str,
                     keep_default_na=False,
                 )
@@ -306,6 +430,13 @@ class PortfolioImportService:
             "发生日期",
             "日期",
             "成交时间",
+            "İşlem Tarihi",
+            "Islem Tarihi",
+            "Tarih",
+            "Transaction Date",
+            "Trade Date",
+            "Date(UTC)",
+            "Date",
         )
         trade_date_obj = self._parse_date(trade_date_raw)
         if trade_date_obj is None:
@@ -317,8 +448,26 @@ class PortfolioImportService:
             "证券代码",
             "股票代码",
             "代码",
+            "Hisse Kodu",
+            "Sembol",
+            "Kod",
+            "Ticker",
+            "Symbol",
+            "Pair",
+            "Market",
         )
-        symbol = canonical_stock_code(str(symbol_raw or "").strip())
+        raw_sym_text = str(symbol_raw or "").strip()
+        if parser_spec.broker == "binance_spot":
+            symbol = raw_sym_text.upper().replace("/", "").replace("-", "").replace(" ", "")
+        else:
+            symbol = canonical_stock_code(raw_sym_text)
+            if (
+                parser_spec.default_market_suffix
+                and symbol
+                and "." not in symbol
+                and _TR_TICKER_RE.fullmatch(symbol.upper())
+            ):
+                symbol = f"{symbol.upper()}{parser_spec.default_market_suffix}"
         if not symbol:
             return None
 
@@ -330,31 +479,63 @@ class PortfolioImportService:
             "交易方向",
             "业务名称",
             "操作",
+            "İşlem Türü",
+            "Islem Turu",
+            "Yön",
+            "Yon",
+            "İşlem",
+            "Side",
+            "Type",
         )
         side = self._normalize_side(side_raw)
         if side is None:
             return None
 
         quantity = self._parse_float(
-            self._pick(row, *(broker_hints.get("quantity") or ()), "成交数量", "数量", "成交股数")
+            self._pick(
+                row,
+                *(broker_hints.get("quantity") or ()),
+                "成交数量",
+                "数量",
+                "成交股数",
+                "Adet",
+                "Lot",
+                "Miktar",
+                "Shares",
+                "Executed",
+                "Quantity",
+                "Qty",
+            )
         )
         price = self._parse_float(
-            self._pick(row, *(broker_hints.get("price") or ()), "成交均价", "成交价格", "价格", "成交价", "均价")
+            self._pick(
+                row,
+                *(broker_hints.get("price") or ()),
+                "成交均价",
+                "成交价格",
+                "价格",
+                "成交价",
+                "均价",
+                "Birim Fiyat",
+                "Fiyat",
+                "Execution Price",
+                "Price",
+            )
         )
         if quantity is None or quantity <= 0 or price is None or price <= 0:
             return None
 
         fee = 0.0
-        for col in ("手续费", "佣金", "交易费", "规费", "过户费"):
+        for col in ("手续费", "佣金", "交易费", "规费", "过户费", "Komisyon", "İşlem Ücreti", "Fee", "Commission"):
             value = self._parse_float(self._pick(row, col))
             if value is not None:
-                fee += value
+                fee += abs(value)
 
         tax = 0.0
-        for col in ("印花税", "税费", "其他税费"):
+        for col in ("印花税", "税费", "其他税费", "BSMV", "Vergi", "Tax"):
             value = self._parse_float(self._pick(row, col))
             if value is not None:
-                tax += value
+                tax += abs(value)
 
         trade_uid = self._pick(
             row,
@@ -364,8 +545,15 @@ class PortfolioImportService:
             "合同编号",
             "委托编号",
             "流水号",
+            "Referans No",
+            "Emir No",
+            "İşlem No",
+            "Order ID",
+            "Trade ID",
+            "Ref",
         )
-        currency = self._pick(row, "币种", "货币")
+        currency = self._pick(row, "币种", "货币", "Para Birimi", "Döviz", "Currency", "Fee Coin")
+        currency_norm = (str(currency).strip().upper() if currency is not None else "") or parser_spec.default_currency
 
         return {
             "trade_date": trade_date_obj,
@@ -376,7 +564,7 @@ class PortfolioImportService:
             "fee": float(fee),
             "tax": float(tax),
             "trade_uid": (str(trade_uid).strip() if trade_uid is not None else None) or None,
-            "currency": (str(currency).strip().upper() if currency is not None else None) or None,
+            "currency": currency_norm or None,
         }
 
     @staticmethod
@@ -392,11 +580,26 @@ class PortfolioImportService:
     def _parse_float(value: Any) -> Optional[float]:
         if value is None:
             return None
-        text = str(value).strip().replace(",", "")
+        text = str(value).strip()
         if not text or text.lower() == "nan":
             return None
+        sign = -1.0 if text.startswith("-") else 1.0
+        match = re.search(r"([0-9][0-9.,]*)", text)
+        if not match:
+            return None
+        num_str = match.group(1)
+        if "." in num_str and "," in num_str:
+            if num_str.rfind(",") > num_str.rfind("."):
+                num_str = num_str.replace(".", "").replace(",", ".")
+            else:
+                num_str = num_str.replace(",", "")
+        elif "," in num_str:
+            if re.fullmatch(r"[1-9]\d{0,2}(?:,\d{3})+", num_str):
+                num_str = num_str.replace(",", "")
+            else:
+                num_str = num_str.replace(",", ".")
         try:
-            return float(text)
+            return sign * float(num_str)
         except ValueError:
             return None
 
@@ -407,19 +610,53 @@ class PortfolioImportService:
         text = str(value).strip()
         if not text or text.lower() == "nan":
             return None
-        parsed = pd.to_datetime(text, errors="coerce")
+        dayfirst = bool(re.match(r"^\d{1,2}[./]\d{1,2}[./]\d{2,4}", text))
+        parsed = pd.to_datetime(text, dayfirst=dayfirst, errors="coerce")
         if pd.isna(parsed):
             return None
         return parsed.date()
 
     @staticmethod
     def _normalize_side(value: Any) -> Optional[str]:
-        text = str(value or "").strip().lower()
-        if not text:
+        raw = str(value or "").strip()
+        if not raw:
             return None
+        text = raw.lower()
         compact = text.replace(" ", "")
-        buy_exact = {"buy", "b", "买", "买入", "证券买入", "普通买入"}
-        sell_exact = {"sell", "s", "卖", "卖出", "证券卖出", "普通卖出"}
+        buy_exact = {
+            "buy",
+            "b",
+            "al",
+            "alış",
+            "aliş",
+            "alis",
+            "alım",
+            "alim",
+            "hissealış",
+            "hissealiş",
+            "hissealis",
+            "买",
+            "买入",
+            "证券买入",
+            "普通买入",
+        }
+        sell_exact = {
+            "sell",
+            "s",
+            "sat",
+            "satış",
+            "satiş",
+            "satis",
+            "satım",
+            "satim",
+            "hissesatış",
+            "hissesatiş",
+            "hissesatis",
+            "卖",
+            "卖出",
+            "证券卖出",
+            "普通卖出",
+        }
         if compact in buy_exact:
             return "buy"
         if compact in sell_exact:

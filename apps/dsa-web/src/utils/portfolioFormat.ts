@@ -78,6 +78,10 @@ export function formatCorporateActionLabel(value: PortfolioCorporateActionType):
 
 export function formatBrokerLabel(value: string, displayName?: string): string {
   if (displayName && displayName.trim()) return `${value}（${displayName.trim()}）`;
+  if (value === 'midas_bist') return 'Midas BIST (.csv / .xlsx)';
+  if (value === 'midas_us') return 'Midas ABD / ETF';
+  if (value === 'binance_spot') return 'Binance Spot / TR';
+  if (value === 'generic_tr') return 'Genel TR (CSV / Excel)';
   if (value === 'huatai') return 'Huatai';
   if (value === 'citic') return 'CITIC';
   if (value === 'cmb') return 'CMB';

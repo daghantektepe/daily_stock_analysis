@@ -6,6 +6,7 @@ import { portfolioApi } from '../api/portfolio';
 import type { ParsedApiError } from '../api/error';
 import { getParsedApiError } from '../api/error';
 import { ApiErrorAlert, Card, Badge, ConfirmDialog, EmptyState, InlineAlert } from '../components/common';
+import { TurkishCryptoBridgesPanel } from '../components/bridges/TurkishCryptoBridgesPanel';
 import { PortfolioSignalSummary } from '../components/decision-signals/DecisionSignalDisplay';
 import { useUiLanguage } from '../contexts/UiLanguageContext';
 import { formatUiText } from '../i18n/uiText';
@@ -57,6 +58,10 @@ const PIE_COLORS = ['#00d4ff', '#00ff88', '#ffaa00', '#ff7a45', '#7f8cff', '#ff4
 const DEFAULT_PAGE_SIZE = 20;
 const PORTFOLIO_SIGNAL_LOOKUP_CONCURRENCY = 6;
 const FALLBACK_BROKERS: PortfolioImportBrokerItem[] = [
+  { broker: 'midas_bist', aliases: ['midas', 'midas_tr'], displayName: 'Midas BIST' },
+  { broker: 'midas_us', aliases: ['midas_abd', 'midas_usa'], displayName: 'Midas ABD / ETF' },
+  { broker: 'binance_spot', aliases: ['binance', 'binance_tr'], displayName: 'Binance Spot / TR' },
+  { broker: 'generic_tr', aliases: ['genel_tr', 'banka', 'tr_csv'], displayName: 'Genel TR (CSV / Excel)' },
   { broker: 'huatai', aliases: [], displayName: 'Huatai' },
   { broker: 'citic', aliases: ['zhongxin'], displayName: 'CITIC' },
   { broker: 'cmb', aliases: ['cmbchina', 'zhaoshang'], displayName: 'CMB' },
@@ -1474,14 +1479,27 @@ const PortfolioPage: React.FC = () => {
                 )}
               </select>
               <label className={PORTFOLIO_FILE_PICKER_CLASS}>
-                CSV Seç
-                <input type="file" accept=".csv" className="hidden"
+                CSV / Excel Seç
+                <input type="file" accept=".csv,.xlsx" className="hidden"
                   onChange={(e) => setCsvFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
               </label>
             </div>
-            <div className="flex items-center gap-2 text-xs text-secondary">
-              <input id="csv-dry-run" type="checkbox" checked={csvDryRun} onChange={(e) => setCsvDryRun(e.target.checked)} />
-              <label htmlFor="csv-dry-run">Yalnızca Önizleme (Veritabanına Yazma)</label>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-secondary">
+              <div className="flex items-center gap-2">
+                <input id="csv-dry-run" type="checkbox" checked={csvDryRun} onChange={(e) => setCsvDryRun(e.target.checked)} />
+                <label htmlFor="csv-dry-run">Yalnızca Önizleme (Veritabanına Yazma)</label>
+              </div>
+              <a
+                href={
+                  portfolioApi.getCsvTemplateUrl
+                    ? portfolioApi.getCsvTemplateUrl(selectedBroker)
+                    : `/api/v1/portfolio/imports/csv/template?broker=${encodeURIComponent(selectedBroker)}`
+                }
+                download
+                className="font-medium text-primary hover:underline"
+              >
+                Örnek Şablon İndir ({selectedBroker})
+              </a>
             </div>
             <div className="flex gap-2">
               <button type="button" className="btn-secondary flex-1" disabled={!csvFile || csvParsing} onClick={() => void handleParseCsv()}>
@@ -1646,6 +1664,7 @@ const PortfolioPage: React.FC = () => {
           </div>
         </Card>
       </section>
+      <TurkishCryptoBridgesPanel />
       <ConfirmDialog
         isOpen={Boolean(pendingDelete)}
         title="Kaydı Sil"

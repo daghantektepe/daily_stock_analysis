@@ -19,6 +19,7 @@ import {
   type SimpleBriefResponse,
   type SimpleProfileOption,
 } from '../api/alpha';
+import { bridgesApi, type MacroTrResponse, type TefasFundItem } from '../api/bridges';
 import { getParsedApiError, type ParsedApiError } from '../api/error';
 import { ApiErrorAlert, Button } from '../components/common';
 import { PlainTermTooltip } from '../components/common/PlainTermTooltip';
@@ -46,6 +47,8 @@ const SimpleInvestorHomePage: React.FC = () => {
   const [currency, setCurrency] = useState<'TRY' | 'USD'>('TRY');
   const [budgetRaw, setBudgetRaw] = useState<string>('100000');
   const [copied, setCopied] = useState(false);
+  const [liveTefasByProxy, setLiveTefasByProxy] = useState<Record<string, TefasFundItem[]>>({});
+  const [liveMacro, setLiveMacro] = useState<MacroTrResponse | null>(null);
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem(TOUR_STORAGE_KEY) !== '1';
@@ -58,8 +61,28 @@ const SimpleInvestorHomePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await alphaApi.getSimpleBrief();
-      setBrief(data);
+      const [briefRes, tefasRes, macroRes] = await Promise.allSettled([
+        alphaApi.getSimpleBrief(),
+        bridgesApi.getTefasFunds(),
+        bridgesApi.getMacroTr(),
+      ]);
+      if (briefRes.status === 'rejected') {
+        throw briefRes.reason;
+      }
+      setBrief(briefRes.value);
+      if (tefasRes.status === 'fulfilled' && Array.isArray(tefasRes.value?.funds)) {
+        const grouped: Record<string, TefasFundItem[]> = {};
+        for (const fund of tefasRes.value.funds) {
+          const proxy = (fund.globalProxy || '').toUpperCase();
+          if (!proxy) continue;
+          if (!grouped[proxy]) grouped[proxy] = [];
+          grouped[proxy].push(fund);
+        }
+        setLiveTefasByProxy(grouped);
+      }
+      if (macroRes.status === 'fulfilled' && macroRes.value) {
+        setLiveMacro(macroRes.value);
+      }
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -89,7 +112,9 @@ const SimpleInvestorHomePage: React.FC = () => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }, [budgetRaw]);
 
-  const usdtry = brief?.usdtry_rate && brief.usdtry_rate > 0 ? brief.usdtry_rate : 50.56;
+  const usdtry =
+    (liveMacro?.usdTry && liveMacro.usdTry > 0 ? liveMacro.usdTry : null) ??
+    (brief?.usdtry_rate && brief.usdtry_rate > 0 ? brief.usdtry_rate : 50.56);
 
   const activeProfile: SimpleProfileOption | null = useMemo(() => {
     const list = brief?.profiles ?? [];
@@ -530,6 +555,27 @@ const SimpleInvestorHomePage: React.FC = () => {
                               <span>{asset.tr_equivalent}</span>
                               <PlainTermTooltip termKey="tefas" />
                             </div>
+                            {liveTefasByProxy[asset.symbol] && liveTefasByProxy[asset.symbol].length > 0 ? (
+                              <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
+                                {liveTefasByProxy[asset.symbol].slice(0, 2).map((fund) => (
+                                  <span
+                                    key={fund.code}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-border/50 bg-card px-2 py-0.5 font-mono text-secondary-text"
+                                  >
+                                    <strong className="text-foreground">{fund.code}</strong>
+                                    {fund.priceTry !== null ? (
+                                      <span>· {fund.priceTry.toFixed(4)} ₺</span>
+                                    ) : null}
+                                    {fund.dailyReturnPct !== null ? (
+                                      <span className={fund.dailyReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                        ({fund.dailyReturnPct >= 0 ? '+' : ''}
+                                        {fund.dailyReturnPct.toFixed(2)}%)
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
 
                           <div className="shrink-0 text-right">

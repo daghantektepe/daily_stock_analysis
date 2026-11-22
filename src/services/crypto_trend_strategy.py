@@ -257,18 +257,38 @@ def current_targets(prices: pd.DataFrame, config: TrendConfig = TrendConfig()) -
 
 
 def load_daily_closes(assets: Sequence[str], start: str = "2015-01-01") -> pd.DataFrame:
-    """Daily closes from Yahoo Finance (columns = assets); drops today's unfinished bar."""
-    import yfinance as yf
+    """Daily closes preferring Binance Spot public klines, with Yahoo Finance fallback."""
+    from data_provider.binance_fetcher import BinanceFetcher
 
-    columns = {}
+    fetcher = BinanceFetcher()
+    columns: Dict[str, pd.Series] = {}
+    fallback_assets: List[str] = []
+
     for asset in assets:
-        history = yf.Ticker(asset).history(start=start, auto_adjust=True)
-        if history.empty:
-            logger.warning("[crypto-trend] no history for %s", asset)
-            continue
-        series = history["Close"].copy()
-        series.index = pd.DatetimeIndex(series.index.tz_localize(None) if series.index.tz else series.index).normalize()
-        columns[asset] = series
+        series: Optional[pd.Series] = None
+        try:
+            series = fetcher.fetch_daily_series(asset, start=start)
+        except Exception as exc:
+            logger.debug("[crypto-trend] binance fetch skipped for %s: %s", asset, exc)
+            series = None
+
+        if series is not None and not series.empty:
+            columns[asset] = series
+        else:
+            fallback_assets.append(asset)
+
+    if fallback_assets:
+        import yfinance as yf
+
+        for asset in fallback_assets:
+            history = yf.Ticker(asset).history(start=start, auto_adjust=True)
+            if history.empty:
+                logger.warning("[crypto-trend] no history for %s", asset)
+                continue
+            series = history["Close"].copy()
+            series.index = pd.DatetimeIndex(series.index.tz_localize(None) if series.index.tz else series.index).normalize()
+            columns[asset] = series
+
     frame = pd.DataFrame(columns).sort_index()
     today = pd.Timestamp.utcnow().tz_localize(None).normalize()
     return frame[frame.index < today]

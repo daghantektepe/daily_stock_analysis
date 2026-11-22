@@ -19,6 +19,7 @@ from api.v1.endpoints import (
     analysis,
     auth,
     backtest,
+    bridges,
     decision_signals,
     health,
     history,
@@ -122,6 +123,12 @@ router.include_router(
     alpha.router,
     prefix="/alpha",
     tags=["Alpha"]
+)
+
+router.include_router(
+    bridges.router,
+    prefix="/bridges",
+    tags=["Bridges"]
 )
 
 router.include_router(

@@ -8,7 +8,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from api.v1.errors import api_error
 from api.v1.schemas.analysis import DuplicateTaskErrorResponse, TaskAccepted
@@ -595,6 +595,27 @@ def list_csv_brokers() -> PortfolioImportBrokerListResponse:
         return PortfolioImportBrokerListResponse(brokers=importer.list_supported_brokers())
     except Exception as exc:
         raise _internal_error("List CSV brokers failed", exc)
+
+
+@router.get(
+    "/imports/csv/template",
+    response_class=PlainTextResponse,
+    responses={400: {"model": ErrorResponse}},
+    summary="Download a sample CSV template for a supported broker (Midas TR/US, Binance, Genel TR)",
+)
+def download_csv_template(
+    broker: str = Query("midas_bist", description="Broker id or alias"),
+) -> PlainTextResponse:
+    importer = PortfolioImportService()
+    try:
+        filename, csv_text = importer.get_csv_template(broker)
+        return PlainTextResponse(
+            content="\ufeff" + csv_text,
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except ValueError as exc:
+        raise _bad_request(exc)
 
 
 @router.post(

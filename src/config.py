@@ -1208,6 +1208,14 @@ class Config:
     alpaca_auto_execute: bool = False
     # Second switch for real-money orders (ALPACA_PAPER=false alone only allows read-only calls)
     alpaca_live_trading_confirmed: bool = False
+    # Binance Spot broker (defaults strictly to testnet + manual approval)
+    binance_api_key: Optional[str] = None
+    binance_api_secret: Optional[str] = None
+    binance_testnet: bool = True
+    binance_auto_execute: bool = False
+    binance_live_trading_confirmed: bool = False
+    # TCMB EVDS2 macro & inflation API key (optional; USD/TRY falls back to Yahoo TRY=X)
+    evds_api_key: Optional[str] = None
     # Crypto trend strategy paper book (scripts/crypto_trend.py)
     crypto_trend_enabled: bool = False
     crypto_trend_assets: List[str] = field(default_factory=lambda: ["BTC-USD", "ETH-USD"])
@@ -2294,6 +2302,12 @@ class Config:
             alpaca_paper=parse_env_bool(os.getenv('ALPACA_PAPER'), default=True),
             alpaca_auto_execute=parse_env_bool(os.getenv('ALPACA_AUTO_EXECUTE'), default=False),
             alpaca_live_trading_confirmed=parse_env_bool(os.getenv('ALPACA_LIVE_TRADING_CONFIRMED'), default=False),
+            binance_api_key=(os.getenv('BINANCE_API_KEY') or '').strip() or None,
+            binance_api_secret=(os.getenv('BINANCE_API_SECRET') or '').strip() or None,
+            binance_testnet=parse_env_bool(os.getenv('BINANCE_TESTNET'), default=True),
+            binance_auto_execute=parse_env_bool(os.getenv('BINANCE_AUTO_EXECUTE'), default=False),
+            binance_live_trading_confirmed=parse_env_bool(os.getenv('BINANCE_LIVE_TRADING_CONFIRMED'), default=False),
+            evds_api_key=(os.getenv('EVDS_API_KEY') or '').strip() or None,
             crypto_trend_enabled=parse_env_bool(os.getenv('CRYPTO_TREND_ENABLED'), default=False),
             crypto_trend_assets=[
                 item.strip().upper()
