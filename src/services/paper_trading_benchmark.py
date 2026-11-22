@@ -421,10 +421,10 @@ def _quant_paper_weekly_text() -> str:
         config = get_config()
         if not getattr(config, "quant_paper_enabled", False):
             return ""
-        from src.quant.paper_book import get_quant_paper_books_status
+        from src.quant.paper_book import get_quant_paper_books_status, resolve_active_quant_paper_strategies
 
         res = get_quant_paper_books_status(
-            strategies=tuple(getattr(config, "quant_paper_strategies", ["paa", "meta_a"])),
+            strategies=tuple(resolve_active_quant_paper_strategies(getattr(config, "quant_paper_strategies", None))),
             initial_capital=float(getattr(config, "quant_paper_capital", 10000.0)),
             cost_bps=float(getattr(config, "quant_paper_cost_bps", 5.0)),
             rebalance_mode=str(getattr(config, "quant_paper_rebalance_mode", "monthly")),

@@ -37,8 +37,11 @@ def _paper_settings():
 
 
 def _strategies(arg: str, cfg) -> list:
-    return [s.strip() for s in arg.split(",") if s.strip()] if arg else list(
-        getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+    from src.quant.paper_book import resolve_active_quant_paper_strategies
+
+    if arg:
+        return [s.strip() for s in arg.split(",") if s.strip()]
+    return resolve_active_quant_paper_strategies(getattr(cfg, "quant_paper_strategies", None))
 
 
 def cmd_status(args) -> int:
@@ -154,7 +157,7 @@ def main() -> int:
     freeze.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     for name in ("alpaca-plan", "alpaca-submit-paper"):
         cmd = sub.add_parser(name)
-        cmd.add_argument("--strategy", default="meta_a", choices=("paa", "meta_a"))
+        cmd.add_argument("--strategy", default="meta_a", choices=("paa", "meta_a", "v3_trp"))
         cmd.add_argument("--capital", type=float, default=None, help="USD of the paper account to use")
         cmd.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     sub.add_parser("alpaca-reconcile")

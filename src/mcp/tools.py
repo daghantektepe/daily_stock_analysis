@@ -698,7 +698,11 @@ def _handle_paa_allocation(args: Dict[str, Any]) -> Dict[str, Any]:
 
 def _handle_quant_paper_books(args: Dict[str, Any]) -> Dict[str, Any]:
     from src.config import get_config
-    from src.quant.paper_book import get_quant_paper_books_status, step_quant_paper_books
+    from src.quant.paper_book import (
+        get_quant_paper_books_status,
+        resolve_active_quant_paper_strategies,
+        step_quant_paper_books,
+    )
 
     cfg = get_config()
     step = _bool_arg(args, "step_paper", False)
@@ -708,7 +712,7 @@ def _handle_quant_paper_books(args: Dict[str, Any]) -> Dict[str, Any]:
     strategies = (
         [str(s).strip().lower() for s in raw_strats if str(s).strip()]
         if isinstance(raw_strats, list) and raw_strats
-        else list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+        else resolve_active_quant_paper_strategies(getattr(cfg, "quant_paper_strategies", None))
     )
     kwargs = {
         "strategies": strategies,
@@ -748,9 +752,12 @@ def _handle_forward_validation(args: Dict[str, Any]) -> Dict[str, Any]:
     try:
         from src.config import get_config
         from src.quant.forward_validation import format_forward_report, run_forward_validation
+        from src.quant.paper_book import resolve_active_quant_paper_strategies
 
         cfg = get_config()
-        strategies = args.get("strategies") or list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+        strategies = args.get("strategies") or resolve_active_quant_paper_strategies(
+            getattr(cfg, "quant_paper_strategies", None)
+        )
         results = run_forward_validation(
             strategies=strategies,
             auto_freeze=False,
@@ -1395,8 +1402,8 @@ def build_dsa_mcp_tools() -> List[McpToolSpec]:
                 "properties": {
                     "strategies": {
                         "type": "array",
-                        "items": {"type": "string", "enum": ["paa", "meta_a"]},
-                        "description": "Optional list of strategy books (default ['paa', 'meta_a']).",
+                        "items": {"type": "string", "enum": ["paa", "meta_a", "v3_trp"]},
+                        "description": "Optional list of strategy books (default: configured + frozen strategies).",
                     },
                     "step_paper": {
                         "type": "boolean",
@@ -1433,8 +1440,8 @@ def build_dsa_mcp_tools() -> List[McpToolSpec]:
                 "properties": {
                     "strategies": {
                         "type": "array",
-                        "items": {"type": "string", "enum": ["paa", "meta_a"]},
-                        "description": "Optional list (default: configured quant paper strategies).",
+                        "items": {"type": "string", "enum": ["paa", "meta_a", "v3_trp"]},
+                        "description": "Optional list (default: configured + frozen quant paper strategies).",
                     },
                 },
                 "additionalProperties": False,

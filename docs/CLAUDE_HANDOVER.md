@@ -51,3 +51,46 @@ Aşağıdaki üç stratejinin ağırlık fonksiyonları ve parametreleri `2026-1
 - `ALPACA_PAPER=true`, `ALPACA_AUTO_EXECUTE=false`
 - `BINANCE_TESTNET=true`, `BINANCE_AUTO_EXECUTE=false`
 - `ALGOLAB_READ_ONLY=true`, `IBKR_READ_ONLY=true`
+
+---
+
+## 3. Doğrulama ve Düzeltmeler (22 Kasım 2026, Claude)
+
+Bu notun iddiaları kodla karşılaştırıldı. Doğrulananlar:
+- Üç parmak izi (`87e22a6b3559`, `37a7ab36a0d9`, `ae4754108564`) koddan yeniden hesaplandı ve birebir tuttu.
+- v3 araştırması bağımsız olarak yeniden çalıştırıldı; `v3_trp` 5/5 kapıyı geçiyor ve sonuçlar `docs/STRATEGY_RESEARCH_V3_REPORT.md` ile aynı.
+- Frontend: 110 test dosyası, 1125 test geçti; lint ve build temiz.
+- Güvenlik kilitleri adaptör kodunda zorlanıyor.
+
+### Düzeltilen iddialar
+
+| Notta | Gerçekte |
+| :--- | :--- |
+| `v3_trp` 19Y BIL üstü Sharpe `+0,72` | `+0,63` (2008–2026); 19Y MaxDD `−%7,35` (notta `−%7,12`); 2008 MaxDD `−%3,83` |
+| 2022–2026 BIL üstü Sharpe `+0,72` | `+0,67` (CAGR `%6,14`, BIL `%3,89`) |
+| Terfi eden: yalnızca `v3_trp` | Rapor 2 aday terfi ettiriyor (`V3_SECTOR_FACTOR_BREADTH_BIL` da). O aday 2022–26'da BIL'in altında (`−0,17`) ve sanal deftere alınmadı. |
+| Backend `6005+ passed, 0 failed` | Linux bulutta `6057 passed, 3 failed`. Kalan 3 hata ortama bağlı: 2'si `.env` dil ayarı, 1'i paralel çalışmada kararsız. |
+| `docs/STRATEGY_RESEARCH_V3.md` | `docs/STRATEGY_RESEARCH_V3_REPORT.md` |
+| `SimpleModeToggle.tsx`, `viewModeStore.ts` | Mod geçişi `contexts/ExperienceModeContext.tsx` içinde |
+| `src/quant/adapters/binance_testnet.py`, `src/quant/adapters/registry.py` | `src/brokers/binance/{client,adapter}.py`, `src/brokers/registry.py` |
+| `src/data/tefas_client.py`, `src/data/tcmb_evds_provider.py` | `data_provider/tefas_fetcher.py`, `data_provider/evds_fetcher.py` |
+| `POST /api/v1/portfolio/import/midas` | `POST /api/v1/portfolio/imports/csv/parse` (`broker=midas_bist` / `midas_us`) |
+| Etiketler `v0.6.0-strategy-research-v3`, `v0.7.0-simple-investor-ux`, `v0.8.0-turkey-and-crypto-bridges` | `v0.6.0-research-v3`, `v0.7.0-simple-mode`, `v0.8.0-tr-crypto-bridges`, `v0.8.5-broker-adapters` |
+
+### Giderilen sorunlar
+
+1. **`/simple` ve sabah özeti veri olmadan karar gösteriyordu.**
+   - Sorun: Ekran sabit kodlanmış ağırlık, tarih ("Güncel"), kur (50,56) ve en büyük düşüş değerleri gösteriyordu.
+   - Düzeltme: Artık `data_status` döner. Eksik veriye dayanan sepet gösterilmez; veri hiç yoksa "Veri Yok" görünür ve sabah özeti gönderilmez.
+2. **`v3_trp` günlük adıma girmiyordu.**
+   - Sorun: Varsayılan liste `paa,meta_a` idi.
+   - Düzeltme: Varsayılan artık `paa,meta_a,v3_trp`. Ayrıca `resolve_active_quant_paper_strategies()` dondurulmuş her stratejiyi `.env`'den bağımsız olarak işler; tüm giriş noktaları bu fonksiyonu kullanır.
+3. **`/simple` verisi hiç yenilenmiyordu.**
+   - Sorun: Turnuva ve v3 araştırma verisi yalnızca elle çalıştırınca güncelleniyordu.
+   - Düzeltme: Günlük adım bu verileri yeniler (`src/quant/snapshot_refresh.py`); `docs/` raporlarına yazmaz.
+
+### Sonraki ajan için kurallar
+
+- Dondurulmuş üç stratejinin ağırlık fonksiyonlarına ve eriştikleri yardımcı fonksiyon ve sabitlere dokunmayın. Dokunursanız kayıt `INVALIDATED` olur.
+- `docs/STRATEGY_TOURNAMENT_REPORT.md` ve `docs/STRATEGY_RESEARCH_V3_REPORT.md` repoda izlenir. Otomatik görevlerin bu dosyaları yazmaması gerekir; yazarlarsa E:\'de `git pull` bozulur.
+- Windows'ta komutlar `.venv\Scripts\python.exe` ile çalıştırılmalı. Sistem Python'unda `yfinance` ve `fake_useragent` eksik.

@@ -153,4 +153,72 @@ describe('SimpleInvestorHomePage', () => {
     expect(openCopilotMock).toHaveBeenCalledTimes(1);
     expect(String(openCopilotMock.mock.calls[0]?.[0])).toContain('anneme anlatır gibi');
   });
+
+  it('shows a stale-data warning and never shows the banner when data is fresh', async () => {
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      data_status: {
+        state: 'stale',
+        message: 'Veriler güncel değil: Strateji turnuvası 25 gün önceye ait (2026-11-20).',
+        stale_after_days: 5,
+        sources: [],
+      },
+    });
+    const { unmount } = render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByTestId('simple-data-status')).toHaveTextContent('25 gün önceye ait');
+    unmount();
+
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      data_status: { state: 'ok', message: '', stale_after_days: 5, sources: [] },
+    });
+    render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Piyasalar Şu An Fırtınalı — Paranı Güvende Tut')).toBeInTheDocument();
+    expect(screen.queryByTestId('simple-data-status')).not.toBeInTheDocument();
+  });
+
+  it('renders an honest empty state without snapshots or FX', async () => {
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      ok: false,
+      as_of_date: '',
+      usdtry_rate: null,
+      data_status: {
+        state: 'missing',
+        message: 'Strateji verisi bulunamadı; bu ekran şu an öneri gösteremez.',
+        stale_after_days: 5,
+        sources: [],
+      },
+      weather: {
+        status: 'unknown',
+        emoji: '❔',
+        badge_label: 'Veri Yok',
+        headline: 'Piyasa Durumu Bilinmiyor — Önce Strateji Verisini Güncelle',
+        plain_summary: 'Sinyaller okunamadı.',
+        behavioral_guard: 'Değişiklik yapma.',
+        protection_pct: null,
+      },
+      profiles: [],
+    });
+    render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Piyasa Durumu Bilinmiyor — Önce Strateji Verisini Güncelle')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-data-status')).toHaveTextContent('Strateji verisi bulunamadı');
+    expect(screen.getByTestId('simple-no-profiles')).toBeInTheDocument();
+    expect(screen.getByText(/kur verisi yok/)).toBeInTheDocument();
+    expect(screen.getByText(/Veri tarihi:/)).toHaveTextContent('bilinmiyor');
+    expect(screen.queryByText(/50[.,]56/)).not.toBeInTheDocument();
+    expect(screen.queryByText('90.000 ₺')).not.toBeInTheDocument();
+  });
 });

@@ -55,11 +55,11 @@ QUANT_PAPER_SPECS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-DEFAULT_QUANT_PAPER_STRATEGIES = ("paa", "meta_a")
+DEFAULT_QUANT_PAPER_STRATEGIES = ("paa", "meta_a", "v3_trp")
 
 
 def normalize_quant_paper_strategies(raw: Optional[Sequence[str]]) -> List[str]:
-    """Filter and deduplicate configured strategy keys, falling back to ``['paa', 'meta_a']``."""
+    """Filter and deduplicate configured strategy keys, falling back to ``DEFAULT_QUANT_PAPER_STRATEGIES``."""
     out: List[str] = []
     for item in raw or DEFAULT_QUANT_PAPER_STRATEGIES:
         key = str(item or "").strip().lower()
@@ -71,6 +71,32 @@ def normalize_quant_paper_strategies(raw: Optional[Sequence[str]]) -> List[str]:
         if key in QUANT_PAPER_SPECS and key not in out:
             out.append(key)
     return out or list(DEFAULT_QUANT_PAPER_STRATEGIES)
+
+
+def resolve_active_quant_paper_strategies(
+    configured: Optional[Sequence[str]],
+    *,
+    book_dir: Optional[Path] = None,
+) -> List[str]:
+    """Configured strategies plus every strategy frozen in the forward-validation registry.
+
+    A frozen strategy is on a 120-day forward exam; dropping it from the daily
+    step (e.g. an older ``QUANT_PAPER_STRATEGIES=paa,meta_a`` in ``.env``) would
+    silently stop the exam, so frozen books are always advanced. Every entry
+    point (scheduler, CLI, API, MCP) resolves strategies through this function.
+    """
+    keys = normalize_quant_paper_strategies(configured)
+    try:
+        from src.quant.forward_validation import DEFAULT_REGISTRY_PATH, ForwardRegistry
+
+        path = Path(book_dir) / DEFAULT_REGISTRY_PATH.name if book_dir else DEFAULT_REGISTRY_PATH
+        if path.is_file():
+            for key in ForwardRegistry(path).data.get("strategies") or {}:
+                if key in QUANT_PAPER_SPECS and key not in keys:
+                    keys.append(key)
+    except Exception as exc:  # noqa: BLE001 - a corrupt registry must not stop the daily step
+        logger.warning("[quant-paper] forward registry unreadable, using configured strategies only: %s", exc)
+    return keys
 
 
 def build_quant_paper_book(

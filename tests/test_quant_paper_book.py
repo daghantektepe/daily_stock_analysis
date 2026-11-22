@@ -146,8 +146,8 @@ def test_quant_paper_book_zero_lookahead_when_future_bars_change(tmp_path: Path)
 
 
 def test_quant_paper_helpers_status_and_mcp_exposure(tmp_path: Path) -> None:
-    assert normalize_quant_paper_strategies(["all"]) == ["paa", "meta_a"]
-    assert normalize_quant_paper_strategies(["invalid"]) == ["paa", "meta_a"]
+    assert normalize_quant_paper_strategies(["all"]) == ["paa", "meta_a", "v3_trp"]
+    assert normalize_quant_paper_strategies(["invalid"]) == ["paa", "meta_a", "v3_trp"]
 
     empty_status = get_quant_paper_books_status(strategies=["paa", "meta_a"], book_dir=tmp_path)
     assert empty_status["ok"] is True

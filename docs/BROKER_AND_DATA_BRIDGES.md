@@ -43,12 +43,13 @@ Tüm aracı kurum ve borsa bağlantıları (`src/quant/adapters/` ve `src/quant/
   - `EVDS_API_KEY` ortam değişkeni tanımlıysa TCMB EVDS2 resmi API'sinden (`https://evds2.tcmb.gov.tr/service/evds/`) çeker; tanımlı değilse yerel/Yahoo Finance `USDTRY=X` fiyat önbelleği ve referans makro göstergelerle çalışır.
 
 ### E. Midas BIST & ABD Ekstre İçe Aktarıcı (`src/services/import_parser.py`)
-- **`POST /api/v1/portfolio/import/midas`** (veya standart `/api/v1/portfolio/import/csv`)
+- **`POST /api/v1/portfolio/imports/csv/parse`** (`broker=midas_bist` veya `midas_us`; desteklenen aracı kurumlar `GET /api/v1/portfolio/imports/csv/brokers`, örnek şablon `GET /api/v1/portfolio/imports/csv/template`)
   - Midas Türkçe (`Sembol / Hisse Kodu`, `İşlem Tipi: Alış/Satış`, `Adet`, `Birim Fiyat`, `Para Birimi`, `Tarih`) ve İngilizce sütun başlıklarını, Türkçe sayı biçimlerini (`1.234,56`) ve BIST/ABD pazar ayrımını otomatik tanır.
 
 ### F. Sade Yatırımcı Özeti ve QuantStats Görsel Tearsheet
-- **`GET /api/v1/alpha/simple-brief?budget_try=100000&profile=temkinli`**
-  - `/simple` ekranını besleyen trafik lambası rejimi, sade Türkçe özet, TL bütçe dağılım tablosu (ABD ETF + TEFAS karşılıkları), 19 yıllık kriz karnesi ve 120 günlük canlı ileri doğrulama durumunu tek pakette döndürür.
+- **`GET /api/v1/alpha/simple-brief`** (parametre almaz; bütçe hesabı tarayıcıda yapılır)
+  - `/simple` ekranını besleyen trafik lambası rejimi, sade Türkçe özet, sepet ağırlıkları (ABD ETF + TEFAS karşılıkları), 19 yıllık kriz karnesi ve 120 günlük canlı ileri doğrulama durumunu tek pakette döndürür.
+  - `data_status` (`ok` / `stale` / `partial` / `missing`) hangi strateji verisinin eksik ya da 5 günden eski olduğunu söyler. Veri yoksa `weather.status=unknown`, `protection_pct=null`, `usdtry_rate=null` döner ve ilgili sepetler listelenmez.
 - **`GET /api/v1/alpha/tearsheet?strategy=meta_a&mode=backtest`**
   - `src/quant/tearsheet.py` tarafından hesaplanan aylık getiri ısı haritası (`monthly_matrix`), düşüş eğrisi (`underwater`, strateji vs `SPY`), en iyi/en kötü aylar, kârlı ay oranı ve 1 yıllık `USD vs TL vs TÜFE` reel alım gücü kıyasını döndürür.
 

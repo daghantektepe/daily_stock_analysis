@@ -423,11 +423,13 @@ CRYPTO_TREND_CAPITAL=10000
 
 Sanal defter `data/strategy_paper/crypto_trend.json` dosyasında tutulur ve geçmiş testle aynı kodu kullanır, yani ikisinin sonuçları birebir karşılaştırılabilir. Pozisyon değişince Telegram'a mesaj gelir; özet haftalık rapora da eklenir. Bilgisayar kapalıyken geçen günler sonradan işlenir ve raporda "sonradan işlendi" olarak ayrıca gösterilir.
 
-### 7.3 İleri doğrulama kapısı (PAA ve Meta-Portföy A)
+### 7.3 İleri doğrulama kapısı (PAA, Meta-Portföy A ve v3_trp)
 
 Meta-Portföy A v2'nin 2022–2026 sonucu, parametreler aynı dönem görülerek ayarlandığı için gerçek örneklem dışı değildir. Temiz kanıt yalnızca stratejinin dondurulmasından sonra gelen veridir.
 
-- **Dondurma:** `quant_paper.py step` ilk çalıştığında PAA ve Meta-A kendiliğinden dondurulur. Ağırlık fonksiyonunun, kullandığı tüm yardımcı fonksiyonların ve sabitlerin, ayrıca maliyet ve dengeleme ayarlarının parmak izi `data/strategy_paper/forward_validation.json` dosyasına yazılır. Yalnızca dondurma gününden sonraki işlem günleri sayılır.
+- **Takip edilen stratejiler:** Varsayılan `QUANT_PAPER_STRATEGIES=paa,meta_a,v3_trp`. Kayıt defterinde (`forward_validation.json`) dondurulmuş bir strateji, `.env` listesinde olmasa bile her gün işlenir; böylece eski bir `.env` sınavı yarıda kesemez.
+- **Günlük veri yenileme:** Aynı adım, `/simple` ekranının okuduğu turnuva ve v3 araştırma dosyalarını (`data/quant_cache/*_latest.json`) da yeniler (yaklaşık 25 sn; 20 saatten yeni dosya atlanır; başarısız olursa eski veri korunur). `docs/` altındaki raporlara dokunmaz. Kapatmak için `--no-snapshot-refresh`.
+- **Dondurma:** `quant_paper.py step` ilk çalıştığında stratejiler kendiliğinden dondurulur. Ağırlık fonksiyonunun, kullandığı tüm yardımcı fonksiyonların ve sabitlerin, ayrıca maliyet ve dengeleme ayarlarının parmak izi `data/strategy_paper/forward_validation.json` dosyasına yazılır. Yalnızca dondurma gününden sonraki işlem günleri sayılır.
 - **Geçersiz sayılma:** Dondurmadan sonra bu kod ya da ayarlar değişirse kayıt "geçersiz" olur. Yeni test bilerek başlatılır:
 
 ```bash

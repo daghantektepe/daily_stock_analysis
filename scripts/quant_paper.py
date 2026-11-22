@@ -23,16 +23,16 @@ if str(REPO_ROOT) not in sys.path:
 
 def _load_settings(strategy_arg: str):
     from src.config import get_config
-    from src.quant.paper_book import normalize_quant_paper_strategies
+    from src.quant.paper_book import normalize_quant_paper_strategies, resolve_active_quant_paper_strategies
 
     cfg = get_config()
-    raw_strats = (
-        [s.strip() for s in strategy_arg.split(",") if s.strip()]
+    strategies = (
+        normalize_quant_paper_strategies([s.strip() for s in strategy_arg.split(",") if s.strip()])
         if strategy_arg
-        else list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]))
+        else resolve_active_quant_paper_strategies(getattr(cfg, "quant_paper_strategies", None))
     )
     return {
-        "strategies": normalize_quant_paper_strategies(raw_strats),
+        "strategies": strategies,
         "initial_capital": float(getattr(cfg, "quant_paper_capital", 10000.0)),
         "cost_bps": float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
         "rebalance_mode": str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
@@ -62,6 +62,13 @@ def cmd_step(args: argparse.Namespace) -> int:
         return 1
     report = res.get("report_text") or ""
     print(report)
+    if not args.no_snapshot_refresh:
+        from src.quant.snapshot_refresh import format_snapshot_refresh_report, refresh_strategy_snapshots
+
+        refresh = refresh_strategy_snapshots(force_refresh_prices=bool(args.refresh))
+        line = format_snapshot_refresh_report(refresh)
+        if line:
+            print(f"\n{line}")
     new_trades = int(res.get("total_new_trades") or 0)
     if new_trades:
         print(f"\nBu adımda toplam {new_trades} sanal ETF işlemi kaydedildi.")
@@ -79,14 +86,19 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
 
     st = sub.add_parser("status", help="print persisted PAA / Meta-A paper book ledgers")
-    st.add_argument("--strategy", default="", help="paa, meta_a, or all (comma-separated)")
+    st.add_argument("--strategy", default="", help="paa, meta_a, v3_trp or all (comma-separated)")
 
     step = sub.add_parser("step", help="advance PAA / Meta-A paper books to the latest completed close")
-    step.add_argument("--strategy", default="", help="paa, meta_a, or all (comma-separated)")
+    step.add_argument("--strategy", default="", help="paa, meta_a, v3_trp or all (comma-separated)")
     step.add_argument("--force-rebalance", action="store_true", help="force rebalance on latest close")
     step.add_argument("--refresh", action="store_true", help="force refresh US ETF prices from Yahoo Finance")
     step.add_argument("--notify", action="store_true", help="send notification when trades occur")
     step.add_argument("--always-notify", action="store_true", help="with --notify: send even without trades")
+    step.add_argument(
+        "--no-snapshot-refresh",
+        action="store_true",
+        help="skip refreshing tournament / research v3 snapshots used by the /simple screen",
+    )
 
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")

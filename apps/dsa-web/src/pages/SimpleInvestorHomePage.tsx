@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
   BookOpen,
   Check,
@@ -112,9 +113,14 @@ const SimpleInvestorHomePage: React.FC = () => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }, [budgetRaw]);
 
-  const usdtry =
+  // No invented FX: without a live or snapshot rate the TL/USD conversion is hidden.
+  const usdtry: number | null =
     (liveMacro?.usdTry && liveMacro.usdTry > 0 ? liveMacro.usdTry : null) ??
-    (brief?.usdtry_rate && brief.usdtry_rate > 0 ? brief.usdtry_rate : 50.56);
+    (brief?.usdtry_rate && brief.usdtry_rate > 0 ? brief.usdtry_rate : null);
+  const convert = (amount: number): number | null =>
+    usdtry === null ? null : currency === 'TRY' ? amount / usdtry : amount * usdtry;
+  const dataStatus = brief?.data_status;
+  const asOfLabel = brief?.as_of_date || 'bilinmiyor';
 
   const activeProfile: SimpleProfileOption | null = useMemo(() => {
     const list = brief?.profiles ?? [];
@@ -136,17 +142,18 @@ const SimpleInvestorHomePage: React.FC = () => {
   const buildShoppingListText = (): string => {
     if (!activeProfile || !brief) return '';
     const lines: string[] = [
-      `Yatırım Sepeti Özeti (${brief.as_of_date}) — ${activeProfile.title}`,
+      `Yatırım Sepeti Özeti (veri tarihi: ${asOfLabel}) — ${activeProfile.title}`,
       `Piyasa Hava Durumu: ${brief.weather.emoji} ${brief.weather.badge_label}`,
-      `Bütçe: ${fmtMoney(budgetNumber, currency)} (Kur referansı: 1 $ ≈ ${usdtry.toFixed(2)} ₺)`,
+      `Bütçe: ${fmtMoney(budgetNumber, currency)}${usdtry !== null ? ` (Kur referansı: 1 $ ≈ ${usdtry.toFixed(2)} ₺)` : ''}`,
+      ...(dataStatus && dataStatus.state !== 'ok' && dataStatus.message ? [`Uyarı: ${dataStatus.message}`] : []),
       '',
     ];
     for (const item of activeProfile.assets) {
       const sliceAmount = (budgetNumber * item.weight_pct) / 100;
-      const altAmount = currency === 'TRY' ? sliceAmount / usdtry : sliceAmount * usdtry;
+      const altAmount = convert(sliceAmount);
       const altCurrency = currency === 'TRY' ? 'USD' : 'TRY';
       lines.push(
-        `- %${item.weight_pct.toFixed(1)} → ${fmtMoney(sliceAmount, currency)} (~${fmtMoney(altAmount, altCurrency)}) | ${item.symbol} (${item.plain_name})`,
+        `- %${item.weight_pct.toFixed(1)} → ${fmtMoney(sliceAmount, currency)}${altAmount !== null ? ` (~${fmtMoney(altAmount, altCurrency)})` : ''} | ${item.symbol} (${item.plain_name})`,
       );
       lines.push(`  Midas / Banka karşılığı: ${item.midas_hint}`);
     }
@@ -178,14 +185,18 @@ const SimpleInvestorHomePage: React.FC = () => {
       ? 'border-emerald-500/40 bg-emerald-500/8'
       : brief?.weather.status === 'cloudy'
         ? 'border-sky-500/40 bg-sky-500/8'
-        : 'border-amber-500/40 bg-amber-500/8';
+        : brief?.weather.status === 'unknown'
+          ? 'border-border/70 bg-card/80'
+          : 'border-amber-500/40 bg-amber-500/8';
 
   const weatherBadgeClass =
     brief?.weather.status === 'sunny'
       ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-400'
       : brief?.weather.status === 'cloudy'
         ? 'border-sky-500/40 bg-sky-500/15 text-sky-400'
-        : 'border-amber-500/40 bg-amber-500/15 text-amber-400';
+        : brief?.weather.status === 'unknown'
+          ? 'border-border/70 bg-background/60 text-secondary-text'
+          : 'border-amber-500/40 bg-amber-500/15 text-amber-400';
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 pb-10 pt-2 sm:px-6 lg:px-4">
@@ -272,6 +283,22 @@ const SimpleInvestorHomePage: React.FC = () => {
 
       {brief ? (
         <>
+          {dataStatus && dataStatus.state !== 'ok' && dataStatus.message ? (
+            <div
+              role="status"
+              data-testid="simple-data-status"
+              className={cn(
+                'flex items-start gap-2.5 rounded-2xl border px-4 py-3 text-xs leading-relaxed',
+                dataStatus.state === 'missing'
+                  ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+                  : 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+              )}
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{dataStatus.message}</span>
+            </div>
+          ) : null}
+
           {/* CARD 1: Market Weather Traffic Light */}
           <section
             aria-label="Piyasa Hava Durumu"
@@ -291,7 +318,7 @@ const SimpleInvestorHomePage: React.FC = () => {
                       {brief.weather.badge_label}
                     </span>
                     <span className="text-xs text-secondary-text">
-                      Veri tarihi: <strong className="text-foreground">{brief.as_of_date}</strong>
+                      Veri tarihi: <strong className="text-foreground">{asOfLabel}</strong>
                     </span>
                     <PlainTermTooltip termKey="risk_off" label="Bu ne demek?" />
                   </div>
@@ -307,7 +334,9 @@ const SimpleInvestorHomePage: React.FC = () => {
               <div className="rounded-2xl border border-border/60 bg-card/85 px-4 py-3 text-right">
                 <p className="text-[11px] font-medium text-secondary-text">Güvenli Liman Payı</p>
                 <p className="mt-0.5 font-mono text-2xl font-bold text-foreground">
-                  %{brief.weather.protection_pct.toFixed(0)}
+                  {brief.weather.protection_pct !== null && brief.weather.protection_pct !== undefined
+                    ? `%${brief.weather.protection_pct.toFixed(0)}`
+                    : '—'}
                 </p>
                 <p className="text-[11px] text-emerald-400">Otomatik emir kapalı</p>
               </div>
@@ -444,13 +473,20 @@ const SimpleInvestorHomePage: React.FC = () => {
               <p className="w-full text-[11px] text-secondary-text sm:w-auto">
                 Yaklaşık karşılık:{' '}
                 <strong className="font-mono text-foreground">
-                  {currency === 'TRY'
-                    ? fmtMoney(budgetNumber / usdtry, 'USD')
-                    : fmtMoney(budgetNumber * usdtry, 'TRY')}
+                  {usdtry !== null ? fmtMoney(convert(budgetNumber) ?? 0, currency === 'TRY' ? 'USD' : 'TRY') : '—'}
                 </strong>{' '}
-                (1 $ ≈ {usdtry.toFixed(2)} ₺)
+                {usdtry !== null ? `(1 $ ≈ ${usdtry.toFixed(2)} ₺)` : '(kur verisi yok)'}
               </p>
             </div>
+
+            {brief.profiles.length === 0 ? (
+              <p
+                data-testid="simple-no-profiles"
+                className="mt-4 rounded-2xl border border-border/60 bg-background/50 px-4 py-3 text-xs text-secondary-text"
+              >
+                Strateji verisi olmadığı için bugün önerilecek bir sepet yok. Tahmine dayalı bir dağılım göstermiyoruz.
+              </p>
+            ) : null}
 
             {/* 3 Risk Profile Selector Cards */}
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -482,7 +518,9 @@ const SimpleInvestorHomePage: React.FC = () => {
                       <span>
                         En kötü kriz:{' '}
                         <strong className="font-mono text-foreground">
-                          %{profile.historical_max_dd_pct.toFixed(1)}
+                          {profile.historical_max_dd_pct !== null && profile.historical_max_dd_pct !== undefined
+                            ? `%${profile.historical_max_dd_pct.toFixed(1)}`
+                            : '—'}
                         </strong>
                       </span>
                       <span>·</span>
@@ -531,7 +569,7 @@ const SimpleInvestorHomePage: React.FC = () => {
                 <div className="space-y-2.5">
                   {activeProfile.assets.map((asset) => {
                     const primaryAmt = (budgetNumber * asset.weight_pct) / 100;
-                    const altAmt = currency === 'TRY' ? primaryAmt / usdtry : primaryAmt * usdtry;
+                    const altAmt = convert(primaryAmt);
                     const altCur = currency === 'TRY' ? 'USD' : 'TRY';
                     return (
                       <div
@@ -583,7 +621,8 @@ const SimpleInvestorHomePage: React.FC = () => {
                               {fmtMoney(primaryAmt, currency)}
                             </p>
                             <p className="font-mono text-xs text-secondary-text">
-                              %{asset.weight_pct.toFixed(1)} · ~{fmtMoney(altAmt, altCur)}
+                              %{asset.weight_pct.toFixed(1)}
+                              {altAmt !== null ? ` · ~${fmtMoney(altAmt, altCur)}` : ''}
                             </p>
                           </div>
                         </div>

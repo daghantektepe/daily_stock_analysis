@@ -785,10 +785,10 @@ def _run_quant_allocation_paper_step(
     if not getattr(config, "quant_paper_enabled", False):
         return
     try:
-        from src.quant.paper_book import step_quant_paper_books
+        from src.quant.paper_book import resolve_active_quant_paper_strategies, step_quant_paper_books
 
         res = step_quant_paper_books(
-            strategies=tuple(getattr(config, "quant_paper_strategies", ["paa", "meta_a"])),
+            strategies=tuple(resolve_active_quant_paper_strategies(getattr(config, "quant_paper_strategies", None))),
             initial_capital=float(getattr(config, "quant_paper_capital", 10000.0)),
             cost_bps=float(getattr(config, "quant_paper_cost_bps", 5.0)),
             rebalance_mode=str(getattr(config, "quant_paper_rebalance_mode", "monthly")),
@@ -806,6 +806,20 @@ def _run_quant_allocation_paper_step(
             notifier.send(report, dedup_key=f"quant-paper:{last_date}")
     except Exception as exc:  # noqa: BLE001 - optional sidecar, fail-open
         logger.warning("PAA/Meta-A sanal portföy adımı hatası (yoksayıldı): %s", exc)
+    finally:
+        _refresh_strategy_snapshots_fail_open()
+
+
+def _refresh_strategy_snapshots_fail_open() -> None:
+    """Keep the /simple screen's tournament & research v3 snapshots current (never fatal)."""
+    try:
+        from src.quant.snapshot_refresh import format_snapshot_refresh_report, refresh_strategy_snapshots
+
+        line = format_snapshot_refresh_report(refresh_strategy_snapshots())
+        if line:
+            logger.info(line)
+    except Exception as exc:  # noqa: BLE001 - optional sidecar, fail-open
+        logger.warning("Strateji verisi yenilenemedi (yoksayıldı): %s", exc)
 
 
 def _resolve_bist_screener_codes(config: Config, args: argparse.Namespace) -> Optional[List[str]]:

@@ -460,8 +460,13 @@ def run_strategy_research_v3(
     save_outputs: bool = True,
     json_path: Optional[Path] = None,
     report_path: Optional[Path] = None,
+    write_report: bool = True,
 ) -> Dict[str, Any]:
-    """Execute the full 19-year Strategy Research v3 evaluation lab."""
+    """Execute the full 19-year Strategy Research v3 evaluation lab.
+
+    ``write_report=False`` keeps the JSON snapshot but leaves the tracked
+    ``docs/`` Markdown report untouched (used by the daily refresh).
+    """
     macro_df = (
         macro_prices
         if macro_prices is not None
@@ -546,9 +551,10 @@ def run_strategy_research_v3(
             json.dump(payload, fh, ensure_ascii=False, indent=2)
         os.replace(tmp, target_json)
 
-        target_md = Path(report_path or DEFAULT_RESEARCH_V3_REPORT)
-        target_md.parent.mkdir(parents=True, exist_ok=True)
-        target_md.write_text(format_research_v3_markdown(payload), encoding="utf-8")
+        if write_report:
+            target_md = Path(report_path or DEFAULT_RESEARCH_V3_REPORT)
+            target_md.parent.mkdir(parents=True, exist_ok=True)
+            target_md.write_text(format_research_v3_markdown(payload), encoding="utf-8")
 
     return payload
 

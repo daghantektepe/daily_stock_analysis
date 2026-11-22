@@ -39,19 +39,26 @@ def format_simple_morning_summary(
 ) -> str:
     """Format strictly 3 calm Turkish lines summarizing market weather and basket status."""
     data = brief if brief is not None else build_simple_investor_brief()
+    status = data.get("data_status") or {}
     weather = data.get("weather") or {}
-    emoji = weather.get("emoji") or "⛅"
-    as_of = data.get("as_of_date") or "Güncel"
-    headline = weather.get("headline") or "Piyasa dengeli seyrediyor"
-    prot = float(weather.get("protection_pct") or 0.0)
-
+    prot_raw = weather.get("protection_pct")
     profiles = data.get("profiles") or []
     chosen = next((p for p in profiles if p.get("id") == profile_id), None) or (profiles[0] if profiles else {})
     assets = chosen.get("assets") or []
+    if status.get("state") == "missing" or prot_raw is None or not assets:
+        return (
+            "❔ Strateji verisi yok: bugün için sepet ya da kalkan oranı hesaplanamadı.\n"
+            "Turnuva ve v3 araştırma dosyaları güncellenince özet yeniden gönderilir.\n"
+            "Sadece bilgi amaçlıdır; otomatik alım-satım yapılmamıştır."
+        )
+    emoji = weather.get("emoji") or "⛅"
+    as_of = data.get("as_of_date") or "tarih bilinmiyor"
+    headline = weather.get("headline") or ""
+    prot = float(prot_raw)
     top_slice = ", ".join(
         f"{a.get('symbol')} %{float(a.get('weight_pct') or 0.0):.0f}"
         for a in assets[:3]
-    ) or "BIL %100"
+    )
 
     if weights_changed is False:
         line2 = f"Sepet Değişmedi ({top_slice}) — bugün hiçbir işlem yapmana gerek yok."
@@ -62,6 +69,8 @@ def format_simple_morning_summary(
 
     line1 = f"{emoji} {as_of} Özeti: {headline} (Kalkan: %{prot:.0f})."
     line3 = "Sadece bilgi amaçlıdır; otomatik alım-satım yapılmamıştır, sakin kalabilirsin."
+    if status.get("state") in ("stale", "partial"):
+        line3 = f"Dikkat: {status.get('message', '').split(' Günlük sanal defter')[0]} {line3}"
     return f"{line1}\n{line2}\n{line3}"
 
 
@@ -77,6 +86,14 @@ def dispatch_simple_morning_summary(
     data = brief if brief is not None else build_simple_investor_brief()
     profiles = data.get("profiles") or []
     chosen = next((p for p in profiles if p.get("id") == profile_id), None) or (profiles[0] if profiles else {})
+    if (data.get("data_status") or {}).get("state") == "missing" or not chosen.get("assets"):
+        # Never announce an allocation that was not computed from real snapshots.
+        return {
+            "sent": False,
+            "skipped_reason": "no_strategy_data",
+            "changed": False,
+            "message": format_simple_morning_summary(data, profile_id=profile_id),
+        }
     sig = _basket_signature(chosen)
 
     path = Path(state_path or DEFAULT_SIMPLE_NOTIFY_STATE)

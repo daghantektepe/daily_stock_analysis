@@ -627,13 +627,14 @@ export const alphaApi = {
 };
 
 export interface SimpleWeatherSummary {
-  status: 'stormy' | 'cloudy' | 'sunny' | string;
+  status: 'stormy' | 'cloudy' | 'sunny' | 'unknown' | string;
   emoji: string;
   badge_label: string;
   headline: string;
   plain_summary: string;
   behavioral_guard: string;
-  protection_pct: number;
+  /** null when no PAA / Meta-A snapshot could be read. */
+  protection_pct: number | null;
 }
 
 export interface SimpleDecisionStep {
@@ -661,7 +662,7 @@ export interface SimpleProfileOption {
   subtitle: string;
   recommended: boolean;
   engine_note: string;
-  historical_max_dd_pct: number;
+  historical_max_dd_pct: number | null;
   estimated_annual_cost_pct: number;
   rebalance_cadence: string;
   assets: SimpleBasketAssetItem[];
@@ -681,11 +682,29 @@ export interface SimplePaperExamItem {
   status_plain: string;
 }
 
+export interface SimpleDataSource {
+  key: string;
+  label: string;
+  available: boolean;
+  as_of_date?: string | null;
+  age_days?: number | null;
+  stale: boolean;
+}
+
+export interface SimpleDataStatus {
+  state: 'ok' | 'stale' | 'partial' | 'missing' | string;
+  message: string;
+  stale_after_days: number;
+  sources: SimpleDataSource[];
+}
+
 export interface SimpleBriefResponse {
   ok: boolean;
   simulated_only: boolean;
   as_of_date: string;
-  usdtry_rate: number;
+  /** USD/TRY from the tournament snapshot; null when unavailable. */
+  usdtry_rate: number | null;
+  data_status?: SimpleDataStatus;
   weather: SimpleWeatherSummary;
   decision_steps: SimpleDecisionStep[];
   profiles: SimpleProfileOption[];

@@ -475,20 +475,10 @@ def get_paa_live_signal(
 
 
 def _active_quant_paper_strategies(cfg: Config) -> tuple[str, ...]:
-    """Return configured quant paper strategies plus any extra frozen v3 books registered locally."""
-    base = list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]) or ["paa", "meta_a"])
-    try:
-        from src.quant.forward_validation import DEFAULT_REGISTRY_PATH, ForwardRegistry
-        from src.quant.paper_book import QUANT_PAPER_SPECS
+    """Return configured quant paper strategies plus every strategy frozen in the forward registry."""
+    from src.quant.paper_book import resolve_active_quant_paper_strategies
 
-        if DEFAULT_REGISTRY_PATH.is_file():
-            frozen = ForwardRegistry(DEFAULT_REGISTRY_PATH).data.get("strategies") or {}
-            for key in frozen:
-                if key in QUANT_PAPER_SPECS and key not in base:
-                    base.append(key)
-    except Exception:  # noqa: BLE001
-        pass
-    return tuple(base)
+    return tuple(resolve_active_quant_paper_strategies(getattr(cfg, "quant_paper_strategies", None)))
 
 
 @router.get("/simple-brief", response_model=SimpleBriefResponse)

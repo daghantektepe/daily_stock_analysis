@@ -1232,7 +1232,7 @@ class Config:
     crypto_trend_capital: float = 10000.0
     # Quant allocation paper books: PAA Crash-Shield & Meta-Portfolio A (scripts/quant_paper.py)
     quant_paper_enabled: bool = False
-    quant_paper_strategies: List[str] = field(default_factory=lambda: ["paa", "meta_a"])
+    quant_paper_strategies: List[str] = field(default_factory=lambda: ["paa", "meta_a", "v3_trp"])
     quant_paper_capital: float = 10000.0
     quant_paper_cost_bps: float = 5.0
     quant_paper_rebalance_mode: str = "monthly"
@@ -2345,9 +2345,9 @@ class Config:
             quant_paper_enabled=parse_env_bool(os.getenv('QUANT_PAPER_ENABLED'), default=False),
             quant_paper_strategies=[
                 item.strip().lower()
-                for item in (os.getenv('QUANT_PAPER_STRATEGIES') or 'paa,meta_a').split(',')
+                for item in (os.getenv('QUANT_PAPER_STRATEGIES') or 'paa,meta_a,v3_trp').split(',')
                 if item.strip()
-            ] or ["paa", "meta_a"],
+            ] or ["paa", "meta_a", "v3_trp"],
             quant_paper_capital=parse_env_float(
                 os.getenv('QUANT_PAPER_CAPITAL'), 10000.0, field_name='QUANT_PAPER_CAPITAL', minimum=100.0,
             ),

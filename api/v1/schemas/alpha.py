@@ -329,7 +329,7 @@ class SimpleWeatherSummary(BaseModel):
     headline: str = ""
     plain_summary: str = ""
     behavioral_guard: str = ""
-    protection_pct: float = 0.0
+    protection_pct: Optional[float] = None
 
 
 class SimpleDecisionStep(BaseModel):
@@ -357,7 +357,7 @@ class SimpleProfileOption(BaseModel):
     subtitle: str
     recommended: bool = False
     engine_note: str = ""
-    historical_max_dd_pct: float = 0.0
+    historical_max_dd_pct: Optional[float] = None
     estimated_annual_cost_pct: float = 0.05
     rebalance_cadence: str = ""
     assets: List[SimpleBasketAssetItem] = Field(default_factory=list)
@@ -377,11 +377,28 @@ class SimplePaperExamItem(BaseModel):
     status_plain: str = ""
 
 
+class SimpleDataSource(BaseModel):
+    key: str
+    label: str
+    available: bool = False
+    as_of_date: Optional[str] = None
+    age_days: Optional[int] = None
+    stale: bool = False
+
+
+class SimpleDataStatus(BaseModel):
+    state: str = Field("missing", description="ok | stale | partial | missing")
+    message: str = ""
+    stale_after_days: int = 5
+    sources: List[SimpleDataSource] = Field(default_factory=list)
+
+
 class SimpleBriefResponse(BaseModel):
     ok: bool = True
     simulated_only: bool = True
     as_of_date: str = ""
-    usdtry_rate: float = 50.0
+    usdtry_rate: Optional[float] = Field(None, description="USD/TRY from the tournament snapshot; null when unavailable")
+    data_status: SimpleDataStatus = Field(default_factory=SimpleDataStatus)
     weather: SimpleWeatherSummary = Field(default_factory=SimpleWeatherSummary)
     decision_steps: List[SimpleDecisionStep] = Field(default_factory=list)
     profiles: List[SimpleProfileOption] = Field(default_factory=list)
