@@ -77,3 +77,11 @@
 | [英文文档索引](INDEX_EN.md) | English documentation index |
 | [英文 README](README_EN.md) | English project overview and quick start |
 | [繁中 README](README_CHT.md) | 繁體中文項目概覽與快速開始 |
+
+
+---
+
+## 🚀 v1.0.0 Kullanıcı Rehberi, Türkiye Köprüleri ve Devir Belgeleri
+- [Sıfırdan Yatırımcı ve Kullanıcı Rehberi (KULLANICI_REHBERI.md)](./KULLANICI_REHBERI.md) — `/simple` ("Bugün Ne Yapayım?"), `/guide` ("Öğren & Sözlük"), TL bütçe hesaplayıcı ve TEFAS fon karşılıkları.
+- [Türkiye & Küresel Veri / Aracı Kurum Köprüleri (BROKER_AND_DATA_BRIDGES.md)](./BROKER_AND_DATA_BRIDGES.md) — Binance Spot Testnet, TEFAS, TCMB EVDS2, Midas CSV/XLSX ve `BrokerAdapter` mimarisi.
+- [Claude & Mühendislik Devir Paketi (CLAUDE_HANDOVER.md)](./CLAUDE_HANDOVER.md) — `v1.0.0` sürüm durumu, donmuş ileri doğrulama parmak izleri, test kapsamı ve güvenlik kilitleri.

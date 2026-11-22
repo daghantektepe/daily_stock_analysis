@@ -91,3 +91,11 @@ This is the entry point for project documentation. The README covers the project
 | **WeChat Work** | Tencent enterprise messaging platform with webhook notifications |
 | **Feishu** | ByteDance enterprise collaboration platform with webhook notifications |
 | **PushPlus / ServerChan** | Chinese mobile push notification services |
+
+
+---
+
+## 🚀 v1.0.0 Beginner Investor Guide, Broker Bridges & Handover
+- [Beginner Investor & User Guide (TR) (KULLANICI_REHBERI.md)](./KULLANICI_REHBERI.md) — `/simple` ("What Should I Do Today?"), `/guide` ("Learn & Glossary"), TRY budget calculator, and TEFAS fund equivalents.
+- [Turkey & Global Data / Broker Bridges (BROKER_AND_DATA_BRIDGES.md)](./BROKER_AND_DATA_BRIDGES.md) — Binance Spot Testnet, TEFAS mutual funds, TCMB EVDS2 macro/CPI, Midas CSV/XLSX import, and `BrokerAdapter` architecture.
+- [Claude & Engineering Handover (CLAUDE_HANDOVER.md)](./CLAUDE_HANDOVER.md) — `v1.0.0` release verification summary, frozen forward-validation fingerprints, test suite results, and paper/read-only safety locks.
