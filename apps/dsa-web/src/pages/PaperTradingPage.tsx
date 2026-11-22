@@ -44,6 +44,7 @@ import {
   SectionCard,
   StatCard,
 } from '../components/common';
+import { BrokerAdaptersPanel } from '../components/bridges/BrokerAdaptersPanel';
 
 function fmtNumber(value: number | null | undefined, digits = 2): string {
   if (value == null || Number.isNaN(value)) return '--';
@@ -930,6 +931,8 @@ const PaperTradingPage: React.FC = () => {
           </div>
         )}
       </SectionCard>
+
+      <BrokerAdaptersPanel />
 
       <ConfirmDialog
         isOpen={pendingConfirm !== null}

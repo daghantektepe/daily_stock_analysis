@@ -86,6 +86,64 @@ export interface BinancePreviewResponse {
   account: Record<string, unknown> | null;
 }
 
+export interface BrokerAdapterHealthItem {
+  brokerId: string;
+  displayName: string;
+  configured: boolean;
+  sandbox: boolean;
+  readOnlyEnforced: boolean;
+  modeLabel: string;
+  note?: string | null;
+  autoExecute?: boolean | null;
+  driverInstalled?: boolean | null;
+  port?: number | null;
+}
+
+export interface BrokerAdaptersResponse {
+  ok: boolean;
+  adapters: BrokerAdapterHealthItem[];
+  auditTail: Array<{
+    timestamp: string;
+    brokerId: string;
+    action: string;
+    status: string;
+    details: Record<string, unknown>;
+  }>;
+}
+
+export interface AdapterPreviewOrder {
+  symbol: string;
+  side: string;
+  targetWeightPct?: number;
+  targetNotional?: number;
+  deltaNotional?: number;
+  notionalUsdt?: number;
+  quantity?: number;
+  currency?: string;
+}
+
+export interface AdapterPreviewResponse {
+  ok: boolean;
+  brokerId: string;
+  strategyKey: string;
+  sandbox: boolean;
+  readOnlyEnforced: boolean;
+  currency: string;
+  capital: number;
+  targetWeights: Record<string, number>;
+  orders: AdapterPreviewOrder[];
+  copyText: string;
+}
+
+export interface AdapterPaperOrderPayload {
+  symbol: string;
+  side: string;
+  quantity?: number;
+  quoteOrderQty?: number;
+  confirmed: boolean;
+  testOnly?: boolean;
+}
+
 export const bridgesApi = {
   async getStatus(checkLive = false): Promise<BridgesStatusResponse> {
     const response = await apiClient.get<Record<string, unknown>>('/api/v1/bridges/status', {
@@ -120,5 +178,41 @@ export const bridgesApi = {
       params: { assets },
     });
     return toCamelCase<BinancePreviewResponse>(response.data);
+  },
+
+  async getAdapters(): Promise<BrokerAdaptersResponse> {
+    const response = await apiClient.get<Record<string, unknown>>('/api/v1/bridges/adapters');
+    return toCamelCase<BrokerAdaptersResponse>(response.data);
+  },
+
+  async previewAdapterPlan(params: {
+    brokerId: string;
+    strategyKey: string;
+    capital?: number;
+  }): Promise<AdapterPreviewResponse> {
+    const response = await apiClient.post<Record<string, unknown>>('/api/v1/bridges/adapters/preview', {
+      broker_id: params.brokerId,
+      strategy_key: params.strategyKey,
+      capital: params.capital,
+    });
+    return toCamelCase<AdapterPreviewResponse>(response.data);
+  },
+
+  async submitAdapterPaperOrder(
+    brokerId: string,
+    payload: AdapterPaperOrderPayload,
+  ): Promise<Record<string, unknown>> {
+    const response = await apiClient.post<Record<string, unknown>>(
+      `/api/v1/bridges/adapters/${encodeURIComponent(brokerId)}/paper-order`,
+      {
+        symbol: payload.symbol,
+        side: payload.side,
+        quantity: payload.quantity,
+        quote_order_qty: payload.quoteOrderQty,
+        confirmed: payload.confirmed,
+        test_only: payload.testOnly ?? true,
+      },
+    );
+    return toCamelCase<Record<string, unknown>>(response.data);
   },
 };

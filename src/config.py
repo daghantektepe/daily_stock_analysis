@@ -1116,6 +1116,7 @@ class Config:
     notification_timezone: str = ""
     notification_min_severity: str = ""
     notification_daily_digest_enabled: bool = False
+    notification_simple_mode: bool = False
 
     # 单股推送模式：每分析完一只股票立即推送，而不是汇总后推送
     single_stock_notify: bool = False
@@ -1216,6 +1217,15 @@ class Config:
     binance_live_trading_confirmed: bool = False
     # TCMB EVDS2 macro & inflation API key (optional; USD/TRY falls back to Yahoo TRY=X)
     evds_api_key: Optional[str] = None
+    # Deniz Yatırım AlgoLab BIST REST bridge (strictly read-only by default)
+    algolab_api_key: Optional[str] = None
+    algolab_username: Optional[str] = None
+    algolab_read_only: bool = True
+    # Interactive Brokers TWS / Gateway Paper port 7497 bridge (optional, read-only default)
+    ibkr_host: str = "127.0.0.1"
+    ibkr_port: int = 7497
+    ibkr_client_id: int = 17
+    ibkr_read_only: bool = True
     # Crypto trend strategy paper book (scripts/crypto_trend.py)
     crypto_trend_enabled: bool = False
     crypto_trend_assets: List[str] = field(default_factory=lambda: ["BTC-USD", "ETH-USD"])
@@ -2129,6 +2139,10 @@ class Config:
                 os.getenv('NOTIFICATION_DAILY_DIGEST_ENABLED'),
                 default=False,
             ),
+            notification_simple_mode=parse_env_bool(
+                os.getenv('NOTIFICATION_SIMPLE_MODE'),
+                default=False,
+            ),
             single_stock_notify=os.getenv('SINGLE_STOCK_NOTIFY', 'false').lower() == 'true',
             report_type=cls._parse_report_type(os.getenv('REPORT_TYPE', 'simple')),
             report_language=cls._parse_report_language(report_language_raw),
@@ -2308,6 +2322,17 @@ class Config:
             binance_auto_execute=parse_env_bool(os.getenv('BINANCE_AUTO_EXECUTE'), default=False),
             binance_live_trading_confirmed=parse_env_bool(os.getenv('BINANCE_LIVE_TRADING_CONFIRMED'), default=False),
             evds_api_key=(os.getenv('EVDS_API_KEY') or '').strip() or None,
+            algolab_api_key=(os.getenv('ALGOLAB_API_KEY') or '').strip() or None,
+            algolab_username=(os.getenv('ALGOLAB_USERNAME') or '').strip() or None,
+            algolab_read_only=parse_env_bool(os.getenv('ALGOLAB_READ_ONLY'), default=True),
+            ibkr_host=(os.getenv('IBKR_HOST') or '127.0.0.1').strip(),
+            ibkr_port=parse_env_int(
+                os.getenv('IBKR_PORT'), 7497, field_name='IBKR_PORT', minimum=1, maximum=65535,
+            ),
+            ibkr_client_id=parse_env_int(
+                os.getenv('IBKR_CLIENT_ID'), 17, field_name='IBKR_CLIENT_ID', minimum=1,
+            ),
+            ibkr_read_only=parse_env_bool(os.getenv('IBKR_READ_ONLY'), default=True),
             crypto_trend_enabled=parse_env_bool(os.getenv('CRYPTO_TREND_ENABLED'), default=False),
             crypto_trend_assets=[
                 item.strip().upper()

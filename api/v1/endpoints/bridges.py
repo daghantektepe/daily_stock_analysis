@@ -9,10 +9,15 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from api.v1.schemas.bridges import (
+    AdapterPaperOrderRequest,
+    AdapterPreviewRequest,
+    AdapterPreviewResponse,
     BinancePreviewResponse,
     BinancePreviewTicker,
     BridgeItemStatus,
     BridgesStatusResponse,
+    BrokerAdapterHealthItem,
+    BrokerAdaptersResponse,
     MacroTrResponse,
     PurchasePowerResult,
     TefasFundItem,
@@ -21,7 +26,13 @@ from api.v1.schemas.bridges import (
 from data_provider.binance_fetcher import BinanceFetcher
 from data_provider.evds_fetcher import EvdsMacroFetcher, compute_real_purchase_power_tr
 from data_provider.tefas_fetcher import TefasFetcher
+from src.brokers.base import BrokerSecurityError, read_broker_audit_tail
 from src.brokers.binance.client import BinanceBrokerError, BinanceClient, ccxt_available
+from src.brokers.registry import (
+    get_broker_registry,
+    list_broker_statuses,
+    resolve_strategy_target_weights,
+)
 from src.config import get_config
 from src.services.portfolio_import_service import PortfolioImportService
 
@@ -202,3 +213,86 @@ def get_binance_preview(
         tickers=tickers,
         account=account_info,
     )
+
+
+@router.get(
+    "/adapters",
+    response_model=BrokerAdaptersResponse,
+    summary="List unified BrokerAdapter instances and recent audit log tail",
+)
+def get_unified_adapters(
+    tail: int = Query(12, ge=1, le=50),
+) -> BrokerAdaptersResponse:
+    statuses = [BrokerAdapterHealthItem(**item) for item in list_broker_statuses()]
+    audit = read_broker_audit_tail(limit=tail)
+    return BrokerAdaptersResponse(ok=True, adapters=statuses, audit_tail=audit)
+
+
+@router.post(
+    "/adapters/preview",
+    response_model=AdapterPreviewResponse,
+    summary="Calculate safety-locked rebalance preview orders across Alpaca, Binance Testnet, AlgoLab, or IBKR",
+)
+def preview_adapter_rebalance(req: AdapterPreviewRequest) -> AdapterPreviewResponse:
+    registry = get_broker_registry()
+    broker_key = (req.broker_id or "alpaca").strip().lower()
+    adapter = registry.get(broker_key)
+    if adapter is None:
+        raise HTTPException(status_code=404, detail=f"Unknown broker adapter '{broker_key}'")
+
+    strategy_key = (req.strategy_key or "meta_a").strip().lower()
+    weights = req.target_weights or resolve_strategy_target_weights(strategy_key)
+    plan = adapter.preview_rebalance_plan(weights, capital=req.capital)
+    orders = list(plan.get("orders") or [])
+    currency = str(plan.get("currency") or "USD")
+    lines = [
+        f"{broker_key.upper()} EMİR PLANI ({strategy_key}, Sermaye: {plan.get('capital')} {currency}) [Otomatik gönderim YOK / Manuel Onaylı]:"
+    ]
+    for ord_item in orders:
+        amt = ord_item.get("notional_usdt") or ord_item.get("delta_notional") or ord_item.get("target_notional") or 0
+        lines.append(
+            f"- {ord_item.get('symbol')}: {ord_item.get('side')} (~{abs(float(amt)):,.2f} {ord_item.get('currency') or currency})"
+        )
+
+    return AdapterPreviewResponse(
+        ok=True,
+        broker_id=broker_key,
+        strategy_key=strategy_key,
+        sandbox=bool(plan.get("sandbox", adapter.is_sandbox)),
+        read_only_enforced=bool(plan.get("read_only_enforced", adapter.read_only_enforced)),
+        currency=currency,
+        capital=float(plan.get("capital") or req.capital or 0.0),
+        target_weights={str(k): float(v) for k, v in weights.items()},
+        orders=orders,
+        copy_text="\n".join(lines),
+    )
+
+
+@router.post(
+    "/adapters/{broker_id}/paper-order",
+    summary="Submit ONE explicitly confirmed sandbox order to Alpaca Paper or Binance Testnet",
+)
+def submit_adapter_paper_order(broker_id: str, req: AdapterPaperOrderRequest) -> dict:
+    registry = get_broker_registry()
+    broker_key = (broker_id or "").strip().lower()
+    adapter = registry.get(broker_key)
+    if adapter is None:
+        raise HTTPException(status_code=404, detail=f"Unknown broker adapter '{broker_key}'")
+
+    try:
+        result = adapter.submit_paper_order(
+            {
+                "symbol": req.symbol,
+                "side": req.side,
+                "quantity": req.quantity,
+                "qty": req.quantity,
+                "quote_order_qty": req.quote_order_qty,
+                "test_only": req.test_only,
+            },
+            confirmed=req.confirmed,
+        )
+        return {"ok": True, **result}
+    except BrokerSecurityError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except (ValueError, Exception) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

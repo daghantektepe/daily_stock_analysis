@@ -467,6 +467,24 @@ def maybe_send_weekly_performance_report(
 
     try:
         from src.services.paper_trading_service import PaperTradingService
+        from src.config import get_config
+
+        cfg = get_config()
+        if bool(getattr(cfg, "notification_simple_mode", False)):
+            from src.services.simple_notification import format_simple_morning_summary
+
+            text = format_simple_morning_summary()
+            if notifier is None:
+                from src.notification import NotificationService
+
+                notifier = NotificationService()
+            delivered = bool(notifier.send(text, dedup_key=f"weekly-performance:{iso_week}:simple"))
+            if delivered:
+                _save_weekly_state(
+                    target_state,
+                    {"last_sent_week": iso_week, "sent_at": local_now.isoformat(), "mode": "simple"},
+                )
+            return delivered
 
         summary = PaperTradingService(db_manager=db_manager).get_summary(
             include_benchmarks=True,

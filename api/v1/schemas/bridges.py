@@ -91,3 +91,51 @@ class BinancePreviewResponse(BaseModel):
     auto_execute: bool = False
     tickers: List[BinancePreviewTicker] = Field(default_factory=list)
     account: Optional[Dict[str, Any]] = None
+
+
+class BrokerAdapterHealthItem(BaseModel):
+    broker_id: str
+    display_name: str
+    configured: bool
+    sandbox: bool = True
+    read_only_enforced: bool = True
+    mode_label: str
+    note: Optional[str] = None
+    auto_execute: Optional[bool] = None
+    driver_installed: Optional[bool] = None
+    port: Optional[int] = None
+
+
+class BrokerAdaptersResponse(BaseModel):
+    ok: bool = True
+    adapters: List[BrokerAdapterHealthItem] = Field(default_factory=list)
+    audit_tail: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class AdapterPreviewRequest(BaseModel):
+    broker_id: str = "alpaca"
+    strategy_key: str = "meta_a"
+    capital: Optional[float] = None
+    target_weights: Optional[Dict[str, float]] = None
+
+
+class AdapterPreviewResponse(BaseModel):
+    ok: bool = True
+    broker_id: str
+    strategy_key: str
+    sandbox: bool = True
+    read_only_enforced: bool = True
+    currency: str = "USD"
+    capital: float = 0.0
+    target_weights: Dict[str, float] = Field(default_factory=dict)
+    orders: List[Dict[str, Any]] = Field(default_factory=list)
+    copy_text: str = ""
+
+
+class AdapterPaperOrderRequest(BaseModel):
+    symbol: str
+    side: str = "BUY"
+    quantity: Optional[float] = None
+    quote_order_qty: Optional[float] = None
+    confirmed: bool = False
+    test_only: bool = True
