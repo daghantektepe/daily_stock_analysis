@@ -3,6 +3,7 @@ import {
   Activity,
   BarChart3,
   Bell,
+  BookOpen,
   BriefcaseBusiness,
   Compass,
   Gauge,
@@ -13,11 +14,13 @@ import {
   PanelLeftOpen,
   Search,
   Settings2,
+  Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { SCREENING_CONFIG_CHANGED_EVENT, SYSTEM_CONFIG_CHANGED_EVENT, screeningApi } from '../../api/screening';
 import { useAuth } from '../../contexts/AuthContext';
+import { useExperienceMode } from '../../contexts/ExperienceModeContext';
 import { useAgentChatStore } from '../../stores/agentChatStore';
 import { useUiLanguage } from '../../contexts/UiLanguageContext';
 import type { UiTextKey } from '../../i18n/uiText';
@@ -43,7 +46,15 @@ type NavItem = {
   badge?: 'completion';
 };
 
+const SIMPLE_NAV_ITEMS: NavItem[] = [
+  { key: 'simple', labelKey: 'layout.nav.simpleHome', to: '/simple', icon: Sparkles },
+  { key: 'portfolio', labelKey: 'layout.nav.portfolio', to: '/portfolio', icon: BriefcaseBusiness },
+  { key: 'chat', labelKey: 'layout.nav.chat', to: '/chat', icon: MessageSquareQuote, badge: 'completion' },
+  { key: 'guide', labelKey: 'layout.nav.guide', to: '/guide', icon: BookOpen },
+];
+
 const NAV_ITEMS: NavItem[] = [
+  { key: 'simple', labelKey: 'layout.nav.simpleHome', to: '/simple', icon: Sparkles },
   { key: 'home', labelKey: 'layout.nav.home', to: '/', icon: Home, exact: true },
   { key: 'chat', labelKey: 'layout.nav.chat', to: '/chat', icon: MessageSquareQuote, badge: 'completion' },
   { key: 'screening', labelKey: 'layout.nav.screening', to: '/screening', icon: Search },
@@ -53,6 +64,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'paper-trading', labelKey: 'layout.nav.paperTrading', to: '/paper-trading', icon: TrendingUp },
   { key: 'backtest', labelKey: 'layout.nav.backtest', to: '/backtest', icon: BarChart3 },
   { key: 'alerts', labelKey: 'layout.nav.alerts', to: '/alerts', icon: Bell },
+  { key: 'guide', labelKey: 'layout.nav.guide', to: '/guide', icon: BookOpen },
   { key: 'usage', labelKey: 'layout.nav.usage', to: '/usage', icon: Gauge },
   { key: 'settings', labelKey: 'layout.nav.settings', to: '/settings', icon: Settings2 },
 ];
@@ -64,6 +76,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   variant = 'default',
 }) => {
   const { authEnabled, logout } = useAuth();
+  const { isSimple } = useExperienceMode();
   const { t } = useUiLanguage();
   const completionBadge = useAgentChatStore((state) => state.completionBadge);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -96,7 +109,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     };
   }, []);
 
-  const navItems = showScreeningNav ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.key !== 'screening');
+  const proItems = showScreeningNav ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.key !== 'screening');
+  const navItems = isSimple ? SIMPLE_NAV_ITEMS : proItems;
   const isRail = variant === 'rail';
   const itemBaseClass = cn(
     'group relative flex h-[var(--nav-item-height)] w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-2xl border border-transparent text-[13px] leading-tight text-secondary-text transition-all',

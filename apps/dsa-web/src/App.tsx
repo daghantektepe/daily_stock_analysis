@@ -8,11 +8,14 @@ import {
   StandaloneRouteBoundary,
 } from './components/layout/RouteBoundary';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ExperienceModeProvider } from './contexts/ExperienceModeContext';
 import { UiLanguageProvider, useUiLanguage } from './contexts/UiLanguageContext';
 import { useAgentChatStore } from './stores/agentChatStore';
 import './App.css';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
+const SimpleInvestorHomePage = lazy(() => import('./pages/SimpleInvestorHomePage'));
+const InvestorGuidePage = lazy(() => import('./pages/InvestorGuidePage'));
 const BacktestPage = lazy(() => import('./pages/BacktestPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -82,6 +85,8 @@ const AppContent: React.FC = () => {
         )}
       >
         <Route path="/" element={<HomePage />} />
+        <Route path="/simple" element={<SimpleInvestorHomePage />} />
+        <Route path="/guide" element={<InvestorGuidePage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/paper-trading" element={<PaperTradingPage />} />
@@ -101,11 +106,13 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <UiLanguageProvider>
-      <Router>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </Router>
+      <ExperienceModeProvider>
+        <Router>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </Router>
+      </ExperienceModeProvider>
     </UiLanguageProvider>
   );
 };

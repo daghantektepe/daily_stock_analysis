@@ -320,3 +320,70 @@ class QuantPaperBooksResponse(BaseModel):
     forward_validation: List[ForwardValidationItem] = Field(default_factory=list)
     report_text: str = ""
     error: Optional[str] = None
+
+
+class SimpleWeatherSummary(BaseModel):
+    status: str = "cloudy"
+    emoji: str = "⛅"
+    badge_label: str = ""
+    headline: str = ""
+    plain_summary: str = ""
+    behavioral_guard: str = ""
+    protection_pct: float = 0.0
+
+
+class SimpleDecisionStep(BaseModel):
+    step: int
+    title: str
+    status: str = "info"
+    explanation: str
+    glossary_term: Optional[str] = None
+
+
+class SimpleBasketAssetItem(BaseModel):
+    symbol: str
+    weight_pct: float
+    plain_name: str
+    role: str
+    risk_level: str
+    tr_equivalent: str
+    midas_hint: str
+
+
+class SimpleProfileOption(BaseModel):
+    id: str
+    emoji: str
+    title: str
+    subtitle: str
+    recommended: bool = False
+    engine_note: str = ""
+    historical_max_dd_pct: float = 0.0
+    estimated_annual_cost_pct: float = 0.05
+    rebalance_cadence: str = ""
+    assets: List[SimpleBasketAssetItem] = Field(default_factory=list)
+
+
+class SimplePaperExamItem(BaseModel):
+    strategy_key: str
+    plain_label: str
+    frozen_date: Optional[str] = None
+    fingerprint: Optional[str] = None
+    forward_days: int = 0
+    target_days: int = 120
+    nav_usd: float = 10000.0
+    initial_capital_usd: float = 10000.0
+    return_pct: float = 0.0
+    benchmark_return_pct: Optional[float] = None
+    status_plain: str = ""
+
+
+class SimpleBriefResponse(BaseModel):
+    ok: bool = True
+    simulated_only: bool = True
+    as_of_date: str = ""
+    usdtry_rate: float = 50.0
+    weather: SimpleWeatherSummary = Field(default_factory=SimpleWeatherSummary)
+    decision_steps: List[SimpleDecisionStep] = Field(default_factory=list)
+    profiles: List[SimpleProfileOption] = Field(default_factory=list)
+    paper_exam: List[SimplePaperExamItem] = Field(default_factory=list)
+    disclaimer: str = ""

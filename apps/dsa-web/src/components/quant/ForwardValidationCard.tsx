@@ -2,6 +2,7 @@ import type React from 'react';
 import { FlaskConical, Lock, Terminal } from 'lucide-react';
 import type { ForwardValidationItem, ForwardValidationStatus } from '../../api/alpha';
 import { Button } from '../common';
+import { PlainTermTooltip } from '../common/PlainTermTooltip';
 import { openCopilotDrawer } from '../chat/copilotEvents';
 
 interface ForwardValidationCardProps {
@@ -44,11 +45,15 @@ interface CheckRowProps {
   value: string;
   target: string;
   ok: boolean | null;
+  glossaryTerm?: string;
 }
 
-const CheckRow: React.FC<CheckRowProps> = ({ label, value, target, ok }) => (
+const CheckRow: React.FC<CheckRowProps> = ({ label, value, target, ok, glossaryTerm }) => (
   <div className="flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-2.5 py-1.5">
-    <span className="min-w-0 text-secondary-text">{label}</span>
+    <span className="inline-flex min-w-0 items-center gap-1 text-secondary-text">
+      <span>{label}</span>
+      {glossaryTerm ? <PlainTermTooltip termKey={glossaryTerm} /> : null}
+    </span>
     <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
       <span className="font-semibold text-foreground">{value}</span>
       <span className="text-secondary-text">/ {target}</span>
@@ -107,6 +112,7 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
       <div className="mt-3 grid grid-cols-1 gap-1.5 font-mono text-[10px] sm:grid-cols-2">
         <CheckRow
           label="BIL üstü Sharpe"
+          glossaryTerm="ex_bil_sharpe"
           value={hasData ? `${fmtNum(item.excess_sharpe)} ± ${fmtNum(item.excess_sharpe_se, 1)}` : '—'}
           target={`≥ ${gate.min_excess_sharpe.toFixed(2)}`}
           ok={hasData && item.excess_sharpe !== null && item.excess_sharpe !== undefined
@@ -115,6 +121,7 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
         />
         <CheckRow
           label="En büyük düşüş"
+          glossaryTerm="max_dd"
           value={hasData ? fmtPct(item.max_drawdown_pct) : '—'}
           target={`-%${gate.max_drawdown_pct.toFixed(0)}`}
           ok={hasData && item.max_drawdown_pct !== null && item.max_drawdown_pct !== undefined
@@ -123,6 +130,7 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
         />
         <CheckRow
           label="Kayma (Alpaca)"
+          glossaryTerm="slippage"
           value={slipAvg !== null && slipAvg !== undefined ? `${slipAvg.toFixed(1)} bps · ${slipFills} dolum` : `${slipFills} dolum`}
           target={`≤ ${gate.max_slippage_bps} bps`}
           ok={slipFills >= gate.min_slippage_fills && slipAvg !== null && slipAvg !== undefined

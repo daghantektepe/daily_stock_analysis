@@ -1,8 +1,9 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Compass, Download, Search, ShieldAlert, Terminal, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Bell, Compass, Download, Search, ShieldAlert, Sparkles, Terminal, TrendingUp, Zap } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { alphaApi, type AlphaOverviewResponse } from '../../api/alpha';
+import { useExperienceMode } from '../../contexts/ExperienceModeContext';
 import { OPEN_COMMAND_PALETTE_EVENT } from './commandPaletteEvents';
 import { openCopilotDrawer } from '../chat/copilotEvents';
 
@@ -14,8 +15,25 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const LiveStatusBar: React.FC = () => {
+  const { isSimple, setMode } = useExperienceMode();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [overview, setOverview] = useState<AlphaOverviewResponse | null>(null);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  const handleSelectSimple = () => {
+    setMode('simple');
+    if (location.pathname !== '/simple') {
+      navigate('/simple');
+    }
+  };
+
+  const handleSelectPro = () => {
+    setMode('pro');
+    if (location.pathname === '/simple' || location.pathname === '/guide') {
+      navigate('/discover');
+    }
+  };
 
   useEffect(() => {
     const onBeforeInstall = (event: Event) => {
@@ -89,6 +107,39 @@ export const LiveStatusBar: React.FC = () => {
       </button>
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        <div
+          role="group"
+          aria-label="Görünüm modu seçimi"
+          className="inline-flex items-center rounded-xl border border-border/70 bg-background/70 p-0.5"
+        >
+          <button
+            type="button"
+            onClick={handleSelectSimple}
+            aria-pressed={isSimple}
+            className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+              isSimple
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'text-secondary-text hover:text-foreground'
+            }`}
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>Basit Mod</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleSelectPro}
+            aria-pressed={!isSimple}
+            className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+              !isSimple
+                ? 'bg-primary/20 text-primary'
+                : 'text-secondary-text hover:text-foreground'
+            }`}
+          >
+            <Zap className="h-3 w-3" />
+            <span>Uzman</span>
+          </button>
+        </div>
+
         {installPrompt ? (
           <button
             type="button"
@@ -115,49 +166,53 @@ export const LiveStatusBar: React.FC = () => {
           </kbd>
         </button>
 
-        <Link
-          to="/discover"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-2.5 py-1 font-medium text-primary transition-colors hover:bg-primary/20"
-        >
-          <Compass className="h-3.5 w-3.5" />
-          <span>Fırsat Bulucu</span>
-        </Link>
+        {!isSimple ? (
+          <>
+            <Link
+              to="/discover"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-2.5 py-1 font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              <span>Fırsat Bulucu</span>
+            </Link>
 
-        <Link
-          to="/paper-trading"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-background/60 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-hover"
-          title="Yalnızca sanal işlem defteri; gerçek emir gönderilmez"
-        >
-          <span
-            className={`h-2 w-2 rounded-full ${
-              overview?.paper_trading_enabled ? 'bg-emerald-400 animate-pulse' : 'bg-secondary-text/50'
-            }`}
-          />
-          <TrendingUp className="h-3.5 w-3.5 text-secondary-text" />
-          <span>
-            SANAL DEFTER{overview ? ` · ${overview.open_position_count} Açık` : ''}
-          </span>
-        </Link>
+            <Link
+              to="/paper-trading"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-background/60 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-hover"
+              aria-label="Yalnızca sanal işlem defteri; gerçek emir gönderilmez"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  overview?.paper_trading_enabled ? 'bg-emerald-400 animate-pulse' : 'bg-secondary-text/50'
+                }`}
+              />
+              <TrendingUp className="h-3.5 w-3.5 text-secondary-text" />
+              <span>
+                SANAL DEFTER{overview ? ` · ${overview.open_position_count} Açık` : ''}
+              </span>
+            </Link>
 
-        {overview && overview.recent_alerts_count > 0 ? (
-          <Link
-            to="/paper-trading"
-            className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 px-2.5 py-1 text-secondary-text transition-colors hover:bg-hover hover:text-foreground"
-          >
-            <Bell className="h-3.5 w-3.5 text-primary" />
-            <span>{overview.recent_alerts_count} KAP/Haber</span>
-          </Link>
-        ) : null}
+            {overview && overview.recent_alerts_count > 0 ? (
+              <Link
+                to="/paper-trading"
+                className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-background/60 px-2.5 py-1 text-secondary-text transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Bell className="h-3.5 w-3.5 text-primary" />
+                <span>{overview.recent_alerts_count} KAP/Haber</span>
+              </Link>
+            ) : null}
 
-        {overview && !overview.auth_enabled ? (
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-1 rounded-xl border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-amber-400 transition-colors hover:bg-amber-500/20"
-            title="Yönetici şifresi kapalı; uzak erişimde ayarlardan aktifleştirin"
-          >
-            <ShieldAlert className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Auth Kapalı</span>
-          </Link>
+            {overview && !overview.auth_enabled ? (
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-1 rounded-xl border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-amber-400 transition-colors hover:bg-amber-500/20"
+                aria-label="Yönetici şifresi kapalı; uzak erişimde ayarlardan aktifleştirin"
+              >
+                <ShieldAlert className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Auth Kapalı</span>
+              </Link>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>

@@ -33,6 +33,7 @@ from api.v1.schemas.alpha import (
     ForwardValidationResponse,
     QuantPaperBooksResponse,
     QuantPaperStepRequest,
+    SimpleBriefResponse,
     TournamentResponse,
     TournamentRunRequest,
     UsQuantCandidateItem,
@@ -472,17 +473,43 @@ def get_paa_live_signal(
     return PaaSignalResponse(**data)
 
 
+def _active_quant_paper_strategies(cfg: Config) -> tuple[str, ...]:
+    """Return configured quant paper strategies plus any extra frozen v3 books registered locally."""
+    base = list(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"]) or ["paa", "meta_a"])
+    try:
+        from src.quant.forward_validation import DEFAULT_REGISTRY_PATH, ForwardRegistry
+        from src.quant.paper_book import QUANT_PAPER_SPECS
+
+        if DEFAULT_REGISTRY_PATH.is_file():
+            frozen = ForwardRegistry(DEFAULT_REGISTRY_PATH).data.get("strategies") or {}
+            for key in frozen:
+                if key in QUANT_PAPER_SPECS and key not in base:
+                    base.append(key)
+    except Exception:  # noqa: BLE001
+        pass
+    return tuple(base)
+
+
+@router.get("/simple-brief", response_model=SimpleBriefResponse)
+def get_simple_investor_brief() -> SimpleBriefResponse:
+    """Plain-Turkish beginner dashboard brief (weather, decision flow, budget baskets & TR equivalents)."""
+    from src.services.simple_investor_brief import build_simple_investor_brief
+
+    data = build_simple_investor_brief()
+    return SimpleBriefResponse(**data)
+
+
 @router.get("/quant-paper", response_model=QuantPaperBooksResponse)
 def get_quant_paper_books(
     auto_step: bool = Query(True, description="Initialize paper books automatically if not yet started"),
 ) -> QuantPaperBooksResponse:
-    """Return persisted PAA & Meta-Portfolio A StrategyPaperBook ledgers (simulated only)."""
+    """Return persisted PAA, Meta-Portfolio A & enrolled v3 StrategyPaperBook ledgers (simulated only)."""
     from src.config import get_config
     from src.quant.paper_book import get_quant_paper_books_status
 
     cfg = get_config()
     data = get_quant_paper_books_status(
-        strategies=tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+        strategies=_active_quant_paper_strategies(cfg),
         initial_capital=float(getattr(cfg, "quant_paper_capital", 10000.0)),
         cost_bps=float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
         rebalance_mode=str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),
@@ -493,14 +520,14 @@ def get_quant_paper_books(
 
 @router.get("/forward-validation", response_model=ForwardValidationResponse)
 def get_forward_validation() -> ForwardValidationResponse:
-    """Forward (live paper) validation gate for the frozen PAA / Meta-Portfolio A books (read-only)."""
+    """Forward (live paper) validation gate for all frozen quant books (read-only)."""
     from src.config import get_config
     from src.quant.forward_validation import format_forward_report, run_forward_validation
 
     cfg = get_config()
     try:
         items = run_forward_validation(
-            strategies=tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+            strategies=_active_quant_paper_strategies(cfg),
             auto_freeze=False,
             paper_settings={
                 "initial_capital": float(getattr(cfg, "quant_paper_capital", 10000.0)),
@@ -516,13 +543,13 @@ def get_forward_validation() -> ForwardValidationResponse:
 
 @router.post("/quant-paper/step", response_model=QuantPaperBooksResponse)
 def step_quant_paper(req: QuantPaperStepRequest) -> QuantPaperBooksResponse:
-    """Advance PAA & Meta-Portfolio A StrategyPaperBook ledgers to the latest completed close."""
+    """Advance PAA, Meta-Portfolio A & enrolled v3 StrategyPaperBook ledgers to the latest completed close."""
     from src.config import get_config
     from src.quant.paper_book import step_quant_paper_books
 
     cfg = get_config()
     data = step_quant_paper_books(
-        strategies=req.strategies or tuple(getattr(cfg, "quant_paper_strategies", ["paa", "meta_a"])),
+        strategies=req.strategies or _active_quant_paper_strategies(cfg),
         initial_capital=float(getattr(cfg, "quant_paper_capital", 10000.0)),
         cost_bps=float(getattr(cfg, "quant_paper_cost_bps", 5.0)),
         rebalance_mode=str(getattr(cfg, "quant_paper_rebalance_mode", "monthly")),

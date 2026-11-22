@@ -609,4 +609,78 @@ export const alphaApi = {
     });
     return res.data;
   },
+
+  async getSimpleBrief(): Promise<SimpleBriefResponse> {
+    const res = await apiClient.get<SimpleBriefResponse>('/api/v1/alpha/simple-brief', {
+      timeout: 30000,
+    });
+    return res.data;
+  },
 };
+
+export interface SimpleWeatherSummary {
+  status: 'stormy' | 'cloudy' | 'sunny' | string;
+  emoji: string;
+  badge_label: string;
+  headline: string;
+  plain_summary: string;
+  behavioral_guard: string;
+  protection_pct: number;
+}
+
+export interface SimpleDecisionStep {
+  step: number;
+  title: string;
+  status: string;
+  explanation: string;
+  glossary_term?: string | null;
+}
+
+export interface SimpleBasketAssetItem {
+  symbol: string;
+  weight_pct: number;
+  plain_name: string;
+  role: string;
+  risk_level: string;
+  tr_equivalent: string;
+  midas_hint: string;
+}
+
+export interface SimpleProfileOption {
+  id: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  recommended: boolean;
+  engine_note: string;
+  historical_max_dd_pct: number;
+  estimated_annual_cost_pct: number;
+  rebalance_cadence: string;
+  assets: SimpleBasketAssetItem[];
+}
+
+export interface SimplePaperExamItem {
+  strategy_key: string;
+  plain_label: string;
+  frozen_date?: string | null;
+  fingerprint?: string | null;
+  forward_days: number;
+  target_days: number;
+  nav_usd: number;
+  initial_capital_usd: number;
+  return_pct: number;
+  benchmark_return_pct?: number | null;
+  status_plain: string;
+}
+
+export interface SimpleBriefResponse {
+  ok: boolean;
+  simulated_only: boolean;
+  as_of_date: string;
+  usdtry_rate: number;
+  weather: SimpleWeatherSummary;
+  decision_steps: SimpleDecisionStep[];
+  profiles: SimpleProfileOption[];
+  paper_exam: SimplePaperExamItem[];
+  disclaimer: string;
+}
