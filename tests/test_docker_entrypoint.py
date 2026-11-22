@@ -1,14 +1,22 @@
 import os
 import re
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+_SKIP_POSIX_SH = pytest.mark.skipif(
+    sys.platform == "win32" or shutil.which("sh") is None,
+    reason="POSIX shell entrypoint tests require sh",
+)
 
 
+@_SKIP_POSIX_SH
 def test_docker_entrypoint_has_valid_shell_syntax() -> None:
     subprocess.run(
         ["sh", "-n", str(REPO_ROOT / "docker" / "entrypoint.sh")],
@@ -186,6 +194,7 @@ def _run_entrypoint_with_fake_tools(
     )
 
 
+@_SKIP_POSIX_SH
 def test_docker_entrypoint_repairs_nested_mount_ownership(tmp_path: Path) -> None:
     fakebin, log_dir = _prepare_fake_entrypoint_tools(
         tmp_path,
@@ -210,6 +219,7 @@ def test_docker_entrypoint_repairs_nested_mount_ownership(tmp_path: Path) -> Non
     assert "/app/data" in chmod_log
 
 
+@_SKIP_POSIX_SH
 def test_docker_entrypoint_skips_owner_chmod_when_chown_fails(tmp_path: Path) -> None:
     fakebin, log_dir = _prepare_fake_entrypoint_tools(
         tmp_path,

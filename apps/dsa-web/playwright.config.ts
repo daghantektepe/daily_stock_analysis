@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDir, '../..');
 const shouldRunWebSmoke = !!process.env.DSA_WEB_SMOKE_PASSWORD;
+const shouldRunMockE2e = !!process.env.DSA_RUN_MOCK_E2E;
 
 function resolveBackendCommand() {
   if (process.env.DSA_WEB_SMOKE_BACKEND_CMD) {
@@ -54,11 +55,24 @@ export default defineConfig({
           timeout: 120_000,
         },
       ]
-    : undefined,
+    : shouldRunMockE2e
+      ? [
+          {
+            command: 'npm run dev -- --host 127.0.0.1 --port 4173',
+            cwd: currentDir,
+            url: 'http://127.0.0.1:4173',
+            reuseExistingServer: !process.env.CI,
+            timeout: 120_000,
+          },
+        ]
+      : undefined,
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(process.platform === 'win32' ? { channel: 'msedge', video: 'off' } : {}),
+      },
     },
   ],
 });

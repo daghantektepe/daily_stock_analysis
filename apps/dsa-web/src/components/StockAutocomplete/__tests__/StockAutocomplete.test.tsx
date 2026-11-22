@@ -161,7 +161,7 @@ describe('StockAutocomplete', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText(/输入股票代码或名称/);
+    const input = screen.getByPlaceholderText(/Hisse kodu veya adı girin/);
     expect(input).toBeInTheDocument();
   });
 
@@ -280,7 +280,7 @@ describe('StockAutocomplete', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText(/输入股票代码或名称/);
+      const input = screen.getByPlaceholderText(/Hisse kodu veya adı girin/);
       expect(input).toHaveAttribute('data-autocomplete-mode', 'fallback');
     });
 
@@ -311,7 +311,7 @@ describe('StockAutocomplete', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText(/输入股票代码或名称/);
+      const input = screen.getByPlaceholderText(/Hisse kodu veya adı girin/);
       expect(input).toHaveAttribute('data-autocomplete-mode', 'fallback');
     });
 
@@ -647,8 +647,8 @@ describe('StockAutocomplete', () => {
       const input = screen.getByDisplayValue('000660');
       fireEvent.focus(input);
 
-      expect(screen.getByText('韩股')).toBeInTheDocument();
-      expect(screen.getByText('日股')).toBeInTheDocument();
+      expect(screen.getByText('Kore')).toBeInTheDocument();
+      expect(screen.getByText('Japonya')).toBeInTheDocument();
       expect(screen.getByText('BIST')).toBeInTheDocument();
       expect(screen.getByText('THYAO.IS')).toBeInTheDocument();
       expect(screen.getByText('000660.KS')).toBeInTheDocument();

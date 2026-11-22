@@ -616,6 +616,14 @@ export const alphaApi = {
     });
     return res.data;
   },
+
+  async getQuantTearsheet(strategy = 'meta_a', mode: 'backtest' | 'paper' = 'backtest'): Promise<QuantTearsheetResponse> {
+    const res = await apiClient.get<QuantTearsheetResponse>('/api/v1/alpha/tearsheet', {
+      params: { strategy, mode },
+      timeout: 30000,
+    });
+    return res.data;
+  },
 };
 
 export interface SimpleWeatherSummary {
@@ -683,4 +691,38 @@ export interface SimpleBriefResponse {
   profiles: SimpleProfileOption[];
   paper_exam: SimplePaperExamItem[];
   disclaimer: string;
+}
+
+export interface TearsheetMonthlyRow {
+  year: number;
+  months: Record<string, number>;
+  ytd_pct?: number | null;
+}
+
+export interface TearsheetUnderwaterPoint {
+  date: string;
+  nav_idx: number;
+  drawdown_pct: number;
+  benchmark_dd_pct?: number | null;
+}
+
+export interface TearsheetCurrencyComparison {
+  usd_1y_return_pct?: number | null;
+  usd_try_spot?: number | null;
+  usd_try_1y_change_pct?: number | null;
+  try_equivalent_1y_return_pct?: number | null;
+  cpi_yoy_pct?: number | null;
+  real_tufe_1y_return_pct?: number | null;
+  cpi_source?: string;
+}
+
+export interface QuantTearsheetResponse {
+  ok: boolean;
+  strategy_key: string;
+  label: string;
+  mode: string;
+  metrics: Record<string, number | null | undefined>;
+  monthly_matrix: TearsheetMonthlyRow[];
+  underwater: TearsheetUnderwaterPoint[];
+  currency_comparison?: TearsheetCurrencyComparison | null;
 }

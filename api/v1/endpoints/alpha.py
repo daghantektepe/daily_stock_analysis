@@ -33,6 +33,7 @@ from api.v1.schemas.alpha import (
     ForwardValidationResponse,
     QuantPaperBooksResponse,
     QuantPaperStepRequest,
+    QuantTearsheetResponse,
     SimpleBriefResponse,
     TournamentResponse,
     TournamentRunRequest,
@@ -557,3 +558,15 @@ def step_quant_paper(req: QuantPaperStepRequest) -> QuantPaperBooksResponse:
         force_refresh_prices=req.force_refresh_prices,
     )
     return QuantPaperBooksResponse(**data)
+
+
+@router.get("/tearsheet", response_model=QuantTearsheetResponse)
+def get_quant_tearsheet(
+    strategy: str = Query("meta_a", description="Strategy key: meta_a, v3_trp, or paa"),
+    mode: str = Query("backtest", description="Data source mode: backtest or paper"),
+) -> QuantTearsheetResponse:
+    """QuantStats-style monthly return calendar heatmap, underwater drawdown, and TRY/USD/CPI check."""
+    from src.quant.tearsheet import build_quant_tearsheet
+
+    data = build_quant_tearsheet(strategy, mode=mode)
+    return QuantTearsheetResponse(**data)

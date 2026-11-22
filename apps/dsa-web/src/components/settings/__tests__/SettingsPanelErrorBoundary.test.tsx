@@ -34,10 +34,10 @@ describe('SettingsPanelErrorBoundary', () => {
     );
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('通知设置加载失败')).toBeInTheDocument();
+    expect(screen.getByText('通知设置 yüklenemedi')).toBeInTheDocument();
     expect(screen.getByText('desktop.log')).toBeInTheDocument();
     expect(screen.getByText(/release 版本、Windows 版本和触发入口/)).toBeInTheDocument();
-    expect(screen.getByText(/错误摘要：mock settings panel crash/)).toBeInTheDocument();
+    expect(screen.getByText(/Hata özeti: mock settings panel crash/)).toBeInTheDocument();
   });
 
   it('redacts and truncates sensitive error summary text', () => {
@@ -49,7 +49,7 @@ describe('SettingsPanelErrorBoundary', () => {
       </SettingsPanelErrorBoundary>
     );
 
-    const summary = screen.getByText(/错误摘要：/).textContent ?? '';
+    const summary = screen.getByText(/Hata özeti:/).textContent ?? '';
 
     expect(summary).toContain('https://hooks.slack.com/[redacted]?[redacted]');
     expect(summary).toContain('?[redacted]');
@@ -58,7 +58,7 @@ describe('SettingsPanelErrorBoundary', () => {
     expect(summary).not.toContain('path-secret');
     expect(summary).not.toContain('super-secret-token');
     expect(summary).not.toContain('sk-supersecretvalue123456');
-    expect(summary.length).toBeLessThanOrEqual('错误摘要：'.length + 183);
+    expect(summary.length).toBeLessThanOrEqual('Hata özeti: '.length + 183);
   });
 
   it('resets after resetKey changes so the panel can render again', async () => {
@@ -68,7 +68,7 @@ describe('SettingsPanelErrorBoundary', () => {
       </SettingsPanelErrorBoundary>
     );
 
-    expect(screen.getByText('Agent 设置加载失败')).toBeInTheDocument();
+    expect(screen.getByText('Agent 设置 yüklenemedi')).toBeInTheDocument();
 
     rerender(
       <SettingsPanelErrorBoundary title="Agent 设置" resetKey="agent:v2">
@@ -79,6 +79,6 @@ describe('SettingsPanelErrorBoundary', () => {
     await waitFor(() => {
       expect(screen.getByText('Agent 设置已恢复')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Agent 设置加载失败')).not.toBeInTheDocument();
+    expect(screen.queryByText('Agent 设置 yüklenemedi')).not.toBeInTheDocument();
   });
 });

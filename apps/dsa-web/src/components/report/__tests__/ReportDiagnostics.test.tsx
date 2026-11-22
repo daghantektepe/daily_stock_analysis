@@ -58,24 +58,24 @@ describe('ReportDiagnostics', () => {
     render(<ReportDiagnostics recordId={1} />);
 
     expect(historyApi.getDiagnostics).toHaveBeenCalledWith(1);
-    expect(await screen.findByText('运行状态')).toBeInTheDocument();
+    expect(await screen.findByText('Run Status')).toBeInTheDocument();
     const panel = screen.getByTestId('run-diagnostics');
     expect(panel).not.toHaveAttribute('open');
-    expect(screen.getByText('部分降级')).toBeInTheDocument();
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('运行状态'));
+    fireEvent.click(screen.getByText('Run Status'));
 
     expect(panel).toHaveAttribute('open');
-    expect(screen.getByText('最近失败后已降级')).toBeInTheDocument();
-    expect(screen.getByText('未配置')).toBeInTheDocument();
+    expect(screen.getByText('Recent failure')).toBeInTheDocument();
+    expect(screen.getByText('Not configured')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '复制排障信息' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy diagnostics' }));
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(diagnosticSummary.copyText);
     });
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '已复制' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
     });
   });
 
@@ -94,8 +94,8 @@ describe('ReportDiagnostics', () => {
 
     render(<ReportDiagnostics recordId={1} onOpenRunFlow={onOpenRunFlow} />);
 
-    fireEvent.click(await screen.findByText('运行状态'));
-    fireEvent.click(screen.getByRole('button', { name: '查看历史记录 1 运行流' }));
+    fireEvent.click(await screen.findByText('Run Status'));
+    fireEvent.click(screen.getByRole('button', { name: 'View run flow for history record 1' }));
 
     expect(onOpenRunFlow).toHaveBeenCalledWith(1);
   });
@@ -112,6 +112,6 @@ describe('ReportDiagnostics', () => {
     await waitFor(() => {
       expect(historyApi.getDiagnostics).toHaveBeenCalledTimes(2);
     });
-    expect(await screen.findByText('运行状态')).toBeInTheDocument();
+    expect(await screen.findByText('Run Status')).toBeInTheDocument();
   });
 });

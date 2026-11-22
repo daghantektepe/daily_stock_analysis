@@ -190,7 +190,7 @@ export const MarketReviewRegionSelector: React.FC<MarketReviewRegionSelectorProp
                       onChange={() => toggleRegion(region)}
                       className="h-4 w-4 rounded border-border accent-primary"
                     />
-                    <span>{regionLabels[region]}</span>
+                    <span>{regionLabels[region]}</span>{' '}
                     <span className="ml-auto text-[11px] uppercase text-muted-text">{region}</span>
                   </label>
                 );

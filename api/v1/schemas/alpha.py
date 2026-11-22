@@ -387,3 +387,37 @@ class SimpleBriefResponse(BaseModel):
     profiles: List[SimpleProfileOption] = Field(default_factory=list)
     paper_exam: List[SimplePaperExamItem] = Field(default_factory=list)
     disclaimer: str = ""
+
+
+class TearsheetMonthlyRow(BaseModel):
+    year: int
+    months: Dict[str, float] = Field(default_factory=dict)
+    ytd_pct: Optional[float] = None
+
+
+class TearsheetUnderwaterPoint(BaseModel):
+    date: str
+    nav_idx: float
+    drawdown_pct: float
+    benchmark_dd_pct: Optional[float] = None
+
+
+class TearsheetCurrencyComparison(BaseModel):
+    usd_1y_return_pct: Optional[float] = None
+    usd_try_spot: Optional[float] = None
+    usd_try_1y_change_pct: Optional[float] = None
+    try_equivalent_1y_return_pct: Optional[float] = None
+    cpi_yoy_pct: Optional[float] = None
+    real_tufe_1y_return_pct: Optional[float] = None
+    cpi_source: str = "unavailable"
+
+
+class QuantTearsheetResponse(BaseModel):
+    ok: bool = True
+    strategy_key: str = "meta_a"
+    label: str = ""
+    mode: str = "backtest"
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    monthly_matrix: List[TearsheetMonthlyRow] = Field(default_factory=list)
+    underwater: List[TearsheetUnderwaterPoint] = Field(default_factory=list)
+    currency_comparison: Optional[TearsheetCurrencyComparison] = None

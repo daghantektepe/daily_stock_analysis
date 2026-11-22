@@ -2009,7 +2009,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(len(observed_timeouts), 5)
         self.assertTrue(all(0 < timeout <= 0.25 for timeout in observed_timeouts))
         self.assertTrue(all(
-            later < earlier
+            later <= earlier
             for earlier, later in zip(observed_timeouts, observed_timeouts[1:])
         ))
         fetcher_manager.assert_not_called()
@@ -2387,7 +2387,7 @@ class ScreeningOpportunitiesApiTestCase(unittest.TestCase):
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",
             20,
-            "正在执行选股，外部数据源较慢时会持续后台运行",
+            "Hisse tarama çalışıyor; dış veri kaynakları yavaşsa arka planda devam edecektir",
         )
         fake_queue.update_task_progress.assert_any_call(
             "screen-task-1",

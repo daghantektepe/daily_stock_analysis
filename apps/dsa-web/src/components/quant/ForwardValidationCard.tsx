@@ -169,14 +169,14 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
         </div>
       </div>
 
-      {item.reasons.length > 0 || item.warnings.length > 0 ? (
+      {(item.reasons ?? []).length > 0 || (item.warnings ?? []).length > 0 ? (
         <ul className="mt-2.5 space-y-1 text-[11px] leading-snug">
-          {item.reasons.map((reason) => (
+          {(item.reasons ?? []).map((reason) => (
             <li key={reason} className="text-secondary-text">
               • {reason}
             </li>
           ))}
-          {item.warnings.map((warning) => (
+          {(item.warnings ?? []).map((warning) => (
             <li key={warning} className="text-amber-300">
               ⚠ {warning}
             </li>

@@ -151,11 +151,11 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
     expect(screen.queryByText(/AlphaSift/)).not.toBeInTheDocument();
     expect(screen.queryByText(/theme_heat/)).not.toBeInTheDocument();
-    expect(screen.queryByText('实验功能与风险提示')).not.toBeInTheDocument();
-    expect(screen.queryByText('选股结果')).not.toBeInTheDocument();
+    expect(screen.queryByText('Deneysel Özellik Uyarısı')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tarama Sonuçları')).not.toBeInTheDocument();
   });
 
   it('re-syncs enabled state when Screening availability check fails after config is enabled', async () => {
@@ -172,15 +172,15 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect((await screen.findAllByText('选股未开启')).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /运行选股/ })).toBeDisabled();
+    expect((await screen.findAllByText('Hisse Tarama Kapalı')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Taramayı Çalıştır/ })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole('button', { name: '开启选股' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Taramayı Etkinleştir' }));
 
     await waitFor(() => expect(getScreeningStatus).toHaveBeenCalledTimes(2));
-    expect(screen.getAllByText('选股未开启').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /运行选股/ })).toBeDisabled();
-    expect(screen.getByText('选股功能不可用')).toBeInTheDocument();
+    expect(screen.getAllByText('Hisse Tarama Kapalı').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Taramayı Çalıştır/ })).toBeDisabled();
+    expect(screen.getByText('Hisse Tarama Kullanılamıyor')).toBeInTheDocument();
     expect(screen.getByText('选股功能不可用，请检查后端日志')).toBeInTheDocument();
   });
 
@@ -221,32 +221,32 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: false }));
     expect(getHotspotDetail).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
-    fireEvent.click(screen.getByRole('button', { name: /刷新热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Yenile/ }));
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: true }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledWith({ topic: 'AI算力', provider: 'akshare', refresh: false }));
     await waitFor(() => expect(screen.getAllByText('AI算力').length).toBeGreaterThan(0));
-    expect(screen.getByText('强势领先')).toBeInTheDocument();
-    expect(screen.getAllByText(/中际旭创、工业富联/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/覆盖 8 股/)).toBeInTheDocument();
-    expect(await screen.findByText('发酵时间线')).toBeInTheDocument();
-    expect(screen.getByText('标准题材：算力')).toBeInTheDocument();
-    expect(screen.getByText('质量 缓存')).toBeInTheDocument();
-    expect(screen.getByText('缓存回退 2.5h')).toBeInTheDocument();
-    expect(screen.getByText('详情数据已降级，展开查看原因')).toBeInTheDocument();
-    expect(screen.getByText(/暂缺：实时概念股行情/)).toBeInTheDocument();
-    expect(screen.getByText('热点明细请求超时')).toBeInTheDocument();
+    expect(screen.getByText('Güçlü Lider')).toBeInTheDocument();
+    expect(screen.getAllByText(/中际旭创, 工业富联/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/8 hisse/)).toBeInTheDocument();
+    expect(await screen.findByText('Gelişim Zaman Çizelgesi')).toBeInTheDocument();
+    expect(screen.getByText('Standart tema: 算力')).toBeInTheDocument();
+    expect(screen.getByText('Kalite: Önbellek')).toBeInTheDocument();
+    expect(screen.getByText('Önbellek yedeği 2.5s')).toBeInTheDocument();
+    expect(screen.getByText('Ayrıntı verisi eksik, nedeni görmek için açın')).toBeInTheDocument();
+    expect(screen.getByText(/Eksik alanlar: Canlı Tema Fiyatları/)).toBeInTheDocument();
+    expect(screen.getByText('Tema detayı zaman aşımına uğradı')).toBeInTheDocument();
     expect(screen.getByText('盘中发酵')).toBeInTheDocument();
-    expect(screen.getByText('概念股')).toBeInTheDocument();
+    expect(screen.getByText('Tema Hisseleri')).toBeInTheDocument();
     expect(screen.getByText('中际旭创')).toBeInTheDocument();
-    expect(screen.queryByText(/last_good_cache|置信 65%/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/last_good_cache|Güven 65%/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '分析 中际旭创' }));
+    fireEvent.click(screen.getByRole('button', { name: '中际旭创 analiz et' }));
     expect(navigate).toHaveBeenCalledWith('/', {
       state: {
         stockCode: '300000',
@@ -293,12 +293,12 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    await screen.findByText('选股已开启');
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    await screen.findByText('Hisse Tarama Etkin');
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(await screen.findByRole('button', { name: '搜索最新消息' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Güncel Haberleri Ara' }));
 
     await waitFor(() => expect(getHotspotDetail).toHaveBeenLastCalledWith({
       topic: 'AI算力',
@@ -306,7 +306,7 @@ describe('StockScreeningPage', () => {
       refresh: false,
       includeSearch: true,
     }));
-    const link = await screen.findByRole('link', { name: '查看消息' });
+    const link = await screen.findByRole('link', { name: 'Haberi Gör' });
     expect(link).toHaveAttribute('href', 'https://example.com/ai-news');
 
     getHotspotDetail.mockResolvedValueOnce({
@@ -319,11 +319,11 @@ describe('StockScreeningPage', () => {
       stocks: [],
       stockCount: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: '搜索最新消息' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Güncel Haberleri Ara' }));
 
-    expect(await screen.findByText('消息搜索失败，请稍后重试。')).toBeInTheDocument();
+    expect(await screen.findByText('Haber araması başarısız oldu, lütfen tekrar deneyin.')).toBeInTheDocument();
     expect(screen.getByText('盘中发酵')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: '查看消息' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Haberi Gör' })).not.toBeInTheDocument();
 
     getHotspotDetail.mockResolvedValueOnce({
       enabled: true,
@@ -335,16 +335,16 @@ describe('StockScreeningPage', () => {
       stocks: [],
       stockCount: 0,
     });
-    fireEvent.click(screen.getByRole('button', { name: '搜索最新消息' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Güncel Haberleri Ara' }));
 
-    expect(await screen.findByText('暂未搜到该题材近期的有效消息。')).toBeInTheDocument();
-    expect(screen.queryByText('消息搜索失败，请稍后重试。')).not.toBeInTheDocument();
+    expect(await screen.findByText('Bu tema için güncel haber bulunamadı.')).toBeInTheDocument();
+    expect(screen.queryByText('Haber araması başarısız oldu, lütfen tekrar deneyin.')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /收起热点题材/ }));
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Gizle/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
 
-    await waitFor(() => expect(screen.queryByRole('link', { name: '查看消息' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'Haberi Gör' })).not.toBeInTheDocument());
     expect(screen.getByText('盘中发酵')).toBeInTheDocument();
     expect(getHotspotDetail).toHaveBeenCalledTimes(4);
   });
@@ -396,20 +396,20 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByRole('heading', { name: '选股' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    expect(await screen.findByRole('heading', { name: 'Hisse Tarama' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /文字媒体/ }));
 
-    expect(await screen.findByText('文字媒体：热度 100.0，阶段 初次异动，核心股 中文在线。')).toBeInTheDocument();
-    expect(screen.getByText('质量 可用')).toBeInTheDocument();
-    expect(screen.getByText('备用数据源')).toBeInTheDocument();
-    expect(screen.queryByText(/^缓存回退/)).not.toBeInTheDocument();
-    expect(screen.getByText('当前发酵')).toBeInTheDocument();
-    expect(screen.getByText('文字媒体热度 100.0，阶段 初次异动，核心股 中文在线。')).toBeInTheDocument();
-    expect(screen.queryByText('详情数据已降级，展开查看原因')).not.toBeInTheDocument();
-    expect(screen.queryByText('热点明细请求超时（20 秒）')).not.toBeInTheDocument();
-    expect(screen.getByText('掉队')).toBeInTheDocument();
-    expect(screen.getByText(/暂无行情/)).toBeInTheDocument();
+    expect(await screen.findByText('文字媒体: Isı 100.0, Aşama 初次异动, Liderler 中文在线.')).toBeInTheDocument();
+    expect(screen.getByText('Kalite: Kullanılabilir')).toBeInTheDocument();
+    expect(screen.getByText('Yedek veri kaynağı')).toBeInTheDocument();
+    expect(screen.queryByText(/^Önbellek yedeği/)).not.toBeInTheDocument();
+    expect(screen.getByText('Aktif Gelişim')).toBeInTheDocument();
+    expect(screen.getByText('文字媒体 Isı 100.0, Aşama: 初次异动, Liderler: 中文在线.')).toBeInTheDocument();
+    expect(screen.queryByText('Ayrıntı verisi eksik, nedeni görmek için açın')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tema detayı zaman aşımına uğradı (20 sn)')).not.toBeInTheDocument();
+    expect(screen.getByText('Geride Kalan')).toBeInTheDocument();
+    expect(screen.getByText(/Fiyat Yok/)).toBeInTheDocument();
     expect(screen.queryByText(/Current fermentation|quality status|available|DsaEastMoneyHotspotProvider|concept_constituents/)).not.toBeInTheDocument();
   });
 
@@ -436,11 +436,11 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledTimes(1));
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /机器人/ }));
 
-    expect(await screen.findByText('机器人：热度 92.0，阶段 加速主升，核心股 拓斯达。')).toBeInTheDocument();
-    expect(screen.getByText('正在补充详情')).toBeInTheDocument();
+    expect(await screen.findByText('机器人: Isı 92.0, Aşama 加速主升, Liderler 拓斯达.')).toBeInTheDocument();
+    expect(screen.getByText('Ayrıntılar tamamlanıyor')).toBeInTheDocument();
     expect(screen.getAllByText('拓斯达').length).toBeGreaterThan(0);
 
     act(() => {
@@ -455,7 +455,7 @@ describe('StockScreeningPage', () => {
         stockCount: 1,
       });
     });
-    await waitFor(() => expect(screen.queryByText('正在补充详情')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Ayrıntılar tamamlanıyor')).not.toBeInTheDocument());
     expect(screen.getByText('盘中发酵')).toBeInTheDocument();
   });
 
@@ -476,9 +476,9 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText('暂无热点缓存')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
-    expect(await screen.findByText('暂无热点缓存')).toBeInTheDocument();
+    expect(screen.queryByText('Önbellekte sıcak tema yok')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
+    expect(await screen.findByText('Önbellekte sıcak tema yok')).toBeInTheDocument();
     expect(screen.queryByText(/No cached Screening hotspot snapshot/)).not.toBeInTheDocument();
   });
 
@@ -500,7 +500,7 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledTimes(1));
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     expect(await screen.findByText('热点源连接中断，暂无可用缓存。')).toBeInTheDocument();
     expect(screen.queryByText(/RemoteDisconnected/)).not.toBeInTheDocument();
   });
@@ -532,7 +532,7 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: false }));
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
 
     expect(await screen.findByText('route-summary')).toBeInTheDocument();
@@ -569,7 +569,7 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: false }));
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Moly/ }));
 
     expect(await screen.findByText('prefetched catalyst')).toBeInTheDocument();
@@ -606,10 +606,10 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: false }));
     expect(getHotspotDetail).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(screen.getByRole('button', { name: /AI算力/ }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledWith({ topic: 'AI算力', provider: 'akshare', refresh: false }));
     expect(getHotspotDetail).toHaveBeenCalledTimes(1);
@@ -670,8 +670,8 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
     expect(await screen.findByText('盘中发酵')).toBeInTheDocument();
     expect(screen.getByText('中际旭创')).toBeInTheDocument();
@@ -682,8 +682,8 @@ describe('StockScreeningPage', () => {
       expect(getHotspotDetail).toHaveBeenLastCalledWith({ topic: '机器人执行器', provider: 'akshare', refresh: false }),
     );
     expect(screen.getAllByText('机器人执行器').length).toBeGreaterThan(0);
-    expect(screen.getByText('正在补充详情')).toBeInTheDocument();
-    expect(screen.getByText('当前发酵')).toBeInTheDocument();
+    expect(screen.getByText('Ayrıntılar tamamlanıyor')).toBeInTheDocument();
+    expect(screen.getByText('Aktif Gelişim')).toBeInTheDocument();
     expect(screen.queryByText('盘中发酵')).not.toBeInTheDocument();
     expect(screen.queryByText('中际旭创')).not.toBeInTheDocument();
 
@@ -744,8 +744,8 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledWith({ topic: 'AI算力', provider: 'akshare', refresh: false }));
 
@@ -852,12 +852,12 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
     fireEvent.click(await screen.findByRole('button', { name: /AI算力/ }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByRole('button', { name: /刷新热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Yenile/ }));
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: true }));
     await waitFor(() => expect(getHotspotDetail).toHaveBeenLastCalledWith({
@@ -900,18 +900,18 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /展开热点题材/ }));
-    expect(await screen.findByText('强势领先')).toBeInTheDocument();
-    expect(screen.getByText(/中际旭创、工业富联/)).toBeInTheDocument();
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Göster/ }));
+    expect(await screen.findByText('Güçlü Lider')).toBeInTheDocument();
+    expect(screen.getByText(/中际旭创, 工业富联/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /刷新热点题材/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Temaları Yenile/ }));
 
     await waitFor(() => expect(getHotspots).toHaveBeenCalledWith({ provider: 'akshare', top: 12, refresh: true }));
     expect(await screen.findByText(/manual refresh failed/)).toBeInTheDocument();
-    expect(screen.getByText('强势领先')).toBeInTheDocument();
-    expect(screen.getByText(/中际旭创、工业富联/)).toBeInTheDocument();
-    expect(screen.queryByText(/点击刷新后会拉取热点概念/)).not.toBeInTheDocument();
+    expect(screen.getByText('Güçlü Lider')).toBeInTheDocument();
+    expect(screen.getByText(/中际旭创, 工业富联/)).toBeInTheDocument();
+    expect(screen.queryByText(/Yenileye tıkladığınızda sıcak temalar/)).not.toBeInTheDocument();
   });
 
   it('shows input strategy when strategy is not in preset list', async () => {
@@ -927,19 +927,19 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('策略'), {
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Strateji'), {
       target: { value: '__custom_strategy__' },
     });
-    fireEvent.change(screen.getByLabelText('自定义策略 ID'), {
+    fireEvent.change(screen.getByLabelText('Özel Strateji ID'), {
       target: { value: 'custom_strategy_alpha' },
     });
 
     expect(screen.getByDisplayValue('custom_strategy_alpha')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
     await waitFor(() => expect(screenStocks).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByText(/自定义策略 \(custom_strategy_alpha\)/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Özel Strateji \(custom_strategy_alpha\)/)).toBeInTheDocument());
   });
 
   it('uses supported Screening strategy ids and cn market', async () => {
@@ -966,19 +966,19 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
 
-    const marketSelect = screen.getByLabelText('市场') as HTMLSelectElement;
+    const marketSelect = screen.getByLabelText('Piyasa') as HTMLSelectElement;
     expect(Array.from(marketSelect.options).map((option) => option.value)).toEqual(['cn']);
 
-    const strategySelect = screen.getByLabelText('策略') as HTMLSelectElement;
+    const strategySelect = screen.getByLabelText('Strateji') as HTMLSelectElement;
     expect(Array.from(strategySelect.options).map((option) => option.textContent)).toEqual([
       '平衡选股',
       '资金热度',
       '双低',
       '超跌',
       '缩量回踩',
-      '自定义策略…',
+      'Özel strateji…',
     ]);
 
     ['balanced_alpha', 'capital_heat', 'oversold_reversal', 'shrink_pullback'].forEach((id) => {
@@ -986,7 +986,7 @@ describe('StockScreeningPage', () => {
       expect(strategySelect.value).toBe(id);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
     await waitFor(() => expect(screenStocks).toHaveBeenCalledTimes(1));
     expect(screenStocks).toHaveBeenCalledWith({
       market: 'cn',
@@ -1025,17 +1025,17 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
     expect(await screen.findByText('旧策略股票')).toBeInTheDocument();
-    expect(screen.getByText('选股完成')).toBeInTheDocument();
+    expect(screen.getByText('Tarama Tamamlandı')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('策略'), { target: { value: 'capital_heat' } });
+    fireEvent.change(screen.getByLabelText('Strateji'), { target: { value: 'capital_heat' } });
 
     expect(screen.queryByText('旧策略股票')).not.toBeInTheDocument();
-    expect(screen.queryByText('选股完成')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('策略')).toHaveValue('capital_heat');
+    expect(screen.queryByText('Tarama Tamamlandı')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Strateji')).toHaveValue('capital_heat');
   });
 
   it('hands a screening candidate to DSA analysis with mapped skills', async () => {
@@ -1073,14 +1073,14 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
     expect(await screen.findByText('贵州茅台')).toBeInTheDocument();
-    const expandButton = screen.queryByRole('button', { name: '展开查看' });
+    const expandButton = screen.queryByRole('button', { name: 'Detay' });
     if (expandButton) {
       fireEvent.click(expandButton);
     }
-    fireEvent.click(screen.getByRole('button', { name: '进一步深度分析' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Derin Analiz Başlat' }));
 
     expect(navigate).toHaveBeenCalledWith('/', {
       state: {
@@ -1145,17 +1145,17 @@ describe('StockScreeningPage', () => {
 
     const firstRender = render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
-    expect(await screen.findByText('选股运行中')).toBeInTheDocument();
+    expect(await screen.findByText('Tarama Çalışıyor')).toBeInTheDocument();
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toContain('screen-task-1');
 
     firstRender.unmount();
     render(<StockScreeningPage />);
 
     expect(await screen.findByText('恢复后的候选')).toBeInTheDocument();
-    expect(screen.getByText('选股完成')).toBeInTheDocument();
+    expect(screen.getByText('Tarama Tamamlandı')).toBeInTheDocument();
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toBeNull();
   });
 
@@ -1177,8 +1177,8 @@ describe('StockScreeningPage', () => {
     render(<StockScreeningPage />);
 
     await waitFor(() => expect(getScreenTask).toHaveBeenCalledTimes(1));
-    expect(screen.getByText('选股运行中')).toBeInTheDocument();
-    expect(screen.getByText('选股任务仍在后台运行，状态轮询暂时超时，将自动重试。')).toBeInTheDocument();
+    expect(screen.getByText('Tarama Çalışıyor')).toBeInTheDocument();
+    expect(screen.getByText('Tarama görevi arka planda devam ediyor; durum sorgusu zaman aşımına uğradı, otomatik tekrar denenecek.')).toBeInTheDocument();
     expect(screen.queryByText(/连接上游服务超时/)).not.toBeInTheDocument();
     expect(window.sessionStorage.getItem('dsa.screening.activeScreenTask.v1')).toContain('screen-task-1');
   });
@@ -1217,15 +1217,15 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
-    expect(await screen.findByText('当前使用因子排序')).toBeInTheDocument();
-    expect(screen.getByText(/缺少可用 LLM API Key/)).toBeInTheDocument();
+    expect(await screen.findByText('Faktör Sıralaması Kullanılıyor')).toBeInTheDocument();
+    expect(screen.getByText(/Kullanılabilir LLM API anahtarı eksik/)).toBeInTheDocument();
     expect(screen.queryByText(/Missing gemini_api_key/)).not.toBeInTheDocument();
-    expect(screen.getByText(/排序：确定性因子/)).toBeInTheDocument();
-    expect(screen.getByText('因子排序')).toBeInTheDocument();
-    expect(screen.getByText(/主要优势：流动性 93、估值 87/)).toBeInTheDocument();
+    expect(screen.getByText(/Sıralama: Deterministik Faktör/)).toBeInTheDocument();
+    expect(screen.getByText('Faktör Sıralaması')).toBeInTheDocument();
+    expect(screen.getByText(/Öne çıkan faktörler: Likidite 93, Değerleme 87/)).toBeInTheDocument();
     expect(screen.queryByText(/LLM 已降级/)).not.toBeInTheDocument();
   });
 
@@ -1255,11 +1255,11 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
-    expect(await screen.findByText('选股提示')).toBeInTheDocument();
-    expect(screen.getAllByText('数据源降级：tushare（交易日历暂无可用开市日）')).toHaveLength(1);
+    expect(await screen.findByText('Tarama Bilgisi')).toBeInTheDocument();
+    expect(screen.getAllByText('Yedek veri kaynağı: tushare (İşlem takviminde açık piyasa günü bulunamadı)')).toHaveLength(1);
     expect(screen.queryByText(/trade_cal returned no open trading days/)).not.toBeInTheDocument();
   });
 
@@ -1289,14 +1289,14 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
-    const efinanceWarning = await screen.findByText('数据源降级：efinance（网络连接中断）');
+    const efinanceWarning = await screen.findByText('Yedek veri kaynağı: efinance (Ağ bağlantısı kesildi)');
     const alert = efinanceWarning.closest('[role="alert"]');
     expect(alert).toHaveClass('max-w-full');
     expect(efinanceWarning).toBeInTheDocument();
-    expect(screen.getByText('数据源降级：akshare_em（网络连接中断）')).toBeInTheDocument();
+    expect(screen.getByText('Yedek veri kaynağı: akshare_em (Ağ bağlantısı kesildi)')).toBeInTheDocument();
     expect(screen.queryByText(/HTTPConnectionPool/)).not.toBeInTheDocument();
     expect(screen.queryByText(/\/api\/qt\/clist\/get/)).not.toBeInTheDocument();
     expect(screen.queryByText(/RemoteDisconnected/)).not.toBeInTheDocument();
@@ -1335,16 +1335,16 @@ describe('StockScreeningPage', () => {
 
     render(<StockScreeningPage />);
 
-    expect(await screen.findByText('选股已开启')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /运行选股/ }));
+    expect(await screen.findByText('Hisse Tarama Etkin')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taramayı Çalıştır/ }));
 
-    expect(await screen.findByText('深度补充：1 / 1')).toBeInTheDocument();
+    expect(await screen.findByText('Derin Zenginleştirme: 1 / 1')).toBeInTheDocument();
 
-    expect(screen.getByText('增强摘要')).toBeInTheDocument();
-    expect(screen.getByText(/行情：现价 1688/)).toBeInTheDocument();
-    expect(screen.getByText('相关新闻')).toBeInTheDocument();
+    expect(screen.getByText('Zenginleştirilmiş Özet')).toBeInTheDocument();
+    expect(screen.getByText(/Piyasa: 现价 1688/)).toBeInTheDocument();
+    expect(screen.getByText('İlgili Haberler')).toBeInTheDocument();
     expect(screen.getByText('贵州茅台最新公告')).toBeInTheDocument();
-    expect(screen.getByText('数据补充提示')).toBeInTheDocument();
+    expect(screen.getByText('Veri Zenginleştirme Notları')).toBeInTheDocument();
     expect(screen.getByText('stock_news_unavailable')).toBeInTheDocument();
   });
 });

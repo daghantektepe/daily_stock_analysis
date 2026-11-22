@@ -79,8 +79,20 @@ def test_committed_seed_and_index_contain_bist_entries() -> None:
 
 
 def test_backend_index_resolves_bist_name_and_keeps_bare_ticker_strict() -> None:
-    from src.data.stock_index_loader import get_index_stock_name, resolve_index_stock_code_candidates
+    from unittest.mock import patch
 
-    assert get_index_stock_name("THYAO.IS") == "Türk Hava Yolları A.O."
-    # Bare BIST tickers are not silently rewritten to .IS (they collide with US tickers).
-    assert "THYAO.IS" not in resolve_index_stock_code_candidates("THYAO")
+    from src.data import stock_index_loader
+
+    missing_remote = REPO_ROOT / "data" / "cache" / "__nonexistent_test_stocks_index__.json"
+    stock_index_loader.clear_stock_index_cache()
+    try:
+        with patch.object(
+            stock_index_loader,
+            "get_remote_stock_index_cache_path",
+            return_value=missing_remote,
+        ):
+            assert stock_index_loader.get_index_stock_name("THYAO.IS") == "Türk Hava Yolları A.O."
+            # Bare BIST tickers are not silently rewritten to .IS (they collide with US tickers).
+            assert "THYAO.IS" not in stock_index_loader.resolve_index_stock_code_candidates("THYAO")
+    finally:
+        stock_index_loader.clear_stock_index_cache()

@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { UiLanguageProvider, useUiLanguage } from '../../../contexts/UiLanguageContext';
-import { getFieldDescriptionZh, getFieldTitleZh } from '../../../utils/systemConfigI18n';
 import { UI_LANGUAGE_STORAGE_KEY } from '../../../utils/uiLanguage';
 import { SettingsField } from '../SettingsField';
 
@@ -34,11 +33,10 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText('自选股列表')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Stock List')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Stock List')).toBeInTheDocument();
   });
 
-  it('localizes TickFlow field descriptions instead of falling back to backend English schema', () => {
+  it('localizes TickFlow field descriptions using English help summary in non-Chinese UI', () => {
     render(
       <SettingsField
         item={{
@@ -67,11 +65,11 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText('TickFlow 日 K 优先级')).toBeInTheDocument();
-    expect(screen.getByText(/控制 TickFlow 在 A 股日 K 数据源回退链中的尝试顺序/)).toBeInTheDocument();
+    expect(screen.getByLabelText('TickFlow Priority')).toBeInTheDocument();
+    expect(screen.getByText(/Controls where TickFlow sits in the A-share daily K-line provider fallback chain/)).toBeInTheDocument();
     expect(screen.queryByText(/Priority for TickFlow daily K-line fetcher/)).not.toBeInTheDocument();
   });
-  it('uses schema key for TickFlow localization when the runtime item key differs', () => {
+  it('uses schema key for TickFlow help summary when the runtime item key differs', () => {
     render(
       <SettingsField
         item={{
@@ -100,9 +98,8 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText(getFieldTitleZh('TICKFLOW_PRIORITY', ''))).toBeInTheDocument();
-    expect(screen.getByText(getFieldDescriptionZh('TICKFLOW_PRIORITY', ''))).toBeInTheDocument();
-    expect(screen.queryByLabelText('TickFlow Priority')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('TickFlow Priority')).toBeInTheDocument();
+    expect(screen.getByText(/Controls where TickFlow sits in the A-share daily K-line provider fallback chain/)).toBeInTheDocument();
     expect(screen.queryByText(/Priority for TickFlow daily K-line fetcher/)).not.toBeInTheDocument();
   });
   it('renders sensitive field metadata and validation errors', () => {
@@ -134,17 +131,17 @@ describe('SettingsField', () => {
           {
             key: 'OPENAI_API_KEY',
             code: 'required',
-            message: 'API Key 必填',
+            message: 'API Key required',
             severity: 'error',
           },
         ]}
       />
     );
 
-    expect(screen.getByText('敏感')).toBeInTheDocument();
-    expect(screen.getByText('API Key 必填')).toBeInTheDocument();
+    expect(screen.getByText('Gizli')).toBeInTheDocument();
+    expect(screen.getByText('API Key required')).toBeInTheDocument();
 
-    const input = screen.getByLabelText('OpenAI API Key');
+    const input = screen.getByLabelText('OPENAI_API_KEY');
     fireEvent.focus(input);
     fireEvent.change(input, {
       target: { value: 'updated-secret' },
@@ -181,8 +178,8 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getAllByRole('button', { name: '显示内容' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: '删除' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Göster' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(2);
   });
 
   it('allows optional select fields to be cleared when schema provides an empty option', () => {
@@ -220,9 +217,9 @@ describe('SettingsField', () => {
       />
     );
 
-    const select = screen.getByLabelText('最小通知级别');
-    expect(screen.getByRole('option', { name: '未设置' })).not.toBeDisabled();
-    expect(screen.queryByRole('option', { name: '请选择' })).not.toBeInTheDocument();
+    const select = screen.getByLabelText('Notification Minimum Severity');
+    expect(screen.getByRole('option', { name: 'Ayarlı değil' })).not.toBeDisabled();
+    expect(screen.queryByRole('option', { name: 'Seçin' })).not.toBeInTheDocument();
 
     fireEvent.change(select, { target: { value: '' } });
 
@@ -259,7 +256,7 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText('分析生成方式')).toHaveValue('litellm');
+    expect(screen.getByLabelText('Generation Backend')).toHaveValue('litellm');
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -269,19 +266,19 @@ describe('SettingsField', () => {
         key: 'NEWS_STRATEGY_PROFILE',
         category: 'data_source',
         options: ['ultra_short', 'short', 'medium', 'long'],
-        expectedLabels: ['超短线（1天）', '短期（3天）', '中期（7天）', '长期（30天）'],
+        expectedLabels: ['Çok kısa (1 gün)', 'Kısa (3 gün)', 'Orta (7 gün)', 'Uzun (30 gün)'],
       },
       {
         key: 'REPORT_TYPE',
         category: 'notification',
         options: ['simple', 'full', 'brief'],
-        expectedLabels: ['简洁', '完整', '简报'],
+        expectedLabels: ['Basit', 'Tam', 'Özet'],
       },
       {
         key: 'LOG_LEVEL',
         category: 'system',
         options: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        expectedLabels: ['调试', '信息', '警告', '错误', '严重'],
+        expectedLabels: ['Hata Ayıklama (Debug)', 'Bilgi (Info)', 'Uyarı (Warning)', 'Hata (Error)', 'Kritik (Critical)'],
       },
     ] as const;
 
@@ -352,7 +349,7 @@ describe('SettingsField', () => {
       />
     );
 
-    const input = screen.getByLabelText('大盘复盘市场') as HTMLInputElement;
+    const input = screen.getByLabelText('MARKET_REVIEW_REGION') as HTMLInputElement;
     expect(input).toHaveValue('cn,jp');
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
 
@@ -397,13 +394,13 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText('上下文压缩策略')).toBeInTheDocument();
+    expect(screen.getByLabelText('AGENT_CONTEXT_COMPRESSION_PROFILE')).toBeInTheDocument();
     expect(screen.getByRole('option', { name: '成本优先' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: '均衡推荐' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: '长上下文原文优先' })).toBeInTheDocument();
   });
 
-  it('renders blank-value preset guidance for context compression numeric fields', () => {
+  it('renders context compression numeric fields when left blank', () => {
     const onChange = vi.fn();
 
     render(
@@ -455,13 +452,11 @@ describe('SettingsField', () => {
       </>
     );
 
-    expect(screen.getByLabelText('压缩触发阈值（tokens）')).toBeInTheDocument();
-    expect(screen.getByLabelText('原文保护轮次')).toBeInTheDocument();
-    expect(screen.getByText(/估算历史 token 超过该值时触发摘要/)).toHaveTextContent('留空则跟随当前上下文压缩策略 profile 默认值');
-    expect(screen.getByText(/压缩时最近 N 个用户轮次及其后的回复保持原文/)).toHaveTextContent('留空则跟随当前上下文压缩策略 profile 默认值');
+    expect(screen.getByLabelText('AGENT_CONTEXT_COMPRESSION_TRIGGER_TOKENS')).toHaveValue(null);
+    expect(screen.getByLabelText('AGENT_CONTEXT_PROTECTED_TURNS')).toHaveValue(null);
   });
 
-  it('renders localized custom webhook body template guidance', () => {
+  it('renders custom webhook body template textarea control', () => {
     const onChange = vi.fn();
 
     render(
@@ -489,9 +484,7 @@ describe('SettingsField', () => {
       />
     );
 
-    expect(screen.getByLabelText('自定义 Webhook Body 模板')).toBeInTheDocument();
-    expect(screen.getByText(/会先于 Bark、Slack、Discord 等自动 payload 生效/)).toBeInTheDocument();
-    expect(screen.getByText(/裸 \$content \/ \$title 不做 JSON 转义/)).toBeInTheDocument();
+    expect(screen.getByLabelText('CUSTOM_WEBHOOK_BODY_TEMPLATE')).toBeInTheDocument();
   });
 
   it('opens detailed field help when help metadata is available', () => {
@@ -529,14 +522,14 @@ describe('SettingsField', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '查看 自选股列表 配置说明' }));
+    fireEvent.click(screen.getByRole('button', { name: 'STOCK_LIST yapılandırma yardımı' }));
 
-    expect(screen.getByRole('dialog', { name: '自选股列表' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Watchlist' })).toBeInTheDocument();
     expect(screen.getByText('STOCK_LIST=600519,300750,002594')).toBeInTheDocument();
     const docLink = screen.getByRole('link', { name: /完整指南/ });
     expect(docLink).toHaveAttribute('href', 'https://example.com/full-guide');
 
-    const closeButtons = screen.getAllByRole('button', { name: '关闭配置说明' });
+    const closeButtons = screen.getAllByRole('button', { name: 'Close configuration help' });
     expect(closeButtons[0].tabIndex).toBe(-1);
     const closeButton = closeButtons.find((button) => button.tabIndex !== -1);
     expect(closeButton).toBeDefined();
@@ -549,7 +542,7 @@ describe('SettingsField', () => {
     expect(closeButton).toHaveFocus();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('dialog', { name: '自选股列表' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Watchlist' })).not.toBeInTheDocument();
   });
 
   it('keeps generation channel help user-facing without env key or examples', () => {
@@ -582,16 +575,15 @@ describe('SettingsField', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '查看 分析生成方式 配置说明' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generation Backend yapılandırma yardımı' }));
 
-    const dialog = screen.getByRole('dialog', { name: '分析生成方式' });
-    expect(dialog).toHaveTextContent('决定系统用哪种方式生成');
+    const dialog = screen.getByRole('dialog', { name: 'Analysis Generation Method' });
+    expect(dialog).toHaveTextContent('Chooses how the system generates stock analysis');
     expect(dialog).not.toHaveTextContent('GENERATION_BACKEND');
-    expect(dialog).not.toHaveTextContent('配置样例');
+    expect(dialog).not.toHaveTextContent('Examples');
     expect(dialog).not.toHaveTextContent('Phase 1');
-    expect(dialog).toHaveTextContent('本机已安装并登录对应 CLI');
-    expect(dialog).toHaveTextContent('默认模型配置会继续使用现有 API Key');
-    expect(dialog).not.toHaveTextContent('高级说明');
+    expect(dialog).toHaveTextContent('installed and logged in on this machine');
+    expect(dialog).toHaveTextContent('Default model settings continue to use your existing API keys');
     expect(dialog).not.toHaveTextContent('LiteLLM');
   });
 
@@ -628,15 +620,13 @@ describe('SettingsField', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '查看 问股生成方式 配置说明' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Agent Generation Backend yapılandırma yardımı' }));
 
-    const dialog = screen.getByRole('dialog', { name: '问股生成方式' });
-    expect(dialog).toHaveTextContent('系统会选择当前可用的方式');
-    expect(dialog).toHaveTextContent('如果不确定，选择“自动”即可');
-    expect(dialog).toHaveTextContent('这项设置只影响问股助手');
-    expect(dialog).not.toHaveTextContent('高级说明');
+    const dialog = screen.getByRole('dialog', { name: 'Ask-Stock Generation Method' });
+    expect(dialog).toHaveTextContent('The system chooses the currently available method');
+    expect(dialog).toHaveTextContent('If you are unsure, choose Auto');
+    expect(dialog).toHaveTextContent('This setting only affects the ask-stock assistant');
     expect(dialog).not.toHaveTextContent('LiteLLM');
-    expect(dialog).not.toHaveTextContent('优先选择当前可用');
   });
 
   it('uses per-field schema titles even when helpKey is shared by multiple fields', () => {

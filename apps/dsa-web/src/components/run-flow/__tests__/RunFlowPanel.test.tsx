@@ -246,7 +246,7 @@ describe('RunFlowPanel', () => {
     render(<RunFlowPanel source={{ type: 'task', taskId: 'task-1' }} />);
 
     expect(screen.getByTestId('run-flow-panel-loading')).toBeInTheDocument();
-    expect(screen.getByText('正在加载运行流')).toBeInTheDocument();
+    expect(screen.getByText('Loading run flow')).toBeInTheDocument();
   });
 
   it('renders an error state and reload action when the request fails', async () => {
@@ -260,7 +260,7 @@ describe('RunFlowPanel', () => {
     render(<RunFlowPanel source={{ type: 'task', taskId: 'missing-task' }} />);
 
     expect(await screen.findByTestId('run-flow-panel-error')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '重新加载' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
   });
 
   it('renders an empty snapshot state when there are no nodes or events', async () => {
@@ -274,7 +274,7 @@ describe('RunFlowPanel', () => {
 
     render(<RunFlowPanel source={{ type: 'history', recordId: 1 }} />);
 
-    expect(await screen.findByText('暂无运行流细节')).toBeInTheDocument();
+    expect(await screen.findByText('No run-flow details yet')).toBeInTheDocument();
     expect(historyApi.getRecordFlow).toHaveBeenCalledWith(1);
   });
 
@@ -291,12 +291,12 @@ describe('RunFlowPanel', () => {
     expect(screen.getByTestId('run-flow-events')).toBeInTheDocument();
     expect(await screen.findByTestId('run-flow-node-details')).toHaveTextContent('新闻舆情');
 
-    fireEvent.click(screen.getByRole('button', { name: 'LLM 生成 节点，状态 成功' }));
+    fireEvent.click(screen.getByRole('button', { name: 'LLM 生成 node, status Success' }));
 
     expect(screen.getByTestId('run-flow-node-details')).toHaveTextContent('LLM 生成');
     expect(screen.getByTestId('run-flow-node-details')).toHaveTextContent('DeepSeek');
 
-    fireEvent.click(screen.getByRole('button', { name: '新闻舆情 节点，状态 降级回退' }));
+    fireEvent.click(screen.getByRole('button', { name: '新闻舆情 node, status Fallback' }));
 
     expect(screen.getByTestId('run-flow-node-details')).toHaveTextContent('fallbackFrom');
     expect(screen.getByTestId('run-flow-node-details')).toHaveTextContent('Tushare');
@@ -333,8 +333,8 @@ describe('RunFlowPanel', () => {
     render(<RunFlowPanel source={{ type: 'task', taskId: 'task-1' }} />);
 
     expect(await screen.findByTestId('run-flow-node-details')).toHaveTextContent('新闻舆情');
-    expect(screen.getByText('保存')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '新闻舆情 节点，状态 降级回退' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Kaydet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '新闻舆情 node, status Fallback' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('expands provider attempt groups from node details', async () => {
@@ -344,12 +344,12 @@ describe('RunFlowPanel', () => {
 
     expect(await screen.findByTestId('run-flow-node-topology_data_news_search')).toBeInTheDocument();
     expect(screen.queryByTestId('run-flow-node-provider_news_search_tavily_1')).not.toBeInTheDocument();
-    expect(await screen.findByTestId('run-flow-node-details')).toHaveTextContent('运行尝试');
+    expect(await screen.findByTestId('run-flow-node-details')).toHaveTextContent('Run attempts');
 
-    fireEvent.click(screen.getByRole('button', { name: '展开尝试' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Expand attempts' }));
 
     expect(await screen.findByTestId('run-flow-node-provider_news_search_tavily_1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '收起尝试' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse attempts' })).toBeInTheDocument();
   });
 
   it('renders TickFlow realtime fallback attempts through generic provider groups', async () => {
@@ -445,7 +445,7 @@ describe('RunFlowPanel', () => {
 
     const details = await screen.findByTestId('run-flow-node-details');
 
-    expect(details).toHaveTextContent('运行尝试');
+    expect(details).toHaveTextContent('Run attempts');
     expect(details).not.toHaveTextContent('data_type');
     expect(details).not.toHaveTextContent('provider_chain');
     expect(details).not.toHaveTextContent('success_count');
@@ -462,7 +462,7 @@ describe('RunFlowPanel', () => {
     const details = await screen.findByTestId('run-flow-node-details');
 
     expect(details).toHaveTextContent('ContextPack');
-    expect(details).toHaveTextContent('上下文输入');
+    expect(details).toHaveTextContent('Context inputs');
     expect(details).toHaveTextContent('新闻');
     expect(details).toHaveTextContent('基本面');
     expect(details).not.toHaveTextContent('context_status_counts');

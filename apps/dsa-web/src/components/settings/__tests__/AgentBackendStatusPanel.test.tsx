@@ -66,10 +66,10 @@ describe('AgentBackendStatusPanel', () => {
 
     await waitFor(() => expect(getStatus).toHaveBeenCalledTimes(1));
     expect(previewStatus).not.toHaveBeenCalled();
-    expect(await screen.findByText('默认模型')).toBeInTheDocument();
-    expect(screen.getByText('可以尝试')).toBeInTheDocument();
-    expect(screen.getByText(/不会登录、调用模型或读取股票数据/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /真实测试/ })).not.toBeInTheDocument();
+    expect(await screen.findByText('Default model')).toBeInTheDocument();
+    expect(screen.getByText('Can try')).toBeInTheDocument();
+    expect(screen.getByText(/does not sign in, call a model, or read stock data/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /smoke test/i })).not.toBeInTheDocument();
   });
 
   it('previews unsaved Agent settings through the same compatibility contract', async () => {
@@ -84,8 +84,8 @@ describe('AgentBackendStatusPanel', () => {
     }));
     expect(getStatus).not.toHaveBeenCalled();
     expect(await screen.findByText('Codex Agent')).toBeInTheDocument();
-    expect(screen.getByText('实验功能')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /真实测试/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Experimental')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /smoke test/i })).not.toBeInTheDocument();
   });
 
   it('ignores a stale draft preview response', async () => {
@@ -110,7 +110,7 @@ describe('AgentBackendStatusPanel', () => {
       second.resolve(litellmStatus);
       await second.promise;
     });
-    expect(await screen.findByText('默认模型')).toBeInTheDocument();
+    expect(await screen.findByText('Default model')).toBeInTheDocument();
 
     await act(async () => {
       first.resolve(codexStatus);
@@ -131,10 +131,10 @@ describe('AgentBackendStatusPanel', () => {
       onUseSingleAgent,
     });
 
-    expect(screen.getByRole('button', { name: '刷新状态' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Refresh status' })).toBeDisabled();
     expect(getStatus).not.toHaveBeenCalled();
     expect(previewStatus).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: '切换为单 Agent' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Single Agent' }));
     expect(onUseSingleAgent).toHaveBeenCalledTimes(1);
   });
 
@@ -148,10 +148,10 @@ describe('AgentBackendStatusPanel', () => {
     });
     renderPanel({ onEnableAgentMode });
 
-    expect(await screen.findByText('需要启用 Agent 模式')).toBeInTheDocument();
-    expect(screen.getAllByText(/保存设置后再使用问股/)).not.toHaveLength(0);
+    expect((await screen.findAllByText(/Agent Mode is disabled/)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Enable Agent Mode').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('internal message must not be shown')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '启用 Agent 模式' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enable Agent Mode' }));
     expect(onEnableAgentMode).toHaveBeenCalledTimes(1);
   });
 
@@ -160,8 +160,8 @@ describe('AgentBackendStatusPanel', () => {
     renderPanel();
 
     expect(await screen.findByText('temporary read failed')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '刷新状态' }));
-    expect(await screen.findByText('默认模型')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh status' }));
+    expect(await screen.findByText('Default model')).toBeInTheDocument();
     expect(getStatus).toHaveBeenCalledTimes(2);
   });
 });

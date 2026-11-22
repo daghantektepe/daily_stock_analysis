@@ -127,37 +127,37 @@ describe('AnalysisContextSummary', () => {
 
     const panel = screen.getByTestId('analysis-context-summary');
     expect(panel).not.toHaveAttribute('open');
-    expect(within(panel).getAllByText('输入数据块')[0]).toBeVisible();
-    expect(screen.getAllByText('可用 1')[0]).toBeVisible();
-    expect(screen.getAllByText('缺失 1')[0]).toBeVisible();
-    expect(screen.getAllByText('抓取失败 1')[0]).toBeVisible();
-    expect(screen.getAllByText('质量分 82/100 可用')[0]).toBeVisible();
-    expect(screen.getByText('触发来源: api')).toBeVisible();
-    expect(screen.getByText('来源: mock_quote')).not.toBeVisible();
+    expect(within(panel).getAllByText('Input Blocks')[0]).toBeVisible();
+    expect(screen.getAllByText('Available 1')[0]).toBeVisible();
+    expect(screen.getAllByText('Missing 1')[0]).toBeVisible();
+    expect(screen.getAllByText('Fetch failed 1')[0]).toBeVisible();
+    expect(screen.getAllByText('Quality 82/100 Usable')[0]).toBeVisible();
+    expect(screen.getByText('Trigger: api')).toBeVisible();
+    expect(screen.getByText('Source: mock_quote')).not.toBeVisible();
 
-    fireEvent.click(within(panel).getAllByText('输入数据块')[0]);
+    fireEvent.click(within(panel).getAllByText('Input Blocks')[0]);
 
     expect(panel).toHaveAttribute('open');
     expect(screen.getByText('行情')).toBeInTheDocument();
-    expect(screen.getByText('来源: mock_quote')).toBeVisible();
-    expect(screen.getByText('告警:')).toBeInTheDocument();
+    expect(screen.getByText('Source: mock_quote')).toBeVisible();
+    expect(screen.getByText('Warnings:')).toBeInTheDocument();
     expect(screen.getByText(/intraday_realtime_overlay/)).toBeInTheDocument();
-    expect(screen.getByText('数据限制:')).toBeInTheDocument();
-    expect(screen.getByText(/基本面：抓取失败/)).toBeInTheDocument();
+    expect(screen.getByText('Data Limitations:')).toBeInTheDocument();
+    expect(screen.getByText(/fundamentals: Fetch failed/)).toBeInTheDocument();
     expect(screen.getByText(/news_provider_timeout/)).toBeInTheDocument();
-    expect(screen.getByText(/说明: 新闻未进入本次 LLM 分析，结论未使用新闻上下文/)).toBeInTheDocument();
-    expect(screen.getByText(/诊断码: news_context_missing/)).toBeInTheDocument();
-    expect(screen.getByText(/报告页相关资讯由独立接口补充，显示与否不代表已进入本次分析/)).toBeInTheDocument();
-    expect(screen.getByText('来源: 未记录输入来源')).toBeInTheDocument();
-    expect(screen.queryByText(/^处理:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^范围:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Details: News was not included in this LLM run, so the conclusion did not use news context/)).toBeInTheDocument();
+    expect(screen.getByText(/Diagnostic code: news_context_missing/)).toBeInTheDocument();
+    expect(screen.getByText(/related news on the report page is loaded separately and does not indicate that it was used in this analysis/)).toBeInTheDocument();
+    expect(screen.getByText('Source: Input source not recorded')).toBeInTheDocument();
+    expect(screen.queryByText(/^Action:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Scope:/)).not.toBeInTheDocument();
     const fundamentalsBlock = screen.getByText('基本面').closest('.home-subpanel');
     expect(fundamentalsBlock).not.toBeNull();
     const fundamentals = within(fundamentalsBlock as HTMLElement);
-    expect(fundamentals.getByText(/说明: 基本面抓取失败，本次分析未使用基本面数据/)).toBeInTheDocument();
-    expect(fundamentals.getByText(/诊断码: fundamental_pipeline_failed/)).toBeInTheDocument();
-    expect(screen.getAllByText('新闻结果数: 3').some((item) => item.textContent === '新闻结果数: 3')).toBe(true);
-    expect(screen.getAllByText('本次分析输入')[0]).toBeVisible();
+    expect(fundamentals.getByText(/Details: Fundamental retrieval failed and this analysis did not use fundamental data/)).toBeInTheDocument();
+    expect(fundamentals.getByText(/Diagnostic code: fundamental_pipeline_failed/)).toBeInTheDocument();
+    expect(screen.getAllByText('News Results: 3').some((item) => item.textContent === 'News Results: 3')).toBe(true);
+    expect(screen.getAllByText('Analysis Input')[0]).toBeVisible();
   });
 
   it('localizes the collapsed summary for english reports', () => {
@@ -208,12 +208,12 @@ describe('AnalysisContextSummary', () => {
 
     render(<AnalysisContextSummary overview={availableFundamentalsOverview} />);
 
-    fireEvent.click(screen.getAllByText('输入数据块')[0]);
+    fireEvent.click(screen.getAllByText('Input Blocks')[0]);
 
-    expect(screen.getByText(/说明: 未记录基本面来源链元数据/)).toBeInTheDocument();
-    expect(screen.getByText(/基本面是否进入本次分析以当前状态为准/)).toBeInTheDocument();
-    expect(screen.getByText(/诊断码: fundamental_source_chain_missing/)).toBeInTheDocument();
-    expect(screen.queryByText(/本次分析未使用基本面数据/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Details: Fundamental source-chain metadata was not recorded/)).toBeInTheDocument();
+    expect(screen.getByText(/use the current status to determine whether fundamentals were included/)).toBeInTheDocument();
+    expect(screen.getByText(/Diagnostic code: fundamental_source_chain_missing/)).toBeInTheDocument();
+    expect(screen.queryByText(/did not use fundamental data/)).not.toBeInTheDocument();
   });
 
   it('uses status guidance for unknown reason codes without adding another field', () => {
@@ -241,11 +241,11 @@ describe('AnalysisContextSummary', () => {
 
     render(<AnalysisContextSummary overview={unknownReasonOverview} />);
 
-    fireEvent.click(screen.getAllByText('输入数据块')[0]);
+    fireEvent.click(screen.getAllByText('Input Blocks')[0]);
 
-    expect(screen.getByText(/说明: 数据抓取失败，本次分析未使用该数据；请检查数据源、网络或限流后重新分析/)).toBeInTheDocument();
-    expect(screen.getByText(/诊断码: brand_new_internal_code/)).toBeInTheDocument();
-    expect(screen.queryByText(/^处理:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Details: Data retrieval failed and this analysis did not use the data/)).toBeInTheDocument();
+    expect(screen.getByText(/Diagnostic code: brand_new_internal_code/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Action:/)).not.toBeInTheDocument();
   });
 
   it('explains the real chip_not_supported reason with actionable guidance', () => {
@@ -273,11 +273,11 @@ describe('AnalysisContextSummary', () => {
 
     render(<AnalysisContextSummary overview={unsupportedChipOverview} />);
 
-    fireEvent.click(screen.getAllByText('输入数据块')[0]);
+    fireEvent.click(screen.getAllByText('Input Blocks')[0]);
 
-    expect(screen.getByText(/说明: 当前市场或标的不支持筹码数据，本次分析未使用该指标；请结合其他指标判断/)).toBeInTheDocument();
-    expect(screen.getByText(/诊断码: chip_not_supported/)).toBeInTheDocument();
-    expect(screen.queryByText(/^处理:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Details: Chip data is not supported for this market or symbol and was not used/)).toBeInTheDocument();
+    expect(screen.getByText(/Diagnostic code: chip_not_supported/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Action:/)).not.toBeInTheDocument();
   });
 
   it('surfaces degraded non-zero states in the collapsed summary', () => {
@@ -341,25 +341,25 @@ describe('AnalysisContextSummary', () => {
 
     const panel = screen.getByTestId('analysis-context-summary');
     expect(panel).not.toHaveAttribute('open');
-    expect(within(panel).getByText('可用 0')).toBeVisible();
-    expect(within(panel).getByText('缺失 0')).toBeVisible();
-    expect(within(panel).getAllByText('降级 1')[0]).toBeVisible();
-    expect(within(panel).getAllByText('过期 1')[0]).toBeVisible();
-    expect(within(panel).getAllByText('估算 1')[0]).toBeVisible();
-    expect(within(panel).getAllByText('部分可用 1')[0]).toBeVisible();
-    expect(within(panel).getAllByText('不支持 1')[0]).toBeVisible();
+    expect(within(panel).getByText('Available 0')).toBeVisible();
+    expect(within(panel).getByText('Missing 0')).toBeVisible();
+    expect(within(panel).getAllByText('Fallback 1')[0]).toBeVisible();
+    expect(within(panel).getAllByText('Stale 1')[0]).toBeVisible();
+    expect(within(panel).getAllByText('Estimated 1')[0]).toBeVisible();
+    expect(within(panel).getAllByText('Partial 1')[0]).toBeVisible();
+    expect(within(panel).getAllByText('Not supported 1')[0]).toBeVisible();
 
-    fireEvent.click(within(panel).getAllByText('输入数据块')[0]);
+    fireEvent.click(within(panel).getAllByText('Input Blocks')[0]);
 
     const quoteBlock = screen.getByText('行情').closest('.home-subpanel');
     expect(quoteBlock).not.toBeNull();
-    expect(within(quoteBlock as HTMLElement).getByText('说明: 本次分析使用了备用数据路径；请结合来源和告警复核结果')).toBeInTheDocument();
-    expect(within(quoteBlock as HTMLElement).queryByText(/^处理:/)).not.toBeInTheDocument();
+    expect(within(quoteBlock as HTMLElement).getByText('Details: This analysis used a fallback data path; review the result against its source and warnings')).toBeInTheDocument();
+    expect(within(quoteBlock as HTMLElement).queryByText(/^Action:/)).not.toBeInTheDocument();
 
-    expect(screen.getByText('说明: 本次分析使用的不是最新数据；请检查更新时间并按需重新分析')).toBeInTheDocument();
-    expect(screen.getByText('说明: 仅部分数据进入本次分析，相关结论可能不完整；请检查告警和数据源后重新分析')).toBeInTheDocument();
-    expect(screen.getByText('说明: 本次分析使用了估算数据；请结合原始数据复核结果')).toBeInTheDocument();
-    expect(screen.getByText('说明: 当前市场或标的不支持该数据，本次分析未使用该数据；请结合其他指标判断')).toBeInTheDocument();
+    expect(screen.getByText('Details: This analysis used data that may not be current; check the timestamp and rerun if needed')).toBeInTheDocument();
+    expect(screen.getByText('Details: Only part of the data was included, so related conclusions may be incomplete; check warnings and the data source and rerun')).toBeInTheDocument();
+    expect(screen.getByText('Details: This analysis used estimated data; cross-check the result against source data')).toBeInTheDocument();
+    expect(screen.getByText('Details: This data is not supported for the current market or symbol and was not used; cross-check other indicators')).toBeInTheDocument();
   });
 
   it('does not render without an overview', () => {
@@ -388,7 +388,7 @@ describe('AnalysisContextSummary', () => {
 
     render(<AnalysisContextSummary overview={unsafeOverview} />);
 
-    fireEvent.click(screen.getAllByText('输入数据块')[0]);
+    fireEvent.click(screen.getAllByText('Input Blocks')[0]);
 
     expect(screen.queryByText('raw trend payload')).not.toBeInTheDocument();
     expect(screen.queryByText('完整新闻正文不应出现')).not.toBeInTheDocument();
@@ -467,8 +467,8 @@ describe('ReportSummary analysis context placement', () => {
       expect(screen.getByText('暂无相关资讯')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('市场阶段: CN · 盘中')).toBeInTheDocument();
-    expect(screen.getByText('日线未完成')).toBeInTheDocument();
+    expect(screen.getByText('Piyasa Seansı: CN · Seans İçi')).toBeInTheDocument();
+    expect(screen.getByText('Günlük Bar Tamamlanmadı')).toBeInTheDocument();
     expect(screen.getAllByText('质量分 82/100 可用')[0]).toBeInTheDocument();
 
     const strategy = screen.getByText('狙击点位');

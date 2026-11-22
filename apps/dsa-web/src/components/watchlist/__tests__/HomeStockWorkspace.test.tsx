@@ -18,7 +18,7 @@ function renderWorkspace({
 }) {
   const onHistoryItemClick = vi.fn();
   const onRemoveFromWatchlist = vi.fn().mockResolvedValue(undefined);
-  window.localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, 'zh');
+  window.localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, 'tr');
 
   const renderView = (rows: HomeWatchlistRow[]) => (
     <UiLanguageProvider>
@@ -96,7 +96,7 @@ describe('HomeStockWorkspace', () => {
       selectedRecordId: 21,
     });
 
-    const row = screen.getByRole('button', { name: '打开 600519 最新分析详情' });
+    const row = screen.getByRole('button', { name: 'Open the latest analysis details for 600519' });
     fireEvent.click(row);
 
     expect(onHistoryItemClick).toHaveBeenCalledWith(21);
@@ -112,10 +112,10 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    const row = screen.getByRole('button', { name: '暂无 AAPL 的分析详情，可先分析' });
+    const row = screen.getByRole('button', { name: 'No analysis details for AAPL yet. Run an analysis first.' });
     fireEvent.click(row);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('暂无分析详情，可先分析。');
+    expect(await screen.findByRole('alert')).toHaveTextContent('No analysis details yet. Run an analysis first.');
     expect(onHistoryItemClick).not.toHaveBeenCalled();
   });
 
@@ -128,12 +128,12 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    const row = screen.getByRole('button', { name: '正在查找 AAPL 的最新分析详情' });
+    const row = screen.getByRole('button', { name: 'Looking up the latest analysis details for AAPL' });
     fireEvent.click(row);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('正在查找最新分析详情，请稍候。');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Looking up the latest analysis details. Please wait.');
     expect(onHistoryItemClick).not.toHaveBeenCalled();
-    expect(screen.getByText('正在查找详情...')).toBeInTheDocument();
+    expect(screen.getByText('Looking up details...')).toBeInTheDocument();
   });
 
   it('shows retry feedback instead of no-detail copy when the latest detail lookup failed', async () => {
@@ -145,12 +145,12 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    const row = screen.getByRole('button', { name: 'AAPL 的最新分析详情暂时无法确认，请稍后重试' });
+    const row = screen.getByRole('button', { name: 'The latest analysis details for AAPL could not be confirmed. Please try again later.' });
     fireEvent.click(row);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('最新分析详情暂时无法确认，请稍后重试。');
-    expect(screen.queryByText('暂无分析详情，可先分析。')).not.toBeInTheDocument();
-    expect(screen.getByText('详情暂不可用')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('The latest analysis details could not be confirmed. Please try again later.');
+    expect(screen.queryByText('No analysis details yet. Run an analysis first.')).not.toBeInTheDocument();
+    expect(screen.getByText('Details unavailable')).toBeInTheDocument();
     expect(onHistoryItemClick).not.toHaveBeenCalled();
   });
 
@@ -173,8 +173,8 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '\u6b63\u5728\u67e5\u627e AAPL \u7684\u6700\u65b0\u5206\u6790\u8be6\u60c5' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('\u6b63\u5728\u67e5\u627e\u6700\u65b0\u5206\u6790\u8be6\u60c5\uff0c\u8bf7\u7a0d\u5019\u3002');
+    fireEvent.click(screen.getByRole('button', { name: 'Looking up the latest analysis details for AAPL' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Looking up the latest analysis details. Please wait.');
     expect(onHistoryItemClick).not.toHaveBeenCalled();
 
     rerenderWatchlistRows([{
@@ -183,9 +183,9 @@ describe('HomeStockWorkspace', () => {
       latestItem: cachedItem,
       isTodayStatusUnknown: true,
     }]);
-    fireEvent.click(screen.getByRole('button', { name: 'AAPL \u7684\u6700\u65b0\u5206\u6790\u8be6\u60c5\u6682\u65f6\u65e0\u6cd5\u786e\u8ba4\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5' }));
+    fireEvent.click(screen.getByRole('button', { name: 'The latest analysis details for AAPL could not be confirmed. Please try again later.' }));
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('\u6700\u65b0\u5206\u6790\u8be6\u60c5\u6682\u65f6\u65e0\u6cd5\u786e\u8ba4\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002');
+      expect(screen.getByRole('alert')).toHaveTextContent('The latest analysis details could not be confirmed. Please try again later.');
     });
     expect(onHistoryItemClick).not.toHaveBeenCalled();
   });
@@ -229,8 +229,8 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '暂无 AAPL 的分析详情，可先分析' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('暂无分析详情，可先分析。');
+    fireEvent.click(screen.getByRole('button', { name: 'No analysis details for AAPL yet. Run an analysis first.' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('No analysis details yet. Run an analysis first.');
 
     rerenderWatchlistRows([{
       code: 'AAPL',
@@ -247,7 +247,7 @@ describe('HomeStockWorkspace', () => {
     }]);
 
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: '打开 AAPL 最新分析详情' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open the latest analysis details for AAPL' })).toBeInTheDocument();
   });
 
   it('derives an opened notice from the latest row state instead of retaining stale copy', async () => {
@@ -260,7 +260,7 @@ describe('HomeStockWorkspace', () => {
 
     const row = screen.getByTestId('watchlist-row-AAPL');
     fireEvent.click(row.querySelector('button[aria-pressed]') as HTMLButtonElement);
-    expect(await screen.findByRole('alert')).toHaveTextContent('\u6682\u65e0\u5206\u6790\u8be6\u60c5\uff0c\u53ef\u5148\u5206\u6790\u3002');
+    expect(await screen.findByRole('alert')).toHaveTextContent('No analysis details yet. Run an analysis first.');
 
     rerenderWatchlistRows([{
       code: 'AAPL',
@@ -268,7 +268,7 @@ describe('HomeStockWorkspace', () => {
       isTodayStatusLoading: true,
     }]);
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('\u6b63\u5728\u67e5\u627e\u6700\u65b0\u5206\u6790\u8be6\u60c5\uff0c\u8bf7\u7a0d\u5019\u3002');
+      expect(screen.getByRole('alert')).toHaveTextContent('Looking up the latest analysis details. Please wait.');
     });
 
     rerenderWatchlistRows([{
@@ -277,7 +277,7 @@ describe('HomeStockWorkspace', () => {
       isTodayStatusUnknown: true,
     }]);
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('\u6700\u65b0\u5206\u6790\u8be6\u60c5\u6682\u65f6\u65e0\u6cd5\u786e\u8ba4\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002');
+      expect(screen.getByRole('alert')).toHaveTextContent('The latest analysis details could not be confirmed. Please try again later.');
     });
   });
 
@@ -298,7 +298,7 @@ describe('HomeStockWorkspace', () => {
       }],
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '从自选股移除 600519' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove 600519 from watchlist' }));
 
     expect(onRemoveFromWatchlist).toHaveBeenCalledWith('600519');
     expect(onHistoryItemClick).not.toHaveBeenCalled();
@@ -322,6 +322,6 @@ describe('HomeStockWorkspace', () => {
       selectedStockCode: '00700.HK',
     });
 
-    expect(screen.getByRole('button', { name: '打开 HK700 最新分析详情' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Open the latest analysis details for HK700' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

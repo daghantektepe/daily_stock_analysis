@@ -106,41 +106,41 @@ function renderCalibration(value = calibration) {
 describe('DecisionSignalProfileCalibration', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    window.localStorage.setItem('dsa.uiLanguage', 'zh');
+    window.localStorage.setItem('dsa.uiLanguage', 'tr');
   });
 
   it('keeps profile and child sample gates independent and distinguishes zero from no result', () => {
     renderCalibration();
 
-    expect(screen.getByRole('heading', { name: '决策风格历史表现' })).toBeInTheDocument();
-    const balancedButton = screen.getByRole('button', { name: /均衡.*已完成 30/ });
+    expect(screen.getByRole('heading', { name: 'Decision profile history' })).toBeInTheDocument();
+    const balancedButton = screen.getByRole('button', { name: /Balanced.*30 completed/ });
     expect(balancedButton).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getAllByText('0%').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('暂无可计算结果').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('另有 2 条历史样本缺少决策风格标记，未计入三类风格。')).toBeInTheDocument();
+    expect(screen.getAllByText('No calculable result').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('2 historical samples have no decision profile label and are not included in the three profiles.')).toBeInTheDocument();
 
-    const horizonCard = screen.getByRole('heading', { name: '3 日' }).closest('article');
+    const horizonCard = screen.getByRole('heading', { name: '3 days' }).closest('article');
     expect(horizonCard).not.toBeNull();
-    expect(within(horizonCard as HTMLElement).getByText('样本不足，仅供观察。')).toBeInTheDocument();
-    expect(within(horizonCard as HTMLElement).queryByText('命中率')).not.toBeInTheDocument();
+    expect(within(horizonCard as HTMLElement).getByText('Insufficient sample size; for observation only.')).toBeInTheDocument();
+    expect(within(horizonCard as HTMLElement).queryByText('Hit rate')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /保守.*已完成 29/ }));
-    expect(screen.getByRole('button', { name: /保守.*已完成 29/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('样本不足，仅供观察。')).toBeInTheDocument();
-    expect(screen.getByText('暂无可观察的细分样本。')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Conservative.*29 completed/ }));
+    expect(screen.getByRole('button', { name: /Conservative.*29 completed/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Insufficient sample size; for observation only.')).toBeInTheDocument();
+    expect(screen.getByText('No breakdown samples are available to observe yet.')).toBeInTheDocument();
   });
 
   it('switches only between the two frozen user-facing breakdown views', () => {
     renderCalibration();
 
-    const breakdownControls = screen.getByLabelText('细分统计方式');
+    const breakdownControls = screen.getByLabelText('Breakdown view');
     expect(within(breakdownControls).getAllByRole('button')).toHaveLength(2);
-    const actionButton = within(breakdownControls).getByRole('button', { name: '按建议动作' });
+    const actionButton = within(breakdownControls).getByRole('button', { name: 'By suggested action' });
     fireEvent.click(actionButton);
 
     expect(actionButton).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('heading', { name: '买入' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: '3 日' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Buy' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '3 days' })).not.toBeInTheDocument();
   });
 
   it('renders the same controls and disclosure in English', () => {

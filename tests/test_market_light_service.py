@@ -199,7 +199,7 @@ class MarketLightServiceTestCase(unittest.TestCase):
             limit_down_count=80,
         )
 
-        with patch("src.services.market_light_service.MarketAnalyzer") as analyzer_cls:
+        with patch("src.market_analyzer.MarketAnalyzer") as analyzer_cls:
             analyzer = analyzer_cls.return_value
             analyzer.get_market_overview.return_value = overview
             analyzer.build_market_light_snapshot.return_value = _snapshot("cn", "2026-03-07", 33)

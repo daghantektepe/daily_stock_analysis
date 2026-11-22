@@ -111,10 +111,10 @@ describe('AlertsPage', () => {
   it('loads rules, trigger history, and notification empty state', async () => {
     render(<AlertsPage />);
 
-    expect(screen.getByText('管理事件告警、日线技术指标、自选股、持仓/账户联动和大盘红绿灯规则，执行一次性测试，并查看后台评估任务记录的触发历史。')).toBeInTheDocument();
+    expect(screen.getByText('Olay uyarılarını, günlük teknik göstergeleri, izleme listesi ve portföy kurallarını yönetin, tek seferlik testler çalıştırın ve tetiklenme geçmişini inceleyin.')).toBeInTheDocument();
     expect(await screen.findByText('茅台价格突破')).toBeInTheDocument();
     expect(await screen.findByText('600519 price above 1800')).toBeInTheDocument();
-    expect(await screen.findByText('暂无通知尝试记录')).toBeInTheDocument();
+    expect(await screen.findByText('Henüz bildirim kaydı yok')).toBeInTheDocument();
     expect(listRules).toHaveBeenCalledWith({
       enabled: undefined,
       alertType: undefined,
@@ -129,12 +129,12 @@ describe('AlertsPage', () => {
     listTriggers.mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 20 });
     render(<AlertsPage />);
 
-    fireEvent.click(await screen.findByRole('button', { name: '测试' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Test Et' }));
 
     await waitFor(() => expect(testRule).toHaveBeenCalledWith(1));
-    expect(await screen.findByText('测试结果')).toBeInTheDocument();
+    expect(await screen.findByText('Test Sonucu')).toBeInTheDocument();
     expect(screen.getByText(/600519 price above 1800/)).toBeInTheDocument();
-    expect(screen.getByText(/观察值：1801/)).toBeInTheDocument();
+    expect(screen.getByText(/Gözlenen Değer: 1801/)).toBeInTheDocument();
     expect(screen.queryByText(/realtime_quote/)).not.toBeInTheDocument();
   });
 
@@ -173,9 +173,9 @@ describe('AlertsPage', () => {
     });
     render(<AlertsPage />);
 
-    fireEvent.click(await screen.findByRole('button', { name: '测试' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Test Et' }));
 
-    expect(await screen.findByText(/评估 2 · 触发 1 · 降级 1 · 跳过 0/)).toBeInTheDocument();
+    expect(await screen.findByText(/Değerlendirilen 2 · Tetiklenen 1 · Yedek 1 · Atlanan 0/)).toBeInTheDocument();
     expect(screen.getByText('自选股 - 600519')).toBeInTheDocument();
     expect(screen.getByText(/not_triggered \/ degraded/)).toBeInTheDocument();
   });
@@ -184,9 +184,9 @@ describe('AlertsPage', () => {
     render(<AlertsPage />);
 
     await screen.findByText('茅台价格突破');
-    fireEvent.change(screen.getByLabelText('标的代码'), { target: { value: 'aapl' } });
-    fireEvent.change(screen.getByLabelText('价格阈值'), { target: { value: '200' } });
-    fireEvent.click(screen.getByRole('button', { name: '创建规则' }));
+    fireEvent.change(screen.getByLabelText('Sembol'), { target: { value: 'aapl' } });
+    fireEvent.change(screen.getByLabelText('Fiyat eşiği'), { target: { value: '200' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Kural Oluştur' }));
 
     await waitFor(() => {
       expect(createRule).toHaveBeenCalledWith(expect.objectContaining({
@@ -195,7 +195,7 @@ describe('AlertsPage', () => {
         parameters: { direction: 'above', price: 200 },
       }));
     });
-    expect(await screen.findByText(/已创建告警规则/)).toBeInTheDocument();
+    expect(await screen.findByText(/Uyarı kuralı oluşturuldu/)).toBeInTheDocument();
   });
 
   it('keeps create form values when create API fails', async () => {
@@ -203,13 +203,13 @@ describe('AlertsPage', () => {
     render(<AlertsPage />);
 
     await screen.findByText('茅台价格突破');
-    fireEvent.change(screen.getByLabelText('标的代码'), { target: { value: 'aapl' } });
-    fireEvent.change(screen.getByLabelText('价格阈值'), { target: { value: '200' } });
-    fireEvent.click(screen.getByRole('button', { name: '创建规则' }));
+    fireEvent.change(screen.getByLabelText('Sembol'), { target: { value: 'aapl' } });
+    fireEvent.change(screen.getByLabelText('Fiyat eşiği'), { target: { value: '200' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Kural Oluştur' }));
 
     expect(await screen.findByText('加载失败')).toBeInTheDocument();
-    expect(screen.getByLabelText('标的代码')).toHaveValue('aapl');
-    expect(screen.getByLabelText('价格阈值')).toHaveValue(200);
+    expect(screen.getByLabelText('Sembol')).toHaveValue('aapl');
+    expect(screen.getByLabelText('Fiyat eşiği')).toHaveValue(200);
   });
 
   it('clamps rules pagination when a mutation leaves the current page empty', async () => {
@@ -225,8 +225,8 @@ describe('AlertsPage', () => {
     expect(await screen.findByText('茅台价格突破')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '2' }));
     expect(await screen.findByText('第二页规则')).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('删除 第二页规则'));
-    fireEvent.click(await screen.findByRole('button', { name: '删除' }));
+    fireEvent.click(screen.getByLabelText('Sil 第二页规则'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sil' }));
 
     await waitFor(() => expect(deleteRule).toHaveBeenCalledWith(2));
     await waitFor(() => {
@@ -252,7 +252,7 @@ describe('AlertsPage', () => {
 
     render(<AlertsPage />);
 
-    fireEvent.change(screen.getByLabelText('启停状态'), { target: { value: 'disabled' } });
+    fireEvent.change(screen.getByLabelText('Durum'), { target: { value: 'disabled' } });
     await waitFor(() => expect(listRules).toHaveBeenCalledTimes(2));
 
     filteredRequest.resolve({ items: [filteredRule], total: 1, page: 1, pageSize: 20 });

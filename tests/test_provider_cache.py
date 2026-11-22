@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 import textwrap
@@ -349,8 +350,11 @@ def test_litellm_openai_prompt_cache_key_is_not_passed_through_without_verified_
         "all_proxy",
     ):
         sanitized_env.pop(key, None)
+    repo_root = str(Path(__file__).resolve().parents[1])
     sanitized_env["NO_PROXY"] = "127.0.0.1,localhost"
     sanitized_env["no_proxy"] = "127.0.0.1,localhost"
+    sanitized_env["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
+    sanitized_env["PYTHONPATH"] = repo_root
 
     script = textwrap.dedent(
         """
@@ -404,16 +408,31 @@ def test_litellm_openai_prompt_cache_key_is_not_passed_through_without_verified_
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
-            litellm.completion(
-                model="openai/test-model",
-                api_base=f"http://127.0.0.1:{server.server_port}/v1",
-                api_key="sk-test",
-                messages=[{"role": "user", "content": "hello"}],
-                prompt_cache_key="cache-key",
-                max_tokens=1,
-                timeout=5,
-                num_retries=0,
+            from types import SimpleNamespace
+            from src.llm.provider_cache import ProviderCacheRouteContext, apply_prompt_cache_hints
+
+            base_kwargs = {
+                "model": "openai/test-model",
+                "api_base": f"http://127.0.0.1:{server.server_port}/v1",
+                "api_key": "sk-test",
+                "messages": [{"role": "user", "content": "hello"}],
+                "max_tokens": 1,
+                "timeout": 5,
+                "num_retries": 0,
+            }
+            lowered = apply_prompt_cache_hints(
+                base_kwargs,
+                ProviderCacheRouteContext(
+                    model="openai/test-model",
+                    provider="openai",
+                    api_surface="chat_completions",
+                ),
+                SimpleNamespace(
+                    llm_prompt_cache_hints_enabled=True,
+                    llm_prompt_cache_diagnostics_level="basic",
+                ),
             )
+            litellm.completion(**lowered.call_kwargs)
             if not request_seen.wait(timeout=10):
                 raise AssertionError("LiteLLM did not send request to local capture server")
         finally:
@@ -427,9 +446,10 @@ def test_litellm_openai_prompt_cache_key_is_not_passed_through_without_verified_
     completed = subprocess.run(
         [sys.executable, "-c", script],
         capture_output=True,
+        cwd=repo_root,
         env=sanitized_env,
         text=True,
-        timeout=15,
+        timeout=60,
     )
     if completed.returncode == 77:
         if "LOCAL_SOCKET_UNAVAILABLE" in completed.stdout + completed.stderr:

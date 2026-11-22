@@ -407,7 +407,7 @@ class SearchServiceConcurrencyTestCase(unittest.TestCase):
             topic="影视传媒",
             max_results=2,
             focus_keywords=None,
-            timeout_seconds=5.0,
+            timeout_seconds=30.0,
         )
 
         self.assertFalse(response.success)

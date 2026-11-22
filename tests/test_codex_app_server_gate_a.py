@@ -34,6 +34,8 @@ from src.agent.codex_tool_process import CodexToolProcessRunner
 from src.agent.tools.execution import ToolAccessContext
 from src.agent.tools.registry import ToolDefinition, ToolParameter, ToolPolicy, ToolRegistry
 
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="Codex App Server Agent excludes native Windows")
+
 
 _FAKE_APP_SERVER = r"""
 import json

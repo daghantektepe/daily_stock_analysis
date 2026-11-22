@@ -26,11 +26,11 @@ describe('Input', () => {
       <Input
         label="Password"
         name="password"
-        trailingAction={<button type="button">显示</button>}
+        trailingAction={<button type="button">Göster</button>}
       />
     );
 
-    expect(screen.getByRole('button', { name: '显示' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Göster' })).toBeInTheDocument();
   });
 
   it('renders a key icon and applies leading padding', () => {
@@ -41,12 +41,12 @@ describe('Input', () => {
   });
 
   it('toggles password visibility in uncontrolled mode', () => {
-    render(<Input label="密码" type="password" allowTogglePassword />);
+    render(<Input label="Şifre" type="password" allowTogglePassword />);
 
-    const input = screen.getByLabelText('密码');
+    const input = screen.getByLabelText('Şifre');
     expect(input).toHaveAttribute('type', 'password');
 
-    fireEvent.click(screen.getByRole('button', { name: '显示内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Göster' }));
     expect(input).toHaveAttribute('type', 'text');
   });
 
@@ -65,19 +65,19 @@ describe('Input', () => {
 
     expect(screen.getByLabelText('API Key')).toHaveAttribute('type', 'text');
 
-    fireEvent.click(screen.getByRole('button', { name: '隐藏内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gizle' }));
     expect(onPasswordVisibleChange).toHaveBeenCalledWith(false);
   });
 
   it('supports the login appearance without affecting password toggle behavior', () => {
-    render(<Input label="登录密码" type="password" allowTogglePassword appearance="login" />);
+    render(<Input label="Giriş şifresi" type="password" allowTogglePassword appearance="login" />);
 
-    const input = screen.getByLabelText('登录密码');
+    const input = screen.getByLabelText('Giriş şifresi');
     expect(input).toHaveAttribute('data-appearance', 'login');
     expect(input).toHaveClass('input-appearance-login');
     expect(input).toHaveAttribute('type', 'password');
 
-    fireEvent.click(screen.getByRole('button', { name: '显示内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Göster' }));
     expect(input).toHaveAttribute('type', 'text');
   });
 });

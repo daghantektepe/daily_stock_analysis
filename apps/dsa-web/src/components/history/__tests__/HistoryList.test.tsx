@@ -46,9 +46,9 @@ describe('HistoryList', () => {
   it('shows the empty state copy when no history exists', () => {
     const { container } = render(<HistoryList {...baseProps} items={[]} />);
 
-    expect(screen.getByText('暂无历史分析记录')).toBeInTheDocument();
-    expect(screen.getByText('完成首次分析后，这里会保留最近结果。')).toBeInTheDocument();
-    expect(screen.getByText('历史分析')).toBeInTheDocument();
+    expect(screen.getByText('No analysis history')).toBeInTheDocument();
+    expect(screen.getByText('Recent results will be saved here after the first analysis.')).toBeInTheDocument();
+    expect(screen.getByText('Analysis history')).toBeInTheDocument();
     expect(container.querySelector('.glass-card')).toBeTruthy();
   });
 
@@ -67,8 +67,8 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('已选 1')).toBeInTheDocument();
-    expect(screen.getByText('买入 82')).toBeInTheDocument();
+    expect(screen.getByText('1 seçili')).toBeInTheDocument();
+    expect(screen.getByText('Buy 82')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /贵州茅台/i }));
     expect(onItemClick).toHaveBeenCalledWith(1);
@@ -85,16 +85,16 @@ describe('HistoryList', () => {
           {
             ...items[0],
             action: 'avoid',
-            actionLabel: '回避',
-            operationAdvice: '买入',
+            actionLabel: 'Avoid',
+            operationAdvice: 'Buy',
             sentimentScore: 35,
           },
         ]}
       />,
     );
 
-    expect(screen.getByText('回避 35')).toBeInTheDocument();
-    expect(screen.queryByText('买入 35')).not.toBeInTheDocument();
+    expect(screen.getByText('Avoid 35')).toBeInTheDocument();
+    expect(screen.queryByText('Buy 35')).not.toBeInTheDocument();
   });
 
   it('uses the unified legacy fallback for negated buy advice without structured action', () => {
@@ -113,8 +113,8 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('回避 28')).toBeInTheDocument();
-    expect(screen.queryByText('买入 28')).not.toBeInTheDocument();
+    expect(screen.getByText('Avoid 28')).toBeInTheDocument();
+    expect(screen.queryByText('Buy 28')).not.toBeInTheDocument();
   });
 
   it('uses the unified legacy fallback for backend-aligned hold advice without structured action', () => {
@@ -133,8 +133,8 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('持有 48')).toBeInTheDocument();
-    expect(screen.queryByText('情绪 48')).not.toBeInTheDocument();
+    expect(screen.getByText('Hold 48')).toBeInTheDocument();
+    expect(screen.queryByText('Sentiment 48')).not.toBeInTheDocument();
   });
 
   it('does not render ambiguous English legacy advice as a buy action', () => {
@@ -153,7 +153,7 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('情绪 28')).toBeInTheDocument();
+    expect(screen.getByText('Sentiment 28')).toBeInTheDocument();
     expect(screen.queryByText('buy 28')).not.toBeInTheDocument();
   });
 
@@ -191,12 +191,12 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('情绪 28')).toBeInTheDocument();
-    expect(screen.getByText('情绪 31')).toBeInTheDocument();
-    expect(screen.getByText('情绪 33')).toBeInTheDocument();
-    expect(screen.queryByText('回避 28')).not.toBeInTheDocument();
-    expect(screen.queryByText('持有 31')).not.toBeInTheDocument();
-    expect(screen.queryByText('卖出 33')).not.toBeInTheDocument();
+    expect(screen.getByText('Sentiment 28')).toBeInTheDocument();
+    expect(screen.getByText('Sentiment 31')).toBeInTheDocument();
+    expect(screen.getByText('Sentiment 33')).toBeInTheDocument();
+    expect(screen.queryByText('Avoid 28')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hold 31')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sell 33')).not.toBeInTheDocument();
   });
 
   it('does not render Chinese financial context legacy advice as an action badge', () => {
@@ -224,10 +224,10 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('情绪 32')).toBeInTheDocument();
-    expect(screen.getByText('情绪 34')).toBeInTheDocument();
-    expect(screen.queryByText('买入 32')).not.toBeInTheDocument();
-    expect(screen.queryByText('卖出 34')).not.toBeInTheDocument();
+    expect(screen.getByText('Sentiment 32')).toBeInTheDocument();
+    expect(screen.getByText('Sentiment 34')).toBeInTheDocument();
+    expect(screen.queryByText('Buy 32')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sell 34')).not.toBeInTheDocument();
   });
 
   it('does not render multi-guard legacy advice as an avoid or alert action', () => {
@@ -246,9 +246,9 @@ describe('HistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('情绪 28')).toBeInTheDocument();
-    expect(screen.queryByText('回避 28')).not.toBeInTheDocument();
-    expect(screen.queryByText('预警 28')).not.toBeInTheDocument();
+    expect(screen.getByText('Sentiment 28')).toBeInTheDocument();
+    expect(screen.queryByText('Avoid 28')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alert 28')).not.toBeInTheDocument();
   });
 
   it('toggles select-all when clicking the label text', () => {
@@ -262,7 +262,7 @@ describe('HistoryList', () => {
       />,
     );
 
-    fireEvent.click(screen.getByText('全选当前'));
+    fireEvent.click(screen.getByText('Mevcutları seç'));
 
     expect(onToggleSelectAll).toHaveBeenCalledTimes(1);
   });
@@ -270,7 +270,7 @@ describe('HistoryList', () => {
   it('disables delete when nothing is selected', () => {
     render(<HistoryList {...baseProps} items={items} />);
 
-    expect(screen.getByRole('button', { name: '删除' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sil' })).toBeDisabled();
   });
 
   it('truncates long stock names with trailing dot', () => {
@@ -286,14 +286,14 @@ describe('HistoryList', () => {
     expect(screen.queryByText('贵州茅台股票股份有限公司')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', {
-        name: /^贵州茅台股票股份有限公司 600519 历史记录$/,
+        name: /^贵州茅台股票股份有限公司 600519 history record$/,
       }),
     ).toBeInTheDocument();
 
     const actions = screen.getByTestId('history-card-actions');
     const meta = screen.getByTestId('history-card-meta');
-    expect(within(actions).queryByText('CN · 非交易日')).not.toBeInTheDocument();
-    expect(within(meta).getByText('CN · 非交易日')).toBeVisible();
+    expect(within(actions).queryByText('CN · İşlem günü değil')).not.toBeInTheDocument();
+    expect(within(meta).getByText('CN · İşlem günü değil')).toBeVisible();
   });
 
   it('generates unique select-all ids across multiple instances', () => {

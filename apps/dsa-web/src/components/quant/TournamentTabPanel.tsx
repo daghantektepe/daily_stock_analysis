@@ -13,6 +13,7 @@ import { ApiErrorAlert, Button, SectionCard, StatCard } from '../common';
 import { openCopilotDrawer } from '../chat/copilotEvents';
 import { ForwardValidationCard } from './ForwardValidationCard';
 import { QuantPaperBookCard } from './QuantPaperBookCard';
+import { QuantTearsheetCard } from './QuantTearsheetCard';
 import { StrategyEquityChart } from './StrategyEquityChart';
 import { TournamentLeaderboard } from './TournamentLeaderboard';
 
@@ -220,16 +221,6 @@ export const TournamentTabPanel: React.FC = () => {
               </div>
             ) : null}
 
-            {/* Daily Automated PAA & Meta-Portfolio A StrategyPaperBook */}
-            <QuantPaperBookCard
-              books={paperBooks}
-              stepping={steppingPaper}
-              onStep={(opts) => void handleStepPaper(opts)}
-            />
-
-            {/* Forward validation gate for the frozen PAA / Meta-A books */}
-            <ForwardValidationCard items={forwardItems} error={forwardError} />
-
             {/* OOS Equity / Drawdown Comparison Chart */}
             <StrategyEquityChart
               strategies={tournament.strategies}
@@ -256,6 +247,19 @@ export const TournamentTabPanel: React.FC = () => {
           </div>
         )}
       </SectionCard>
+
+      {/* Daily Automated PAA & Meta-Portfolio A StrategyPaperBook */}
+      <QuantPaperBookCard
+        books={paperBooks}
+        stepping={steppingPaper}
+        onStep={(opts) => void handleStepPaper(opts)}
+      />
+
+      {/* Forward validation gate for the frozen PAA / Meta-A books */}
+      <ForwardValidationCard items={forwardItems} error={forwardError} />
+
+      {/* QuantStats Monthly Returns Heatmap + Underwater Drawdown + TL/USD/TÜFE */}
+      <QuantTearsheetCard />
     </div>
   );
 };

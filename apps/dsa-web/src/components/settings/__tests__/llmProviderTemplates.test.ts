@@ -68,19 +68,19 @@ describe('llmProviderTemplates', () => {
 
   it('uses volcengine as the default Volcengine Ark provider id', () => {
     expect(LLM_PROVIDER_TEMPLATE_BY_ID.volcengine).toMatchObject({
-      label: '火山方舟（豆包）',
+      label: 'Volcengine Ark (Doubao)',
       protocol: 'openai',
       baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
       placeholderModels: 'doubao-seed-1-6-251015,doubao-seed-1-6-thinking-251015',
-      configHint: '确认在线推理 endpoint / region 与 Coding Plan 专用入口不要混用。',
+      configHint: 'Çevrimiçi çıkarım uç noktası ile özel Coding Plan uç noktasını karıştırmayın.',
     });
     expect(LLM_PROVIDER_TEMPLATE_BY_ID.ark).toBeUndefined();
   });
 
   it('keeps focused config hints on providers with common setup pitfalls', () => {
-    expect(LLM_PROVIDER_TEMPLATE_BY_ID.ollama.configHint).toContain('Ollama 服务');
-    expect(LLM_PROVIDER_TEMPLATE_BY_ID.siliconflow.configHint).toContain('API Key');
-    expect(LLM_PROVIDER_TEMPLATE_BY_ID.openrouter.configHint).toContain('API Key');
+    expect(LLM_PROVIDER_TEMPLATE_BY_ID.ollama.configHint).toContain('Ollama servisine');
+    expect(LLM_PROVIDER_TEMPLATE_BY_ID.siliconflow.configHint).toContain('API anahtarına');
+    expect(LLM_PROVIDER_TEMPLATE_BY_ID.openrouter.configHint).toContain('API anahtarına');
     expect(LLM_PROVIDER_TEMPLATE_BY_ID.openai.configHint).toBeUndefined();
   });
 

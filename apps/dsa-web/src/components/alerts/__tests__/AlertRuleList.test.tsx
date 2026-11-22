@@ -113,15 +113,15 @@ describe('AlertRuleList', () => {
 
     expect(screen.getByText('茅台价格突破')).toBeInTheDocument();
     expect(screen.getByText('600519')).toBeInTheDocument();
-    expect(screen.getAllByText('价格突破').length).toBeGreaterThan(0);
-    expect(screen.getByText('上破 1800')).toBeInTheDocument();
-    expect(screen.getAllByText('MACD 金叉/死叉').length).toBeGreaterThan(0);
-    expect(screen.getByText('MACD(12,26,9) 金叉')).toBeInTheDocument();
-    expect(screen.getByText('KDJ(9,3,3) 死叉')).toBeInTheDocument();
-    expect(screen.getByText('冷却中')).toBeInTheDocument();
+    expect(screen.getAllByText('Fiyat kesişimi').length).toBeGreaterThan(0);
+    expect(screen.getByText('üzerine çıktı 1800')).toBeInTheDocument();
+    expect(screen.getAllByText('MACD kesişimi').length).toBeGreaterThan(0);
+    expect(screen.getByText('MACD(12,26,9) altın kesişim')).toBeInTheDocument();
+    expect(screen.getByText('KDJ(9,3,3) ölüm kesişimi')).toBeInTheDocument();
+    expect(screen.getByText('Beklemede')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('启停状态'), { target: { value: 'enabled' } });
-    fireEvent.change(screen.getByLabelText('规则类型'), { target: { value: 'price_cross' } });
+    fireEvent.change(screen.getByLabelText('Durum'), { target: { value: 'enabled' } });
+    fireEvent.change(screen.getByLabelText('Kural tipi'), { target: { value: 'price_cross' } });
     fireEvent.click(screen.getByRole('button', { name: '2' }));
 
     expect(onEnabledFilterChange).toHaveBeenCalledWith('enabled');
@@ -140,7 +140,7 @@ describe('AlertRuleList', () => {
       ],
     });
 
-    expect(screen.getByText('未冷却')).toBeInTheDocument();
+    expect(screen.getByText('Hazır')).toBeInTheDocument();
   });
 
   it('renders portfolio scope labels and child-target cooldown hint', () => {
@@ -173,11 +173,11 @@ describe('AlertRuleList', () => {
       ],
     });
 
-    expect(screen.getByText('持仓标的')).toBeInTheDocument();
-    expect(screen.getByText('子目标见触发历史')).toBeInTheDocument();
-    expect(screen.getByText('账户 9')).toBeInTheDocument();
-    expect(screen.getAllByText('组合止损').length).toBeGreaterThan(0);
-    expect(screen.getByText('已触发止损')).toBeInTheDocument();
+    expect(screen.getByText('Portföy varlıkları')).toBeInTheDocument();
+    expect(screen.getByText('Hedef bazlı bekleme tetik geçmişinde')).toBeInTheDocument();
+    expect(screen.getByText('Hesap 9')).toBeInTheDocument();
+    expect(screen.getAllByText('Portföy zarar kes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Zarar kes ihlal edildi')).toBeInTheDocument();
   });
 
   it('renders portfolio drawdown alert labels in English UI mode', () => {
@@ -237,14 +237,14 @@ describe('AlertRuleList', () => {
       ],
     });
 
-    expect(screen.getByText('A 股')).toBeInTheDocument();
-    expect(screen.getByText('美股')).toBeInTheDocument();
-    expect(screen.getAllByText('大盘市场').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('大盘红绿灯状态').length).toBeGreaterThan(0);
-    expect(screen.getByText('红灯 / 黄灯')).toBeInTheDocument();
-    expect(screen.getByText('Score 下降 >= 15')).toBeInTheDocument();
+    expect(screen.getByText('Çin A')).toBeInTheDocument();
+    expect(screen.getByText('ABD')).toBeInTheDocument();
+    expect(screen.getAllByText('Genel piyasa').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Piyasa trafik ışığı durumu').length).toBeGreaterThan(0);
+    expect(screen.getByText('Kırmızı / Sarı')).toBeInTheDocument();
+    expect(screen.getByText('Skor düşüşü >= 15')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('规则类型'), { target: { value: 'market_light_score_drop' } });
+    fireEvent.change(screen.getByLabelText('Kural tipi'), { target: { value: 'market_light_score_drop' } });
 
     expect(onAlertTypeFilterChange).toHaveBeenCalledWith('market_light_score_drop');
   });
@@ -252,8 +252,8 @@ describe('AlertRuleList', () => {
   it('runs test and toggles enabled state', () => {
     renderList();
 
-    fireEvent.click(screen.getAllByRole('button', { name: '测试' })[0]);
-    fireEvent.click(screen.getAllByRole('button', { name: '停用' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Test Et' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Durdur' })[0]);
 
     expect(onTest).toHaveBeenCalledWith(rules[0]);
     expect(onToggleEnabled).toHaveBeenCalledWith(rules[0]);
@@ -262,17 +262,17 @@ describe('AlertRuleList', () => {
   it('shows loading text only for the active rule operation', () => {
     renderList({ busyRule: { id: 1, action: 'toggle' } });
 
-    expect(screen.getAllByRole('button', { name: '测试' })[0]).toBeDisabled();
-    expect(screen.getByRole('button', { name: '停用中' })).toHaveAttribute('aria-busy', 'true');
-    expect(screen.queryByRole('button', { name: '测试中' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Test Et' })[0]).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Durduruluyor' })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByRole('button', { name: 'Test ediliyor' })).not.toBeInTheDocument();
   });
 
   it('confirms deletion before calling onDelete', async () => {
     renderList();
 
-    fireEvent.click(screen.getByLabelText('删除 茅台价格突破'));
-    expect(await screen.findByRole('heading', { name: '删除告警规则' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '删除' }));
+    fireEvent.click(screen.getByLabelText('Sil 茅台价格突破'));
+    expect(await screen.findByRole('heading', { name: 'Alarm kuralını sil' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sil' }));
 
     expect(onDelete).toHaveBeenCalledWith(rules[0]);
   });
@@ -280,6 +280,6 @@ describe('AlertRuleList', () => {
   it('shows an empty state for no rules', () => {
     renderList({ rules: [], total: 0 });
 
-    expect(screen.getByText('暂无告警规则')).toBeInTheDocument();
+    expect(screen.getByText('Alarm kuralı yok')).toBeInTheDocument();
   });
 });

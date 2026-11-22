@@ -39,7 +39,8 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
   const phaseLabel = getMarketPhaseSummaryLabel(item.marketPhaseSummary, language)
     ?.replace('市场阶段: ', '')
     .replace('市场阶段：', '')
-    .replace('Market phase: ', '');
+    .replace('Market phase: ', '')
+    .replace('Piyasa aşaması: ', '');
 
   return (
     <div className="flex items-start gap-2 group">

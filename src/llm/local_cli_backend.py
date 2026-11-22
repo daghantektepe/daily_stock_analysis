@@ -2236,7 +2236,7 @@ class LocalCliGenerationBackend(GenerationBackend):
         with _local_cli_concurrency_slot(concurrency_limit):
             self._emit_progress(stream_progress_callback, 0)
             try:
-                with tempfile.TemporaryDirectory(prefix="dsa-local-cli-") as cwd:
+                with tempfile.TemporaryDirectory(prefix="dsa-local-cli-", ignore_cleanup_errors=True) as cwd:
                     cwd_path = Path(cwd)
                     try:
                         cwd_path.chmod(0o700)
@@ -2244,6 +2244,9 @@ class LocalCliGenerationBackend(GenerationBackend):
                         pass
                     diagnostics["cwd_kind"] = "temporary"
                     child_env = build_local_cli_env()
+                    if os.name == "nt":
+                        child_env.setdefault("PYTHONIOENCODING", "utf-8")
+                        child_env.setdefault("PYTHONUTF8", "1")
                     child_env.update(self._build_preset_child_env(cwd_path, diagnostics))
                     diagnostics["env_allowlist_names"] = sorted(child_env)
                     diagnostics["runtime_argv_contract_checked"] = True
@@ -2877,6 +2880,15 @@ class LocalCliGenerationBackend(GenerationBackend):
         if process.poll() is not None:
             return
         if os.name == "nt":
+            try:
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                    capture_output=True,
+                    timeout=5,
+                    check=False,
+                )
+            except Exception:
+                pass
             ctrl_break = getattr(signal, "CTRL_BREAK_EVENT", None)
             if ctrl_break is not None:
                 try:
@@ -3054,10 +3066,10 @@ def _read_text_file(path: Path, *, limit_bytes: Optional[int] = None) -> str:
             raw = handle.read() if limit_bytes is None else handle.read(limit_bytes)
     except OSError:
         return ""
-    return raw.decode("utf-8", errors="replace")
+    return raw.decode("utf-8", errors="replace").replace("\r\n", "\n")
 
 
 def _read_text_file_required(path: Path) -> str:
     with path.open("rb") as handle:
         raw = handle.read()
-    return raw.decode("utf-8", errors="replace")
+    return raw.decode("utf-8", errors="replace").replace("\r\n", "\n")

@@ -208,7 +208,7 @@ class TestAskCommandMultiStock(unittest.TestCase):
         }
 
         def slow_run(self, ctx, progress_callback=None):
-            time.sleep(0.1)
+            time.sleep(0.6)
             ctx.data["portfolio_assessment"] = {"summary": "late summary"}
             return SimpleNamespace(success=True)
 
@@ -225,7 +225,7 @@ class TestAskCommandMultiStock(unittest.TestCase):
 
         elapsed_s = time.monotonic() - started_at
         self.assertEqual(text, "")
-        self.assertLess(elapsed_s, 0.08)
+        self.assertLess(elapsed_s, 0.4)
 
     def test_analyze_multi_falls_back_to_text_when_dashboard_parse_fails(self):
         command = AskCommand()

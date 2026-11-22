@@ -45,7 +45,7 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole('link', { name: '选股' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Tarama' })).not.toBeInTheDocument();
   });
 
   it('shows screening directly after chat when Screening is enabled', async () => {
@@ -57,9 +57,10 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole('link', { name: '选股' })).toHaveAttribute('href', '/screening');
+    expect(await screen.findByRole('link', { name: 'Tarama' })).toHaveAttribute('href', '/screening');
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-    expect(hrefs.slice(0, 5)).toEqual(['/', '/chat', '/screening', '/portfolio', '/decision-signals']);
+    expect(hrefs).toContain('/screening');
+    expect(hrefs.indexOf('/screening')).toBe(hrefs.indexOf('/chat') + 1);
   });
 
   it('refreshes the controlled screening entry after config changes', async () => {
@@ -73,10 +74,10 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole('link', { name: '选股' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Tarama' })).not.toBeInTheDocument();
     window.dispatchEvent(new Event('screening-config-changed'));
 
-    expect(await screen.findByRole('link', { name: '选股' })).toHaveAttribute('href', '/screening');
+    expect(await screen.findByRole('link', { name: 'Tarama' })).toHaveAttribute('href', '/screening');
     await waitFor(() => expect(mockGetScreeningStatus.mock.calls.length).toBeGreaterThanOrEqual(2));
   });
 
@@ -90,7 +91,7 @@ describe('SidebarNav', () => {
     );
 
     expect(screen.getByTestId('chat-completion-badge')).toBeInTheDocument();
-    expect(screen.getByLabelText('问股有新消息')).toBeInTheDocument();
+    expect(screen.getByLabelText('New Ask update')).toBeInTheDocument();
 
     completionBadgeState.value = false;
     rerender(
@@ -122,7 +123,7 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    const alertsLink = screen.getByRole('link', { name: '告警' });
+    const alertsLink = screen.getByRole('link', { name: 'Alarmlar' });
     expect(alertsLink).toHaveAttribute('href', '/alerts');
     expect(alertsLink).toHaveClass('font-medium');
   });
@@ -134,7 +135,7 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    const signalsLink = screen.getByRole('link', { name: 'AI 建议' });
+    const signalsLink = screen.getByRole('link', { name: 'AI Sinyalleri' });
     expect(signalsLink).toHaveAttribute('href', '/decision-signals');
     expect(signalsLink).toHaveClass('font-medium');
   });
@@ -146,10 +147,10 @@ describe('SidebarNav', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '退出' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Çıkış yap' }));
 
-    expect(await screen.findByRole('heading', { name: '退出登录' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '确认退出' }));
+    expect(await screen.findByRole('heading', { name: 'Oturumu kapat' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Çıkışı onayla' }));
     expect(mockLogout).toHaveBeenCalled();
   });
 });

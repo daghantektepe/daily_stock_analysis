@@ -62,8 +62,8 @@ describe('StockHistoryTrendDrawer', () => {
       />,
     );
 
-    expect(screen.getAllByText('回避').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText('买入')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Avoid').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('Buy')).not.toBeInTheDocument();
   });
 
   it('keeps full legacy operation advice when structured action is absent', () => {
@@ -100,7 +100,7 @@ describe('StockHistoryTrendDrawer', () => {
     );
 
     expect(screen.getAllByText('继续持有，等待突破').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText('持有')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hold')).not.toBeInTheDocument();
   });
 
   it('keeps multi-guard legacy advice as full text when structured action is absent', () => {
@@ -137,8 +137,8 @@ describe('StockHistoryTrendDrawer', () => {
     );
 
     expect(screen.getAllByText('risk alert, avoid buying').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText('回避')).not.toBeInTheDocument();
-    expect(screen.queryByText('预警')).not.toBeInTheDocument();
+    expect(screen.queryByText('Avoid')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alert')).not.toBeInTheDocument();
   });
 
   it('uses localized taxonomy labels before server labels in English UI mode', () => {

@@ -49,7 +49,8 @@ def _make_multi_era_prices(
 
 def test_research_v3_does_not_import_library_and_preserves_frozen_fingerprints() -> None:
     """Strict isolation invariant: research_v3 must never import library.py or alter PAA/Meta-A fingerprints."""
-    src_path = Path("src/quant/strategies/research_v3.py")
+    repo_root = Path(__file__).resolve().parents[1]
+    src_path = repo_root / "src" / "quant" / "strategies" / "research_v3.py"
     tree = ast.parse(src_path.read_text(encoding="utf-8"))
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and node.module:
@@ -59,7 +60,7 @@ def test_research_v3_does_not_import_library_and_preserves_frozen_fingerprints()
                 assert "library" not in alias.name
 
     # If a local forward_validation.json exists with frozen paa/meta_a, verify exact SHA-256 match
-    reg_path = Path("data/strategy_paper/forward_validation.json")
+    reg_path = repo_root / "data" / "strategy_paper" / "forward_validation.json"
     if reg_path.is_file():
         reg = json.loads(reg_path.read_text(encoding="utf-8"))
         strategies = reg.get("strategies") or {}

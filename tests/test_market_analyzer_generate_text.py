@@ -3616,7 +3616,8 @@ Index text.
         import ast
         import pathlib
 
-        src = pathlib.Path("src/market_analyzer.py").read_text(encoding="utf-8")
+        repo_root = pathlib.Path(__file__).resolve().parents[1]
+        src = (repo_root / "src" / "market_analyzer.py").read_text(encoding="utf-8")
         tree = ast.parse(src)
         forbidden = {
             "_model", "_router", "_use_openai", "_use_anthropic",  # historical

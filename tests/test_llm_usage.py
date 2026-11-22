@@ -1770,11 +1770,13 @@ class TestLLMUsageMigration(unittest.TestCase):
         DatabaseManager.reset_instance()
 
     def _create_legacy_usage_db(self, db_path: Path, telemetry_columns=()):
+        from contextlib import closing
+
         extra_columns = "".join(
             f",\n                        {column} {_LLM_USAGE_TELEMETRY_COLUMN_SQL[column]}"
             for column in telemetry_columns
         )
-        with sqlite3.connect(db_path) as conn:
+        with closing(sqlite3.connect(db_path)) as conn:
             conn.execute(
                 f"""
                 CREATE TABLE llm_usage (
@@ -1792,13 +1794,16 @@ class TestLLMUsageMigration(unittest.TestCase):
             conn.commit()
 
     def _usage_columns(self, db_path: Path):
-        with sqlite3.connect(db_path) as conn:
+        from contextlib import closing
+
+        with closing(sqlite3.connect(db_path)) as conn:
             return {
                 row[1]
                 for row in conn.execute("PRAGMA table_info(llm_usage)").fetchall()
             }
 
     def _assert_all_telemetry_columns(self, db_path: Path):
+        DatabaseManager.reset_instance()
         columns = self._usage_columns(db_path)
         missing = set(_LLM_USAGE_TELEMETRY_COLUMN_SQL) - columns
         self.assertFalse(missing, f"Missing telemetry columns: {sorted(missing)}")
@@ -1864,8 +1869,10 @@ class TestLLMUsageMigration(unittest.TestCase):
                     not race_fired["value"]
                     and self._is_add_column_statement(statement, "provider_usage_json")
                 ):
+                    from contextlib import closing
+
                     race_fired["value"] = True
-                    with sqlite3.connect(db_path) as conn:
+                    with closing(sqlite3.connect(db_path)) as conn:
                         conn.execute(
                             "ALTER TABLE llm_usage ADD COLUMN provider_usage_json TEXT"
                         )

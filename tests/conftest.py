@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import os
+from pathlib import Path
 import time
 import threading
 from collections.abc import Awaitable, Callable
@@ -16,6 +18,7 @@ from warnings import warn
 import anyio.to_thread
 import fastapi.testclient
 import httpx
+import pytest
 import starlette.testclient
 from anyio._backends import _asyncio
 
@@ -144,6 +147,8 @@ _asyncio.AsyncIOBackend.run_async_from_thread = classmethod(_run_async_from_thre
 class _ThreadlessTestClient:
     """Small TestClient replacement that avoids AnyIO's cross-thread portal."""
 
+    __test__ = False
+
     def __init__(
         self,
         app,
@@ -249,3 +254,15 @@ class _ThreadlessTestClient:
 
 fastapi.testclient.TestClient = _ThreadlessTestClient
 starlette.testclient.TestClient = _ThreadlessTestClient
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _ensure_repo_cwd():
+    if Path.cwd() != _REPO_ROOT:
+        os.chdir(_REPO_ROOT)
+    yield
+    if Path.cwd() != _REPO_ROOT:
+        os.chdir(_REPO_ROOT)
+

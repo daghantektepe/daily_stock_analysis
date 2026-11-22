@@ -18,13 +18,13 @@ describe('RunFlowNodeDetails', () => {
     render(<RunFlowNodeDetails node={node} />);
 
     expect(screen.getByText('任务队列')).toBeInTheDocument();
-    expect(screen.getByText('类型')).toBeInTheDocument();
-    expect(screen.getByText('队列')).toBeInTheDocument();
-    expect(screen.getByText('开始时间')).toBeInTheDocument();
-    expect(screen.queryByText('提供方')).not.toBeInTheDocument();
-    expect(screen.queryByText('耗时')).not.toBeInTheDocument();
-    expect(screen.queryByText('尝试次数')).not.toBeInTheDocument();
-    expect(screen.queryByText('记录数')).not.toBeInTheDocument();
+    expect(screen.getByText('Kind')).toBeInTheDocument();
+    expect(screen.getByText('Queue')).toBeInTheDocument();
+    expect(screen.getByText('Started')).toBeInTheDocument();
+    expect(screen.queryByText('Provider')).not.toBeInTheDocument();
+    expect(screen.queryByText('Duration')).not.toBeInTheDocument();
+    expect(screen.queryByText('Attempts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Records')).not.toBeInTheDocument();
   });
 
   it('renders ContextPack quality metadata as structured details instead of raw JSON', () => {
@@ -63,18 +63,18 @@ describe('RunFlowNodeDetails', () => {
 
     render(<RunFlowNodeDetails node={node} />);
 
-    expect(screen.getByText('上下文质量')).toBeInTheDocument();
-    expect(screen.getByText('综合评分')).toBeInTheDocument();
+    expect(screen.getByText('Context quality')).toBeInTheDocument();
+    expect(screen.getByText('Overall score')).toBeInTheDocument();
     expect(screen.getByText('91')).toBeInTheDocument();
-    expect(screen.getByText('数据块评分')).toBeInTheDocument();
+    expect(screen.getByText('Block scores')).toBeInTheDocument();
     expect(screen.getByText('news')).toBeInTheDocument();
     expect(screen.getByText('35')).toBeInTheDocument();
-    expect(screen.getByText('版本')).toBeInTheDocument();
+    expect(screen.getByText('Version')).toBeInTheDocument();
     expect(screen.getByText('1.0')).toBeInTheDocument();
-    expect(screen.queryByText('提供方')).not.toBeInTheDocument();
-    expect(screen.queryByText('耗时')).not.toBeInTheDocument();
-    expect(screen.queryByText('尝试次数')).not.toBeInTheDocument();
-    expect(screen.queryByText('记录数')).not.toBeInTheDocument();
+    expect(screen.queryByText('Provider')).not.toBeInTheDocument();
+    expect(screen.queryByText('Duration')).not.toBeInTheDocument();
+    expect(screen.queryByText('Attempts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Records')).not.toBeInTheDocument();
     expect(screen.queryByText('counts')).not.toBeInTheDocument();
     expect(screen.queryByText('dataQuality')).not.toBeInTheDocument();
     expect(screen.queryByText('context_status_counts')).not.toBeInTheDocument();
@@ -96,13 +96,13 @@ describe('RunFlowNodeDetails', () => {
 
     render(<RunFlowNodeDetails node={node} />);
 
-    expect(screen.getByText('提供方')).toBeInTheDocument();
+    expect(screen.getByText('Provider')).toBeInTheDocument();
     expect(screen.getByText('TushareFetcher -> AkshareFetcher')).toBeInTheDocument();
-    expect(screen.getByText('耗时')).toBeInTheDocument();
+    expect(screen.getByText('Duration')).toBeInTheDocument();
     expect(screen.getByText('750 ms')).toBeInTheDocument();
-    expect(screen.getByText('尝试次数')).toBeInTheDocument();
+    expect(screen.getByText('Attempts')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('记录数')).toBeInTheDocument();
+    expect(screen.getByText('Records')).toBeInTheDocument();
     expect(screen.getByText('39')).toBeInTheDocument();
   });
 });

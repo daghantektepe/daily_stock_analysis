@@ -664,12 +664,12 @@ class RuntimeSchedulerServiceTestCase(unittest.TestCase):
             app = create_app(static_dir=Path(temp_dir))
             with TestClient(app):
                 pass
+            self.assertIsNone(os.getenv(RUNTIME_SCHEDULER_SUPPRESS_START_ENV))
 
         self.assertEqual(events, [
             ("init", True, False, True),
             ("stop",),
         ])
-        self.assertIsNone(os.getenv(RUNTIME_SCHEDULER_SUPPRESS_START_ENV))
 
     def test_lifespan_passes_runtime_scheduler_args_overrides(self) -> None:
         from api.app import create_app
