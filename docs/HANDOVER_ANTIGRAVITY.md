@@ -90,6 +90,8 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 - **Kök neden:** Değerlendirici fiyatı yalnızca yerel veritabanından okuyordu. Bir kez analiz edilen hissenin sonraki kapanışları hiç kaydedilmediği için kontroller sonsuza kadar sonuçsuz kalıyordu. Rapor da "değerlendirilemedi" durumunu "bekliyor" diye gösteriyordu.
 - **Düzeltme:** `evaluate_signal_outcomes()` eksik kapanışları veri sağlayıcısından tamamlıyor; rapor nedenleri ayrı gösteriyor.
 - **Sonraki adım:** Kullanıcı `paper_trading_report.py`'yi yeniden çalıştırıp gerçek isabeti bu nota eklemeli.
+- **Düzeltme sonrası E:\\ çıktısı:** 160 kontrol = 40 sinyal. 30 sinyal "izle" (120 kontrol), yani yönsüz ve puanlanamaz. 10 yönlü sinyalden 9'u ileri kapanış bekliyor (36), 1'inin sinyal günü fiyatı yok (4). Bulgu: yapay zekâ çoğunlukla yön vermiyor. Ayrıntı için kullanıcıdan `paper_trading_report.py --details` çıktısı istendi.
+- **Kontrol edilmesi gerekenler:** Sinyal günü fiyatı olmayan sinyal hafta sonu ya da tatil gününe mi bağlı? Eğer öyleyse anchor kuralı upstream'de bilinçli olarak "tam gün" seçilmiş; değiştirmeden önce upstream sözleşmesini (`get_daily_on_date`) değerlendirin. Bekleyen 9 sinyal gerçekten son günlerden mi?
 - **`İşlem: 0` neden:** Sinyallerden sanal işlem açılması isteğe bağlı (`PAPER_TRADING_ENABLED=false` varsayılan).
 
 ### P1 — Al/sat sinyallerinin değerini kanıtla ya da göster

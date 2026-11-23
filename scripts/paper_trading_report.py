@@ -27,6 +27,11 @@ def main() -> int:
     parser.add_argument("--no-outcomes", action="store_true", help="skip DecisionSignal outcome evaluation and stats")
     parser.add_argument("--market", default=None, help="optional market filter for signal outcomes (e.g. tr)")
     parser.add_argument(
+        "--details",
+        action="store_true",
+        help="list every directional signal with its signal day, stored closes and per-horizon status",
+    )
+    parser.add_argument(
         "--weekly-if-due",
         action="store_true",
         help="only send when it is Friday after market close in Istanbul and not yet sent this ISO week",
@@ -48,6 +53,11 @@ def main() -> int:
     summary = PaperTradingService().get_summary(include_benchmarks=not args.no_benchmark)
     text = format_paper_trading_report(summary, outcome_stats=outcomes)
     print(text)
+    if args.details:
+        from src.services.paper_trading_benchmark import describe_signal_outcome_details
+
+        print("\n🔎 Sinyal ayrıntısı")
+        print("\n".join(describe_signal_outcome_details(market=args.market)))
     if args.notify:
         from src.notification import NotificationService
 

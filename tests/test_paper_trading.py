@@ -670,3 +670,24 @@ def test_low_sample_hit_rate_is_flagged() -> None:
     text = "\n".join(lines)
     assert "yönlü sonuç sayısı 6 (< 30)" in text
     assert "3 ileri kapanış bekliyor" in text and "1 değerlendirilemedi (yönsüz sinyal (izle) 1)" in text
+
+
+def test_signal_details_show_action_mix_weekday_and_stored_closes(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import describe_signal_outcome_details, evaluate_signal_outcomes
+
+    _add_signal(db, "ASELS.IS", "2026-11-03", action="buy")
+    _add_signal(db, "THYAO.IS", "2026-11-03", action="watch")
+    _add_signal(db, "THYAO.IS", "2026-11-08", action="sell")  # a Sunday: no close can exist that day
+    for offset in range(0, 4):
+        _add_close(db, "ASELS.IS", date(2026, 11, 3) + timedelta(days=offset), 100.0 + 3.0 * offset)
+    evaluate_signal_outcomes(market="tr", db_manager=db, refill_missing_bars=False)
+
+    lines = describe_signal_outcome_details(market="tr", db_manager=db)
+    text = "\n".join(lines)
+    assert lines[0].startswith("Sinyal dağılımı:") and "izle 1" in lines[0] and "al 1" in lines[0]
+    assert "ASELS.IS al · sinyal günü 2026-11-03 (Sal) · o günün fiyatı var · ileri kapanış 3/10" in text
+    assert "1d isabet" in text and "10d ileri kapanış bekleniyor" in text
+    assert "THYAO.IS sat · sinyal günü 2026-11-08 (Paz) · o günün fiyatı YOK" in text
+    assert "THYAO.IS izle" not in text  # non-directional signals are only counted

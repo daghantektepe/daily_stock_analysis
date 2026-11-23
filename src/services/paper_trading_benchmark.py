@@ -41,6 +41,8 @@ _ACTION_LABELS_TR = {
     "reduce": "azalt",
     "sell": "sat",
     "avoid": "uzak dur",
+    "watch": "izle",
+    "alert": "uyarı",
 }
 
 # market -> benchmark index and USD rate (quote currency per 1 USD).
@@ -325,6 +327,77 @@ def _signal_outcome_status_line(outcomes: Dict[str, Any]) -> Optional[str]:
         detail = ", ".join(f"{label} {count}" for label, count in sorted(blocked.items(), key=lambda kv: -kv[1]))
         parts.append(f"{sum(blocked.values())} değerlendirilemedi ({detail})")
     return "Sonuçlanmayan kontroller: " + " · ".join(parts)
+
+
+_WEEKDAYS_TR = ("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
+
+
+def describe_signal_outcome_details(
+    *,
+    market: Optional[str] = None,
+    db_manager: Optional[Any] = None,
+    limit: int = 50,
+) -> List[str]:
+    """Read-only per-signal diagnosis: why each directional signal is (not yet) scored.
+
+    Shows the action mix of all signals, then for every directional signal its
+    signal day (with weekday, to spot weekend/holiday anchors), whether that day's
+    close and how many forward closes are stored, the latest stored close and the
+    status of each horizon.
+    """
+    try:
+        from collections import Counter
+        from datetime import date as _date
+
+        from src.services.decision_signal_outcome_service import (
+            DECISION_SIGNAL_OUTCOME_ENGINE_VERSION,
+            DEFAULT_STATS_STATUSES,
+            SUPPORTED_OUTCOME_HORIZONS,
+            DecisionSignalOutcomeService,
+        )
+
+        service = DecisionSignalOutcomeService(db_manager=db_manager)
+        signals = service.repo.list_candidate_signals(
+            market=market, statuses=list(DEFAULT_STATS_STATUSES), limit=max(1, min(int(limit), 500))
+        )
+    except Exception as exc:  # noqa: BLE001 - diagnostics only
+        return [f"Ayrıntı okunamadı: {exc}"]
+    if not signals:
+        return ["Kayıtlı sinyal yok."]
+
+    mix = Counter(_ACTION_LABELS_TR.get(str(sig.action), str(sig.action)) for sig in signals)
+    lines = ["Sinyal dağılımı: " + ", ".join(f"{label} {count}" for label, count in mix.most_common())]
+    status_tr = {"hit": "isabet", "miss": "ıska", "neutral": "nötr"}
+    for sig in signals:
+        if service._direction_for_action(sig.action) is None:
+            continue
+        anchor = service._anchor_date(sig)
+        if anchor is None:
+            lines.append(f"- #{sig.id} {sig.stock_code} {sig.action}: sinyal tarihi yok")
+            continue
+        has_anchor = service.stock_repo.get_daily_on_date(code=sig.stock_code, target_date=anchor) is not None
+        forward = service.stock_repo.get_forward_bars(code=sig.stock_code, analysis_date=anchor, eval_window_days=10)
+        latest = service.stock_repo.get_start_daily(code=sig.stock_code, analysis_date=_date.today())
+        horizon_parts = []
+        for horizon in SUPPORTED_OUTCOME_HORIZONS:
+            row = service.repo.get_outcome(
+                signal_id=sig.id, horizon=horizon, engine_version=DECISION_SIGNAL_OUTCOME_ENGINE_VERSION
+            )
+            if row is None:
+                horizon_parts.append(f"{horizon} kayıt yok")
+            elif row.eval_status == "completed":
+                horizon_parts.append(f"{horizon} {status_tr.get(str(row.outcome), row.outcome)}")
+            else:
+                reason = _UNABLE_REASON_LABELS_TR.get(str(row.unable_reason), str(row.unable_reason))
+                horizon_parts.append(f"{horizon} {reason}")
+        lines.append(
+            f"- #{sig.id} {sig.stock_code} {_ACTION_LABELS_TR.get(str(sig.action), sig.action)} · "
+            f"sinyal günü {anchor.isoformat()} ({_WEEKDAYS_TR[anchor.weekday()]}) · "
+            f"o günün fiyatı {'var' if has_anchor else 'YOK'} · ileri kapanış {len(forward)}/10 · "
+            f"son kayıtlı kapanış {latest.date.isoformat() if latest is not None else 'yok'} · "
+            + ", ".join(horizon_parts)
+        )
+    return lines
 
 
 def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
