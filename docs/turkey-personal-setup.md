@@ -477,11 +477,14 @@ TL getirisi lira değer kaybını da içerir. 2022–2026'da USD/TRY yaklaşık 
   - Web turnuva tablosu: BIST satırlarında CAGR, BIL üstü Sharpe, MaxDD ve Recovery dolar bazındadır; TL CAGR altta küçük yazılır. Tablonun altında kur ve XU100 TL/USD karşılaştırması bulunur.
   - Rapor: `docs/STRATEGY_TOURNAMENT_REPORT.md` içinde "Gerçek Dolar (USD) Karşılığı" bölümü, yıllara göre dolar getirileriyle.
   - MCP: `dsa_get_strategy_tournament` aracındaki `usd_*` alanları.
-- **Güncelleme:** Turnuvayı web arayüzünden yenile ya da şunu çalıştır:
+- **Güncelleme:** Turnuvayı web arayüzünden yenile ya da şunu çalıştır (rapor varsayılan olarak `data/reports/` altına yazılır; izlenen `docs/` raporunu güncellemek için `--publish` ekle):
 
 ```bash
 python scripts/run_strategy_tournament.py
+python scripts/run_strategy_tournament.py --publish   # yalnızca docs/ dosyasını güncellemek istediğinde
 ```
+
+> Not: `run_strategy_research_v3.py` ve `run_strategy_research_v4.py` da varsayılan olarak `data/reports/` altına yazar; `git pull` çakışmasını önlemek için `docs/` dosyaları yalnızca `--publish` bayrağıyla güncellenir.
 
 ### 7.5 AI Konseyi v2: tüzükleri yeniden değerlendir
 

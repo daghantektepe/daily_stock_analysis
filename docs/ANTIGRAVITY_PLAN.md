@@ -197,13 +197,13 @@ Bunlar ancak belirtilen koşul sağlanınca başlar:
 | :--- | :--- | :--- | :--- |
 | G0.1–G0.7 Başlangıç ölçümü | ✅ | `3887fd4` | `2026-11-23` gerçek E:\ ölçümü `HANDOVER_ANTIGRAVITY.md` §7'ye işlendi; tüm komutlar exit 0 |
 | G1.1 Endekse göre sinyal başarısı | ✅ | `abadf17` | `evaluate_signal_outcomes(history_provider=...)`, 10g `XU100.IS`/`SPY` kıyası, bootstrap %90 GA (`n>=30`), bilinmeyen pazar `endeks yok`, 30/30 test geçti |
-| G1.2 Sinyal görünürlüğü | ✅ | (sonraki commit) | `SimpleBriefResponse.signal_accuracy` (eklemeli), `/simple` dürüst veri durumu (`veri yok` / `n/30` / `%X`), 3 satırlık bildirim & Vitest/build yeşil |
-| G1.3 "İzle" oranı | ✅ | (sonraki commit) | `evaluate_weekly_watch_ratio()` + haftalık rapor `"Bu hafta: N sinyal, %Y'si izle"` + 4 hafta >%70 prompt onay uyarısı (`weekly_report_state.json`) |
-| G2.1 Raporlar `data/reports`'a | ⏳ | — | |
-| G2.2 Ortama bağlı testler | ⏳ | — | |
-| G2.3 Rapor gürültüsü | ⏳ | — | |
-| G2.4 Küçük temizlikler | ⏳ | — | |
-| G2.5 v4 kartı | ⏳ | — | |
+| G1.2 Sinyal görünürlüğü | ✅ | `15f0151` | `SimpleBriefResponse.signal_accuracy` (eklemeli), `/simple` dürüst veri durumu (`veri yok` / `n/30` / `%X`), 3 satırlık bildirim & Vitest/build yeşil |
+| G1.3 "İzle" oranı | ✅ | `15f0151` | `evaluate_weekly_watch_ratio()` + haftalık rapor `"Bu hafta: N sinyal, %Y'si izle"` + 4 hafta >%70 prompt onay uyarısı (`weekly_report_state.json`) |
+| G2.1 Raporlar `data/reports`'a | ✅ | (sonraki commit) | 3 rapor betiği varsayılan olarak `data/reports/` altına yazar; `docs/` yalnızca `--publish` ile güncellenir, `turkey-personal-setup.md` güncellendi |
+| G2.2 Ortama bağlı testler | ✅ | (sonraki commit) | `test_report_schema.py` (TR dil izolasyonu) & `test_intelligence_service.py` (tam `ENV_FILE`/env snapshot izolasyonu) ortamdan bağımsız |
+| G2.3 Rapor gürültüsü | ✅ | (sonraki commit) | `paper_trading_report.py` varsayılan sessiz çıktı (`--verbose` ile tam log); 588200 / Çin hisseleri tercihi kullanıcıya soruluyor |
+| G2.4 Küçük temizlikler | ✅ | (sonraki commit) | `asdict` ve `US_ETF_SAFE_ASSETS` kaldırıldı; `run_strategy_tournament.py` çıktısı `BIL üstü Sharpe` gösteriyor |
+| G2.5 v4 kartı | ✅ | (sonraki commit) | `GET /api/v1/alpha/research-v4` (`ok=false` dosya yoksa) + `TournamentTabPanel` kompakt v4 short testi kartı + backend/frontend testler |
 | G3.1 Kayma ölçümü (aylık) | ⏳ | — | İlk: Aralık başı |
 | G3.2 Kontrol noktaları | ⏳ | — | 21 Ara, 6 Oca, 19 Şub, 2 Nis |
 | G3.4 Kapı kararı | ⏳ | — | 14 Mayıs 2027 |

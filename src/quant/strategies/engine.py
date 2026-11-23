@@ -11,7 +11,7 @@ exactly 1 trading bar (``weights.shift(1)``) before multiplying against day
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np

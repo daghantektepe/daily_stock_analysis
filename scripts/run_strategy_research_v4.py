@@ -23,16 +23,29 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
+DEFAULT_LOCAL_RESEARCH_V4_REPORT = Path("data") / "reports" / "STRATEGY_RESEARCH_V4_REPORT.md"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Strategy Research v4: long/short (inverse ETF) vs long-only control")
     parser.add_argument("--refresh", action="store_true", help="re-download 2007+ prices")
     parser.add_argument("--no-plateau", action="store_true", help="skip the ±20%% parameter plateau grid")
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="write Markdown report to tracked docs/STRATEGY_RESEARCH_V4_REPORT.md (default writes data/reports/)",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
     from src.quant.research_v4_lab import DEFAULT_RESEARCH_V4_REPORT, run_strategy_research_v4
 
-    payload = run_strategy_research_v4(force_refresh=bool(args.refresh), run_plateau=not bool(args.no_plateau))
+    report_target = DEFAULT_RESEARCH_V4_REPORT if args.publish else DEFAULT_LOCAL_RESEARCH_V4_REPORT
+    payload = run_strategy_research_v4(
+        force_refresh=bool(args.refresh),
+        run_plateau=not bool(args.no_plateau),
+        report_path=report_target,
+    )
     cmp_ = payload["short_vs_control"]
     ls, ctrl = cmp_["long_short"], cmp_["long_only_control"]
     print("=== Strateji Araştırması v4: Short (ters ETF) değer katıyor mu? ===")
@@ -47,7 +60,7 @@ def main() -> int:
         f"Long-Only  : BIL üstü Sharpe {ctrl['excess_sharpe_5bps']:+.2f} (25 bps {ctrl['excess_sharpe_25bps']:+.2f}) "
         f"| 2008 {ctrl['return_2008_pct']:+.1f}% | 2022 {ctrl['return_2022_pct']:+.1f}%"
     )
-    print(f"Rapor: {DEFAULT_RESEARCH_V4_REPORT}")
+    print(f"Rapor: {report_target}")
     return 0
 
 

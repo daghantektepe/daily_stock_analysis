@@ -150,3 +150,45 @@ def test_lab_runs_offline_and_writes_report(tmp_path: Path) -> None:
         json_path=tmp_path / "v4b.json", report_path=tmp_path / "v4b.md", write_report=False,
     )
     assert not (tmp_path / "v4b.md").exists()
+
+
+def test_report_scripts_default_to_data_reports_without_touching_docs(monkeypatch, tmp_path, capsys) -> None:
+    import sys
+    import scripts.run_strategy_research_v3 as s_v3
+    import scripts.run_strategy_research_v4 as s_v4
+    import scripts.run_strategy_tournament as s_t
+
+    assert str(s_t.DEFAULT_LOCAL_TOURNAMENT_REPORT).replace("\\", "/") == "data/reports/STRATEGY_TOURNAMENT_REPORT.md"
+    assert str(s_v3.DEFAULT_LOCAL_RESEARCH_V3_REPORT).replace("\\", "/") == "data/reports/STRATEGY_RESEARCH_V3_REPORT.md"
+    assert str(s_v4.DEFAULT_LOCAL_RESEARCH_V4_REPORT).replace("\\", "/") == "data/reports/STRATEGY_RESEARCH_V4_REPORT.md"
+
+    local_t = tmp_path / "data" / "reports" / "STRATEGY_TOURNAMENT_REPORT.md"
+    monkeypatch.setattr(s_t, "DEFAULT_LOCAL_TOURNAMENT_REPORT", local_t)
+    called_write = []
+
+    def fake_tournament(**kwargs):
+        called_write.append(kwargs.get("write_report"))
+        return {
+            "total_strategies": 1,
+            "total_assets": 1,
+            "total_asset_days": 10,
+            "oos_start": "2022-01-01",
+            "latest_date": "2026-11-20",
+            "pass_elite_count": 1,
+            "pass_solid_count": 0,
+            "champion": {
+                "name": "Test Champ",
+                "oos": {"cagr_pct": 6.0, "sharpe": 0.9, "excess_sharpe": 0.72, "max_drawdown_pct": -5.0, "dsr_pct": 95.0},
+                "signal_summary": "BIL %100",
+            },
+            "strategies": [],
+        }
+
+    monkeypatch.setattr(s_t, "run_tournament", fake_tournament)
+    monkeypatch.setattr(s_t, "format_tournament_markdown", lambda _p: "# report\n")
+    monkeypatch.setattr(sys, "argv", ["run_strategy_tournament.py"])
+    assert s_t.main() == 0
+    out = capsys.readouterr().out
+    assert "BIL üstü Sharpe +0.72" in out
+    assert called_write == [False]
+    assert local_t.is_file()

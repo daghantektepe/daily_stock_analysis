@@ -34,6 +34,7 @@ from api.v1.schemas.alpha import (
     QuantPaperBooksResponse,
     QuantPaperStepRequest,
     QuantTearsheetResponse,
+    ResearchV4SummaryResponse,
     SimpleBriefResponse,
     TournamentResponse,
     TournamentRunRequest,
@@ -560,3 +561,29 @@ def get_quant_tearsheet(
 
     data = build_quant_tearsheet(strategy, mode=mode)
     return QuantTearsheetResponse(**data)
+
+
+@router.get("/research-v4", response_model=ResearchV4SummaryResponse)
+def get_research_v4_summary() -> ResearchV4SummaryResponse:
+    """Read-only summary of Strategy Research v4 (inverse-ETF short vs long-only control)."""
+    import json
+    from pathlib import Path
+    from src.quant.research_v4_lab import DEFAULT_RESEARCH_V4_JSON
+
+    target = Path(DEFAULT_RESEARCH_V4_JSON)
+    if not target.is_file():
+        return ResearchV4SummaryResponse(ok=False, error="Araştırma v4 verisi henüz üretilmedi.")
+    try:
+        raw = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        logger.warning("[alpha] failed to read research_v4_latest.json: %s", exc)
+        return ResearchV4SummaryResponse(ok=False, error="Araştırma v4 verisi okunamadı.")
+    if not isinstance(raw, dict) or not raw.get("short_vs_control"):
+        return ResearchV4SummaryResponse(ok=False, error="Araştırma v4 özeti eksik.")
+    return ResearchV4SummaryResponse(
+        ok=True,
+        generated_at=raw.get("generated_at"),
+        data_start=raw.get("data_start"),
+        data_end=raw.get("data_end"),
+        short_vs_control=raw.get("short_vs_control"),
+    )

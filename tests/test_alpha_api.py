@@ -178,3 +178,40 @@ def test_alpha_overview_and_screens(monkeypatch) -> None:
     kap_res = client.get("/api/v1/alpha/kap-contracts")
     assert kap_res.status_code == 200
     assert kap_res.json()["items"][0]["symbol"] == "ASELS.IS"
+
+
+def test_research_v4_endpoint_handles_missing_and_present_json(monkeypatch, tmp_path) -> None:
+    import json
+    from src.quant import research_v4_lab
+
+    client = TestClient(_make_app())
+    missing_file = tmp_path / "missing_v4.json"
+    monkeypatch.setattr(research_v4_lab, "DEFAULT_RESEARCH_V4_JSON", missing_file)
+
+    r_missing = client.get("/api/v1/alpha/research-v4")
+    assert r_missing.status_code == 200
+    assert r_missing.json()["ok"] is False
+
+    present_file = tmp_path / "research_v4_latest.json"
+    present_file.write_text(
+        json.dumps({
+            "generated_at": "2026-11-23T12:00:00+00:00",
+            "data_start": "2008-01-01",
+            "data_end": "2026-11-20",
+            "short_vs_control": {
+                "long_short": {"excess_sharpe_5bps": 0.51, "return_2008_pct": 17.4},
+                "long_only_control": {"excess_sharpe_5bps": 0.68, "return_2008_pct": 11.3},
+                "short_adds_value": False,
+                "reasons": ["5 bps fark -0.17"],
+            },
+        }),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(research_v4_lab, "DEFAULT_RESEARCH_V4_JSON", present_file)
+    r_ok = client.get("/api/v1/alpha/research-v4")
+    assert r_ok.status_code == 200
+    body = r_ok.json()
+    assert body["ok"] is True
+    assert body["short_vs_control"]["short_adds_value"] is False
+    assert body["short_vs_control"]["long_short"]["excess_sharpe_5bps"] == 0.51
+    assert body["short_vs_control"]["long_only_control"]["excess_sharpe_5bps"] == 0.68

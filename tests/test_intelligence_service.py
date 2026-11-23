@@ -49,12 +49,27 @@ NEWSNOW_FIXTURE = {
 
 
 class IntelligenceServiceTestCase(unittest.TestCase):
+    _ENV_KEYS = (
+        "ENV_FILE",
+        "DATABASE_PATH",
+        "NEWS_INTEL_RETENTION_DAYS",
+        "NEWS_INTEL_MAX_ITEMS_PER_SOURCE",
+        "NEWS_INTEL_FETCH_TIMEOUT_SEC",
+        "NEWS_INTEL_AUTO_FETCH_ENABLED",
+    )
+
     def setUp(self) -> None:
         self._temp_dir = tempfile.TemporaryDirectory()
+        self._saved_env = {key: os.environ.get(key) for key in self._ENV_KEYS}
+        empty_env = os.path.join(self._temp_dir.name, ".env")
+        with open(empty_env, "w", encoding="utf-8"):
+            pass
+        os.environ["ENV_FILE"] = empty_env
         os.environ["DATABASE_PATH"] = os.path.join(self._temp_dir.name, "intelligence.db")
         os.environ["NEWS_INTEL_RETENTION_DAYS"] = "30"
         os.environ["NEWS_INTEL_MAX_ITEMS_PER_SOURCE"] = "50"
         os.environ["NEWS_INTEL_FETCH_TIMEOUT_SEC"] = "3"
+        os.environ["NEWS_INTEL_AUTO_FETCH_ENABLED"] = "false"
         Config._instance = None
         DatabaseManager.reset_instance()
         IntelligenceService.reset_auto_fetch_state()
@@ -94,14 +109,12 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         DatabaseManager.reset_instance()
         Config._instance = None
         IntelligenceService.reset_auto_fetch_state()
-        for key in [
-            "DATABASE_PATH",
-            "NEWS_INTEL_RETENTION_DAYS",
-            "NEWS_INTEL_MAX_ITEMS_PER_SOURCE",
-            "NEWS_INTEL_FETCH_TIMEOUT_SEC",
-            "NEWS_INTEL_AUTO_FETCH_ENABLED",
-        ]:
-            os.environ.pop(key, None)
+        for key in self._ENV_KEYS:
+            old = self._saved_env.get(key)
+            if old is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = old
         self._temp_dir.cleanup()
 
     def _mock_response(self, source_url: str = "https://feeds.example.com/rss.xml"):

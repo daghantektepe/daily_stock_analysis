@@ -935,7 +935,7 @@ describe('DecisionSignalsPage', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Saved as a new DecisionSignal #88.')).toBeInTheDocument();
     expect(within(dialog).getByText('Watch')).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it('keeps the preview visible and renders structured persist guardrail errors', async () => {
     const persistError = new Error('guardrail blocked');

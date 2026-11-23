@@ -28,9 +28,12 @@ def test_v3_trp_is_a_default_strategy() -> None:
     assert normalize_quant_paper_strategies(["all"]) == ["paa", "meta_a", "v3_trp"]
 
 
-def test_config_default_includes_v3_trp(monkeypatch) -> None:
+def test_config_default_includes_v3_trp(monkeypatch, tmp_path: Path) -> None:
     from src.config import Config
 
+    env_file = tmp_path / ".env"
+    env_file.write_text("", encoding="utf-8")
+    monkeypatch.setenv("ENV_FILE", str(env_file))
     monkeypatch.delenv("QUANT_PAPER_STRATEGIES", raising=False)
     Config.reset_instance()
     try:

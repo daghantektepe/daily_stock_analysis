@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] Faz 2 G2.1–G2.5 可靠性与技术债清理：`scripts/run_strategy_tournament.py`、`run_strategy_research_v3.py` 与 `run_strategy_research_v4.py` 默认将报告写至未跟踪的 `data/reports/*.md`，仅传入 `--publish` 时才更新 `docs/` 报告并同步更新 `docs/turkey-personal-setup.md`；`tests/test_report_schema.py` 与 `tests/test_intelligence_service.py` 彻底隔离 `.env` 与并发环境变量依赖；`scripts/paper_trading_report.py` 默认静默第三方行情噪声日志与资源警告（保留 `--verbose`）；清理 `src/quant/strategies/engine.py`（`asdict`）与 `src/quant/tournament.py`（`US_ETF_SAFE_ASSETS`）未使用导入并让锦标赛脚本展示 BIL 超额 Sharpe；新增只读接口 `GET /api/v1/alpha/research-v4` 与锦标赛页签「Short testi (ters ETF)」精简结果卡
 - [新功能] G1.2 / G1.3 `GET /api/v1/alpha/simple-brief` 与 `/simple`（`SimpleInvestorHomePage.tsx`）新增增量可选字段 `signal_accuracy`（样本 `<30` 诚实提示测量进度 `n/30`，无数据时明确标注「veri yok」，`≥30` 展示近 N 条买卖信号 10 日跑赢大盘比率；`format_simple_morning_summary` 保持 3 行不破坏现有合约）；周报及 `paper_trading_report.py` 新增 G1.3 本周「izle（观望）」信号占比统计及连续 4 周超过 70% 时提醒须经用户确认方可调整提示词
 - [改进] G1.1 `evaluate_signal_outcomes()` 新增 10 日方向性信号相对大盘基准（`tr` → `XU100.IS`、`us` → `SPY`，未配置基准的市场如 `cn` 诚实提示「endeks yok」）的超额收益对比，支持可注入 `history_provider` 与单日重复信号去重，样本 `n ≥ 30` 时通过确定性自助法（bootstrap）输出 %90 置信区间，`n < 30` 标注「örnek yetersiz」；单测通过 `_offline_signal_outcome_bar_refill` 保持离线（`tests/test_paper_trading.py` 新增 3 项验证，不改动上游 Web 决策信号统计口径）
 - [文档] 新增 `docs/ANTIGRAVITY_PLAN.md`：按阶段（基线测量、信号相对指数评估、可靠性/技术债、前向验证期检查点与滑点测量、条件性工作）列出任务、涉及文件、验收标准、时间表（前向验证最早于 2027-05-14 结束）及交接启动提示

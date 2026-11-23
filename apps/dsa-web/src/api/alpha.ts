@@ -624,6 +624,13 @@ export const alphaApi = {
     });
     return res.data;
   },
+
+  async getResearchV4Summary(): Promise<ResearchV4SummaryResponse> {
+    const res = await apiClient.get<ResearchV4SummaryResponse>('/api/v1/alpha/research-v4', {
+      timeout: 15000,
+    });
+    return res.data;
+  },
 };
 
 export interface SimpleWeatherSummary {
@@ -756,4 +763,31 @@ export interface QuantTearsheetResponse {
   monthly_matrix: TearsheetMonthlyRow[];
   underwater: TearsheetUnderwaterPoint[];
   currency_comparison?: TearsheetCurrencyComparison | null;
+}
+
+export interface ResearchV4ArmSummary {
+  excess_sharpe_5bps?: number | null;
+  excess_sharpe_25bps?: number | null;
+  cagr_pct?: number | null;
+  max_drawdown_pct?: number | null;
+  return_2008_pct?: number | null;
+  return_2022_pct?: number | null;
+}
+
+export interface ResearchV4ShortVsControl {
+  long_short: ResearchV4ArmSummary;
+  long_only_control: ResearchV4ArmSummary;
+  excess_sharpe_edge_5bps?: number | null;
+  excess_sharpe_edge_25bps?: number | null;
+  short_adds_value: boolean;
+  reasons: string[];
+}
+
+export interface ResearchV4SummaryResponse {
+  ok: boolean;
+  error?: string | null;
+  generated_at?: string | null;
+  data_start?: string | null;
+  data_end?: string | null;
+  short_vs_control?: ResearchV4ShortVsControl | null;
 }

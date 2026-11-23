@@ -1018,7 +1018,7 @@ time.sleep(30)
     while time.time() < deadline:
         try:
             os.kill(child_pid, 0)
-        except OSError:
+        except (OSError, SystemError):
             break
         time.sleep(0.05)
     else:
@@ -1083,7 +1083,7 @@ time.sleep(30)
     while time.time() < deadline:
         try:
             os.kill(child_pid, 0)
-        except OSError:
+        except (OSError, SystemError):
             break
         time.sleep(0.05)
     else:
@@ -1375,7 +1375,7 @@ time.sleep(30)
     while time.time() < deadline:
         try:
             os.kill(child_pid, 0)
-        except OSError:
+        except (OSError, SystemError):
             break
         time.sleep(0.05)
     else:

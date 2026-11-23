@@ -6,6 +6,7 @@ import {
   type ForwardValidationItem,
   type PaaSignalResponse,
   type QuantPaperBookItem,
+  type ResearchV4SummaryResponse,
   type TournamentResponse,
 } from '../../api/alpha';
 import { getParsedApiError, type ParsedApiError } from '../../api/error';
@@ -23,6 +24,7 @@ export const TournamentTabPanel: React.FC = () => {
   const [paperBooks, setPaperBooks] = useState<QuantPaperBookItem[]>([]);
   const [forwardItems, setForwardItems] = useState<ForwardValidationItem[]>([]);
   const [forwardError, setForwardError] = useState<string | null>(null);
+  const [researchV4, setResearchV4] = useState<ResearchV4SummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [steppingPaper, setSteppingPaper] = useState(false);
@@ -32,11 +34,12 @@ export const TournamentTabPanel: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [tData, paaData, paperData, forwardData] = await Promise.all([
+      const [tData, paaData, paperData, forwardData, v4Data] = await Promise.all([
         alphaApi.getTournament(true),
         alphaApi.getPaaSignal(false).catch(() => null),
         alphaApi.getQuantPaperBooks(true).catch(() => null),
         alphaApi.getForwardValidation().catch(() => null),
+        alphaApi.getResearchV4Summary().catch(() => null),
       ]);
       setTournament(tData);
       if (paaData) setPaa(paaData);
@@ -45,6 +48,7 @@ export const TournamentTabPanel: React.FC = () => {
         setForwardItems(Array.isArray(forwardData.items) ? forwardData.items : []);
         setForwardError(forwardData.ok ? null : forwardData.error ?? 'İleri doğrulama okunamadı.');
       }
+      if (v4Data) setResearchV4(v4Data);
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -260,6 +264,47 @@ export const TournamentTabPanel: React.FC = () => {
 
       {/* QuantStats Monthly Returns Heatmap + Underwater Drawdown + TL/USD/TÜFE */}
       <QuantTearsheetCard />
+
+      {/* Research v4 Inverse-ETF Short Test Compact Card (hidden if no data) */}
+      {researchV4?.ok && researchV4.short_vs_control ? (
+        <div
+          data-testid="research-v4-card"
+          className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3 text-xs text-secondary-text"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-semibold text-foreground">
+              Short testi (ters ETF):{' '}
+              {researchV4.short_vs_control.short_adds_value
+                ? 'değer katıyor'
+                : 'değer katmıyor'}
+            </span>
+            <span className="font-mono text-[11px]">
+              {researchV4.data_start ?? '2008'} → {researchV4.data_end ?? 'güncel'} · Sanal sınava alınmadı
+            </span>
+          </div>
+          <p className="mt-1 leading-relaxed">
+            Krizde korur (2008:{' '}
+            <strong className="font-mono text-foreground">
+              {researchV4.short_vs_control.long_short.return_2008_pct != null
+                ? `${researchV4.short_vs_control.long_short.return_2008_pct > 0 ? '+' : ''}${researchV4.short_vs_control.long_short.return_2008_pct.toFixed(1)}%`
+                : '—'}
+            </strong>
+            ) ama toplamda BIL üstü Sharpe{' '}
+            <strong className="font-mono text-foreground">
+              {researchV4.short_vs_control.long_short.excess_sharpe_5bps != null
+                ? researchV4.short_vs_control.long_short.excess_sharpe_5bps.toFixed(2).replace('.', ',')
+                : '—'}
+            </strong>
+            &apos;e karşı{' '}
+            <strong className="font-mono text-foreground">
+              {researchV4.short_vs_control.long_only_control.excess_sharpe_5bps != null
+                ? researchV4.short_vs_control.long_only_control.excess_sharpe_5bps.toFixed(2).replace('.', ',')
+                : '—'}
+            </strong>{' '}
+            (long-only kontrol).
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 };

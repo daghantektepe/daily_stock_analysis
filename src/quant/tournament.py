@@ -19,7 +19,6 @@ from src.quant.bist_usd import (
 from src.quant.data_loader import (
     DEFAULT_CACHE_DIR,
     US_ETF_RISK_ASSETS,
-    US_ETF_SAFE_ASSETS,
     US_ETF_UNIVERSE,
     load_all_tournament_universes,
     load_universe_closes,

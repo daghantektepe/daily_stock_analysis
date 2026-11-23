@@ -20,6 +20,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
+DEFAULT_LOCAL_RESEARCH_V3_REPORT = Path("data") / "reports" / "STRATEGY_RESEARCH_V3_REPORT.md"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run 19-year multi-era Strategy Research v3 evaluation lab.")
     parser.add_argument("--refresh", action="store_true", help="Force refresh 2007-present Yahoo Finance caches")
@@ -29,15 +32,23 @@ def main() -> int:
         action="store_true",
         help="Enroll & freeze standout promoted v3 winner (v3_trp) as an independent ForwardRegistry paper book",
     )
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="Write Markdown report to tracked docs/STRATEGY_RESEARCH_V3_REPORT.md (default writes data/reports/)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
     from src.quant.research_lab import DEFAULT_RESEARCH_V3_REPORT, run_strategy_research_v3
 
+    report_target = DEFAULT_RESEARCH_V3_REPORT if args.publish else DEFAULT_LOCAL_RESEARCH_V3_REPORT
     payload = run_strategy_research_v3(
         force_refresh=bool(args.refresh),
         run_plateau=not bool(args.no_plateau),
         save_outputs=True,
+        report_path=report_target,
+        write_report=True,
     )
 
     print("\n=== Strateji Araştırması v3 (2008–2026 · 4 Makro Rejim · 5 Kapı) ===")
@@ -55,7 +66,7 @@ def main() -> int:
         for gname, gval in (c.get("gates") or {}).items():
             mark = "✓" if gval.get("passed") else "✗"
             print(f"  {mark} {gname}: {gval.get('detail')}")
-    print(f"\nRapor kaydedildi: {DEFAULT_RESEARCH_V3_REPORT}")
+    print(f"\nRapor kaydedildi: {report_target}")
 
     if args.enroll_winner and "V3_TREND_RISK_PARITY_BIL" in (payload.get("promoted_ids") or []):
         from src.quant.paper_book import step_quant_paper_books
