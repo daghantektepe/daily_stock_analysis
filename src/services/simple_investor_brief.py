@@ -13,7 +13,7 @@ import json
 import logging
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +306,38 @@ def _load_paper_exam_items(book_dir: Path, forward_path: Path) -> List[Dict[str,
     return out
 
 
+def load_signal_accuracy_for_brief(
+    *,
+    db_manager: Optional[Any] = None,
+    history_provider: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """Read directional signal vs. index status without triggering slow bar refills."""
+    from src.services.paper_trading_benchmark import build_signal_accuracy_summary, evaluate_signal_outcomes
+
+    try:
+        from src.config import get_config
+        from src.storage import DatabaseManager, DecisionSignalRecord
+
+        if db_manager is None:
+            db_path = getattr(get_config(), "database_path", None)
+            if db_path and not Path(str(db_path)).is_file():
+                return build_signal_accuracy_summary({}, signal_count=0)
+        manager = db_manager or DatabaseManager.get_instance()
+        with manager.get_session() as session:
+            signal_count = int(session.query(DecisionSignalRecord.id).count())
+        if signal_count <= 0:
+            return build_signal_accuracy_summary({}, signal_count=0)
+        outcomes = evaluate_signal_outcomes(
+            db_manager=manager,
+            refill_missing_bars=False,
+            history_provider=history_provider,
+        )
+        return build_signal_accuracy_summary(outcomes, signal_count=signal_count)
+    except Exception as exc:  # noqa: BLE001 - fail-open, report missing data explicitly
+        logger.info("[simple-brief] signal accuracy skipped: %s", exc)
+        return build_signal_accuracy_summary({}, signal_count=0)
+
+
 def build_simple_investor_brief(
     *,
     tournament_path: Optional[Path] = None,
@@ -313,6 +345,8 @@ def build_simple_investor_brief(
     forward_path: Optional[Path] = None,
     book_dir: Optional[Path] = None,
     today: Optional[date] = None,
+    db_manager: Optional[Any] = None,
+    signal_summary_loader: Optional[Callable[[], Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Assemble the plain-Turkish simple-mode dashboard brief from local persisted snapshots.
 
@@ -551,6 +585,11 @@ def build_simple_investor_brief(
     profiles = [p for p in profiles if p["assets"]]
 
     paper_exam = _load_paper_exam_items(b_dir, fwd_path)
+    signal_accuracy = (
+        signal_summary_loader()
+        if signal_summary_loader is not None
+        else load_signal_accuracy_for_brief(db_manager=db_manager)
+    )
     frozen_dates = sorted({str(item["frozen_date"]) for item in paper_exam if item.get("frozen_date")})
     exam_note = (
         f"Stratejiler {', '.join(frozen_dates)} itibarıyla dondurulmuş 120 işlem günlük canlı sanal sınavdadır."
@@ -568,6 +607,7 @@ def build_simple_investor_brief(
         "decision_steps": decision_steps,
         "profiles": profiles,
         "paper_exam": paper_exam,
+        "signal_accuracy": signal_accuracy,
         "disclaimer": (
             "Bu ekran eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. "
             "Program hiçbir aracı kuruma otomatik gerçek emir göndermez (ALPACA_PAPER=true, ALPACA_AUTO_EXECUTE=false). "

@@ -660,6 +660,16 @@ def _format_benchmark_group_line(label: str, bucket: Dict[str, Any]) -> str:
     return f"Endekse göre: {label} sinyallerinin {rate_str}'i 10 günde endeksi geçti (n={n}, ort. fark {excess_str}, {sample_note})"
 
 
+def _weekly_watch_lines(outcomes: Dict[str, Any]) -> List[str]:
+    watch_stats = outcomes.get("weekly_watch") or {}
+    out: List[str] = []
+    if int(watch_stats.get("total") or 0) > 0 and watch_stats.get("line"):
+        out.append(str(watch_stats["line"]))
+    if watch_stats.get("alert_line"):
+        out.append(str(watch_stats["alert_line"]))
+    return out
+
+
 def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
     if not isinstance(outcomes, dict) or not outcomes:
         return []
@@ -677,8 +687,9 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
                 lines.append(status_line)
             if merged_line:
                 lines.append(merged_line)
+            lines.extend(_weekly_watch_lines(outcomes))
             return lines
-        return []
+        return _weekly_watch_lines(outcomes)
     hit = int(outcomes.get("hit") or 0)
     miss = int(outcomes.get("miss") or 0)
     neutral = int(outcomes.get("neutral") or 0)
@@ -735,13 +746,183 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
     missing_idx = int(bench.get("missing_index_data_count") or 0)
     if missing_idx > 0:
         lines.append(f"Endekse göre: 10g karşılaştırma için endeks fiyat verisi bulunamadı (n={missing_idx})")
+    lines.extend(_weekly_watch_lines(outcomes))
     return lines
+
+
+def build_signal_accuracy_summary(
+    outcomes: Optional[Dict[str, Any]],
+    *,
+    signal_count: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Summarize 10d signal-vs-benchmark accuracy in plain Turkish without inventing defaults."""
+    outcomes_dict = outcomes if isinstance(outcomes, dict) else {}
+    bench = outcomes_dict.get("benchmark_comparison") or {}
+    combined = bench.get("combined_10d") or {}
+    min_sample = int(bench.get("min_sample") or MIN_SIGNAL_SAMPLE)
+    n = int(combined.get("n") or 0)
+    total_checks = int(outcomes_dict.get("total") or 0)
+
+    has_any_signals = (signal_count > 0) if signal_count is not None else (total_checks > 0 or n > 0)
+    if not has_any_signals:
+        return {
+            "data_status": "missing",
+            "n": 0,
+            "min_sample": min_sample,
+            "beat_rate_pct": None,
+            "avg_excess_pct": None,
+            "beat_rate_ci90_pct": None,
+            "proven_vs_benchmark": None,
+            "summary_line": "Yapay zekâ önerileri için veri yok.",
+        }
+
+    if n < min_sample:
+        return {
+            "data_status": "insufficient",
+            "n": n,
+            "min_sample": min_sample,
+            "beat_rate_pct": None,
+            "avg_excess_pct": None,
+            "beat_rate_ci90_pct": None,
+            "proven_vs_benchmark": None,
+            "summary_line": f"Yapay zekâ önerilerinin başarısı henüz ölçülüyor ({n}/{min_sample})",
+        }
+
+    beat_rate = combined.get("beat_rate_pct")
+    avg_excess = combined.get("avg_excess_pct")
+    ci90 = combined.get("beat_rate_ci90_pct")
+    proven = bool(isinstance(ci90, (list, tuple)) and len(ci90) == 2 and float(ci90[0]) > 50.0)
+    rate_str = "n/a" if beat_rate is None else f"%{float(beat_rate):.0f}"
+    summary_line = f"Son {n} al/sat önerisinden {rate_str}'i 10 günde endeksten iyi çıktı."
+    if not proven:
+        summary_line += " (Endeksi geçtiği henüz istatistiksel olarak kanıtlanmadı.)"
+    return {
+        "data_status": "ok",
+        "n": n,
+        "min_sample": min_sample,
+        "beat_rate_pct": beat_rate,
+        "avg_excess_pct": avg_excess,
+        "beat_rate_ci90_pct": ci90,
+        "proven_vs_benchmark": proven,
+        "summary_line": summary_line,
+    }
+
+
+def _update_watch_history(
+    prior_history: Optional[Sequence[Dict[str, Any]]],
+    *,
+    week: str,
+    total: int,
+    watch: int,
+    watch_pct: Optional[float],
+) -> List[Dict[str, Any]]:
+    by_week: Dict[str, Dict[str, Any]] = {}
+    for entry in prior_history or []:
+        w = str(entry.get("week") or "").strip()
+        if w:
+            by_week[w] = dict(entry)
+    by_week[week] = {
+        "week": week,
+        "total": int(total),
+        "watch": int(watch),
+        "watch_pct": watch_pct,
+    }
+    ordered = [by_week[k] for k in sorted(by_week.keys())]
+    return ordered[-12:]
+
+
+def evaluate_weekly_watch_ratio(
+    *,
+    db_manager: Optional[Any] = None,
+    market: Optional[str] = None,
+    now: Optional[datetime] = None,
+    days: int = 7,
+    state_history: Optional[Sequence[Dict[str, Any]]] = None,
+    current_week: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Compute the past-week 'watch' ratio and detect 4 consecutive weeks > 70%."""
+    ref_local = (now or datetime.now(timezone.utc)).astimezone(_ISTANBUL_TZ)
+    end_utc = ref_local.astimezone(timezone.utc).replace(tzinfo=None)
+    start_utc = end_utc - timedelta(days=max(1, int(days)))
+    week_key = current_week or f"{ref_local.isocalendar().year}-W{ref_local.isocalendar().week:02d}"
+
+    total = 0
+    watch = 0
+    try:
+        from src.storage import DatabaseManager, DecisionSignalRecord
+
+        manager = db_manager or DatabaseManager.get_instance()
+        market_norm = str(market or "").strip().lower()
+        with manager.get_session() as session:
+            rows = (
+                session.query(DecisionSignalRecord.action, DecisionSignalRecord.market)
+                .filter(DecisionSignalRecord.created_at >= start_utc)
+                .filter(DecisionSignalRecord.created_at <= end_utc)
+                .all()
+            )
+            for action, row_market in rows:
+                if market_norm and str(row_market or "").strip().lower() != market_norm:
+                    continue
+                total += 1
+                if str(action or "").strip().lower() == "watch":
+                    watch += 1
+    except Exception as exc:  # noqa: BLE001 - optional weekly telemetry, fail-open
+        logger.info("[paper-benchmark] weekly watch ratio query skipped: %s", exc)
+        return {
+            "week": week_key,
+            "total": 0,
+            "watch": 0,
+            "watch_pct": None,
+            "line": None,
+            "consecutive_over_70": 0,
+            "alert_four_weeks_over_70": False,
+            "alert_line": None,
+            "history": list(state_history or []),
+        }
+
+    watch_pct = round(watch / total * 100.0, 1) if total > 0 else None
+    history = _update_watch_history(
+        state_history,
+        week=week_key,
+        total=total,
+        watch=watch,
+        watch_pct=watch_pct,
+    )
+    streak = 0
+    for entry in reversed(history):
+        if int(entry.get("total") or 0) > 0 and float(entry.get("watch_pct") or 0.0) > 70.0:
+            streak += 1
+        else:
+            break
+    alert_4w = streak >= 4
+    line = (
+        f"Bu hafta: {total} sinyal, %{watch_pct:.0f}'si izle"
+        if total > 0 and watch_pct is not None
+        else "Bu hafta: yeni sinyal yok"
+    )
+    alert_line = (
+        "⚠️ İzle oranı 4 hafta üst üste %70'in üzerinde — prompt değişikliği için onayınız gerekir."
+        if alert_4w
+        else None
+    )
+    return {
+        "week": week_key,
+        "total": total,
+        "watch": watch,
+        "watch_pct": watch_pct,
+        "line": line,
+        "consecutive_over_70": streak,
+        "alert_four_weeks_over_70": alert_4w,
+        "alert_line": alert_line,
+        "history": history,
+    }
 
 
 def format_paper_trading_report(
     summary: Dict[str, Any],
     *,
     outcome_stats: Optional[Dict[str, Any]] = None,
+    watch_stats: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Plain-text (Turkish) paper trading summary for notifications / console."""
     lines = ["📒 Sanal işlem özeti"]
@@ -780,8 +961,15 @@ def format_paper_trading_report(
             f"son {position['last_close'] if position['last_close'] is not None else 'n/a'}, "
             f"K/Z {_pct(position.get('unrealized_pnl_pct'))}{risk_suffix}"
         )
-    effective_outcomes = outcome_stats if outcome_stats is not None else summary.get("signal_outcomes")
-    lines.extend(_format_signal_outcomes_section(effective_outcomes or {}))
+    effective_outcomes = dict(outcome_stats if outcome_stats is not None else (summary.get("signal_outcomes") or {}))
+    if watch_stats and "weekly_watch" not in effective_outcomes:
+        effective_outcomes["weekly_watch"] = watch_stats
+    lines.extend(_format_signal_outcomes_section(effective_outcomes))
+    if not effective_outcomes.get("total") and watch_stats and int(watch_stats.get("total") or 0) > 0:
+        if watch_stats.get("line"):
+            lines.append(str(watch_stats["line"]))
+        if watch_stats.get("alert_line"):
+            lines.append(str(watch_stats["alert_line"]))
     lines.append("Not: sanal işlemdir; komisyon, kayma ve vergi dahil değildir.")
     return "\n".join(lines)
 
@@ -863,7 +1051,7 @@ def maybe_send_weekly_performance_report(
     after daily runs. Sends the notification at most once per ISO week unless
     ``force=True``. Fail-open: never raises.
     """
-    outcomes = evaluate_signal_outcomes(market=market, db_manager=db_manager)
+    outcomes = evaluate_signal_outcomes(market=market, db_manager=db_manager, history_provider=history)
     local_now = (now or datetime.now(timezone.utc)).astimezone(_ISTANBUL_TZ)
     if not force and (local_now.weekday() != 4 or local_now.hour < int(after_hour)):
         return False
@@ -875,15 +1063,31 @@ def maybe_send_weekly_performance_report(
     if not force and state.get("last_sent_week") == iso_week:
         return False
 
+    watch_stats = evaluate_weekly_watch_ratio(
+        db_manager=db_manager,
+        market=market,
+        now=local_now,
+        state_history=state.get("watch_history"),
+        current_week=iso_week,
+    )
+
     try:
         from src.services.paper_trading_service import PaperTradingService
         from src.config import get_config
 
         cfg = get_config()
         if bool(getattr(cfg, "notification_simple_mode", False)):
+            from src.services.simple_investor_brief import build_simple_investor_brief
             from src.services.simple_notification import format_simple_morning_summary
 
-            text = format_simple_morning_summary()
+            brief = build_simple_investor_brief(
+                db_manager=db_manager,
+                signal_summary_loader=lambda: build_signal_accuracy_summary(
+                    outcomes,
+                    signal_count=max(int(outcomes.get("total") or 0), int(watch_stats.get("total") or 0)) or None,
+                ),
+            )
+            text = format_simple_morning_summary(brief, weekly_watch=watch_stats)
             if notifier is None:
                 from src.notification import NotificationService
 
@@ -892,7 +1096,12 @@ def maybe_send_weekly_performance_report(
             if delivered:
                 _save_weekly_state(
                     target_state,
-                    {"last_sent_week": iso_week, "sent_at": local_now.isoformat(), "mode": "simple"},
+                    {
+                        "last_sent_week": iso_week,
+                        "sent_at": local_now.isoformat(),
+                        "mode": "simple",
+                        "watch_history": watch_stats.get("history") or [],
+                    },
                 )
             return delivered
 
@@ -902,10 +1111,18 @@ def maybe_send_weekly_performance_report(
         )
         crypto_text = _crypto_trend_weekly_text()
         quant_text = _quant_paper_weekly_text()
-        stock_activity = summary.get("trade_count", 0) or int(outcomes.get("total") or 0)
+        stock_activity = (
+            summary.get("trade_count", 0)
+            or int(outcomes.get("total") or 0)
+            or int(watch_stats.get("total") or 0)
+        )
         if not stock_activity and not crypto_text and not quant_text:
             return False
-        text = format_paper_trading_report(summary, outcome_stats=outcomes) if stock_activity else ""
+        text = (
+            format_paper_trading_report(summary, outcome_stats=outcomes, watch_stats=watch_stats)
+            if stock_activity
+            else ""
+        )
         if crypto_text:
             text = f"{text}\n\n{crypto_text}" if text else crypto_text
         if quant_text:
@@ -918,7 +1135,11 @@ def maybe_send_weekly_performance_report(
         if delivered:
             _save_weekly_state(
                 target_state,
-                {"last_sent_week": iso_week, "sent_at": local_now.isoformat()},
+                {
+                    "last_sent_week": iso_week,
+                    "sent_at": local_now.isoformat(),
+                    "watch_history": watch_stats.get("history") or [],
+                },
             )
         return delivered
     except Exception as exc:  # noqa: BLE001 - fail-open
@@ -929,9 +1150,11 @@ def maybe_send_weekly_performance_report(
 __all__: List[str] = [
     "BENCHMARKS",
     "DEFAULT_WEEKLY_REPORT_STATE_PATH",
+    "build_signal_accuracy_summary",
     "compute_benchmarks",
     "compute_market_benchmark",
     "evaluate_signal_outcomes",
+    "evaluate_weekly_watch_ratio",
     "format_paper_trading_report",
     "maybe_send_weekly_performance_report",
     "yfinance_history",

@@ -40,6 +40,7 @@ def main() -> int:
 
     from src.services.paper_trading_benchmark import (
         evaluate_signal_outcomes,
+        evaluate_weekly_watch_ratio,
         format_paper_trading_report,
         maybe_send_weekly_performance_report,
     )
@@ -51,8 +52,9 @@ def main() -> int:
 
     no_hist = (lambda *_args: {}) if args.no_benchmark else None
     outcomes = {} if args.no_outcomes else evaluate_signal_outcomes(market=args.market, history_provider=no_hist)
+    watch_stats = {} if args.no_outcomes else evaluate_weekly_watch_ratio(market=args.market)
     summary = PaperTradingService().get_summary(include_benchmarks=not args.no_benchmark)
-    text = format_paper_trading_report(summary, outcome_stats=outcomes)
+    text = format_paper_trading_report(summary, outcome_stats=outcomes, watch_stats=watch_stats)
     print(text)
     if args.details:
         from src.services.paper_trading_benchmark import describe_signal_outcome_details

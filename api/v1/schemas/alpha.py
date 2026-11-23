@@ -393,6 +393,17 @@ class SimpleDataStatus(BaseModel):
     sources: List[SimpleDataSource] = Field(default_factory=list)
 
 
+class SimpleSignalAccuracySummary(BaseModel):
+    data_status: str = Field("missing", description="ok | insufficient | missing")
+    n: int = 0
+    min_sample: int = 30
+    beat_rate_pct: Optional[float] = None
+    avg_excess_pct: Optional[float] = None
+    beat_rate_ci90_pct: Optional[List[float]] = None
+    proven_vs_benchmark: Optional[bool] = None
+    summary_line: str = "Yapay zekâ önerileri için veri yok."
+
+
 class SimpleBriefResponse(BaseModel):
     ok: bool = True
     simulated_only: bool = True
@@ -403,6 +414,7 @@ class SimpleBriefResponse(BaseModel):
     decision_steps: List[SimpleDecisionStep] = Field(default_factory=list)
     profiles: List[SimpleProfileOption] = Field(default_factory=list)
     paper_exam: List[SimplePaperExamItem] = Field(default_factory=list)
+    signal_accuracy: Optional[SimpleSignalAccuracySummary] = None
     disclaimer: str = ""
 
 

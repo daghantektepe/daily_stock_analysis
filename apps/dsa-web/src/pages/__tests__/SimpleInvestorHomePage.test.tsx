@@ -221,4 +221,43 @@ describe('SimpleInvestorHomePage', () => {
     expect(screen.queryByText(/50[.,]56/)).not.toBeInTheDocument();
     expect(screen.queryByText('90.000 ₺')).not.toBeInTheDocument();
   });
+
+  it('shows signal accuracy states honestly (missing, insufficient n/30, and proven)', async () => {
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      signal_accuracy: {
+        data_status: 'insufficient',
+        n: 4,
+        min_sample: 30,
+        summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (4/30)',
+      },
+    });
+    const { unmount } = render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByTestId('simple-signal-accuracy')).toHaveTextContent('4/30');
+    unmount();
+
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      signal_accuracy: {
+        data_status: 'ok',
+        n: 30,
+        min_sample: 30,
+        beat_rate_pct: 70,
+        proven_vs_benchmark: true,
+        summary_line: "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı.",
+      },
+    });
+    render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByTestId('simple-signal-accuracy')).toHaveTextContent(
+      "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı.",
+    );
+  });
 });

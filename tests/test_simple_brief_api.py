@@ -192,3 +192,59 @@ def test_morning_summary_sends_real_allocation(tmp_path: Path, fresh: bool) -> N
     text = format_simple_morning_summary(brief)
     assert text.startswith("⛈️ 2026-11-20 Özeti")
     assert ("Dikkat" in text) is (not fresh)
+
+
+def test_simple_brief_signal_accuracy_states_and_morning_3_lines(tmp_path: Path, monkeypatch) -> None:
+    _write_snapshots(tmp_path)
+    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "nonexistent.db"))
+    from src.config import Config
+
+    Config.reset_instance()
+    try:
+        missing_brief = build_simple_investor_brief(
+            tournament_path=tmp_path / "tournament_latest.json",
+            research_v3_path=tmp_path / "research_v3_latest.json",
+            forward_path=tmp_path / "forward_validation.json",
+            book_dir=tmp_path,
+            today=FRESH_DAY,
+        )
+        assert missing_brief["signal_accuracy"]["data_status"] == "missing"
+        assert "veri yok" in missing_brief["signal_accuracy"]["summary_line"].lower()
+    finally:
+        Config.reset_instance()
+
+    insufficient_brief = build_simple_investor_brief(
+        tournament_path=tmp_path / "tournament_latest.json",
+        research_v3_path=tmp_path / "research_v3_latest.json",
+        forward_path=tmp_path / "forward_validation.json",
+        book_dir=tmp_path,
+        today=FRESH_DAY,
+        signal_summary_loader=lambda: {
+            "data_status": "insufficient",
+            "n": 4,
+            "min_sample": 30,
+            "summary_line": "Yapay zekâ önerilerinin başarısı henüz ölçülüyor (4/30)",
+        },
+    )
+    text_ins = format_simple_morning_summary(insufficient_brief, weekly_watch={"total": 10, "line": "Bu hafta: 10 sinyal, %80'si izle"})
+    assert len(text_ins.splitlines()) == 3
+    assert "4/30" in text_ins and "Bu hafta: 10 sinyal" in text_ins
+
+    ok_brief = build_simple_investor_brief(
+        tournament_path=tmp_path / "tournament_latest.json",
+        research_v3_path=tmp_path / "research_v3_latest.json",
+        forward_path=tmp_path / "forward_validation.json",
+        book_dir=tmp_path,
+        today=FRESH_DAY,
+        signal_summary_loader=lambda: {
+            "data_status": "ok",
+            "n": 30,
+            "min_sample": 30,
+            "beat_rate_pct": 70.0,
+            "proven_vs_benchmark": True,
+            "summary_line": "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı.",
+        },
+    )
+    text_ok = format_simple_morning_summary(ok_brief)
+    assert len(text_ok.splitlines()) == 3
+    assert "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı." in text_ok

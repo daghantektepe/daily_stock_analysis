@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] G1.2 / G1.3 `GET /api/v1/alpha/simple-brief` 与 `/simple`（`SimpleInvestorHomePage.tsx`）新增增量可选字段 `signal_accuracy`（样本 `<30` 诚实提示测量进度 `n/30`，无数据时明确标注「veri yok」，`≥30` 展示近 N 条买卖信号 10 日跑赢大盘比率；`format_simple_morning_summary` 保持 3 行不破坏现有合约）；周报及 `paper_trading_report.py` 新增 G1.3 本周「izle（观望）」信号占比统计及连续 4 周超过 70% 时提醒须经用户确认方可调整提示词
 - [改进] G1.1 `evaluate_signal_outcomes()` 新增 10 日方向性信号相对大盘基准（`tr` → `XU100.IS`、`us` → `SPY`，未配置基准的市场如 `cn` 诚实提示「endeks yok」）的超额收益对比，支持可注入 `history_provider` 与单日重复信号去重，样本 `n ≥ 30` 时通过确定性自助法（bootstrap）输出 %90 置信区间，`n < 30` 标注「örnek yetersiz」；单测通过 `_offline_signal_outcome_bar_refill` 保持离线（`tests/test_paper_trading.py` 新增 3 项验证，不改动上游 Web 决策信号统计口径）
 - [文档] 新增 `docs/ANTIGRAVITY_PLAN.md`：按阶段（基线测量、信号相对指数评估、可靠性/技术债、前向验证期检查点与滑点测量、条件性工作）列出任务、涉及文件、验收标准、时间表（前向验证最早于 2027-05-14 结束）及交接启动提示
 - [修复] 周末（周六/周日）生成的决策信号因锚定日永远没有收盘价而无法评估：仅当锚定日为周末且当日无日线时，改用 3 天内最近一个交易日收盘作为起始价（工作日数据缺口仍保持精确锚定、可重试的上游语义）；土耳其语信号报告统计中，同一股票、同一信号日、同一方向、同一周期的重复信号只计一次（保留最新一条），并显示合并数量（Web 决策信号统计口径不变）

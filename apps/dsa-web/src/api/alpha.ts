@@ -698,6 +698,17 @@ export interface SimpleDataStatus {
   sources: SimpleDataSource[];
 }
 
+export interface SimpleSignalAccuracySummary {
+  data_status: 'ok' | 'insufficient' | 'missing' | string;
+  n: number;
+  min_sample: number;
+  beat_rate_pct?: number | null;
+  avg_excess_pct?: number | null;
+  beat_rate_ci90_pct?: number[] | null;
+  proven_vs_benchmark?: boolean | null;
+  summary_line: string;
+}
+
 export interface SimpleBriefResponse {
   ok: boolean;
   simulated_only: boolean;
@@ -709,6 +720,7 @@ export interface SimpleBriefResponse {
   decision_steps: SimpleDecisionStep[];
   profiles: SimpleProfileOption[];
   paper_exam: SimplePaperExamItem[];
+  signal_accuracy?: SimpleSignalAccuracySummary | null;
   disclaimer: string;
 }
 

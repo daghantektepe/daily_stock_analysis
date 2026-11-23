@@ -36,6 +36,7 @@ def format_simple_morning_summary(
     *,
     weights_changed: Optional[bool] = None,
     profile_id: str = "balanced",
+    weekly_watch: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Format strictly 3 calm Turkish lines summarizing market weather and basket status."""
     data = brief if brief is not None else build_simple_investor_brief()
@@ -68,9 +69,20 @@ def format_simple_morning_summary(
         line2 = f"Önerilen Dağılım ({chosen.get('title', 'Dengeli')}): {top_slice}."
 
     line1 = f"{emoji} {as_of} Özeti: {headline} (Kalkan: %{prot:.0f})."
-    line3 = "Sadece bilgi amaçlıdır; otomatik alım-satım yapılmamıştır, sakin kalabilirsin."
+    notes = []
     if status.get("state") in ("stale", "partial"):
-        line3 = f"Dikkat: {status.get('message', '').split(' Günlük sanal defter')[0]} {line3}"
+        stale_msg = str(status.get("message", "")).split(" Günlük sanal defter")[0].strip()
+        if stale_msg:
+            notes.append(f"Dikkat: {stale_msg}")
+    acc = data.get("signal_accuracy") or {}
+    if isinstance(acc, dict) and acc.get("summary_line"):
+        notes.append(str(acc["summary_line"]).rstrip(".") + ".")
+    if isinstance(weekly_watch, dict) and int(weekly_watch.get("total") or 0) > 0 and weekly_watch.get("line"):
+        notes.append(str(weekly_watch["line"]).rstrip(".") + ".")
+        if weekly_watch.get("alert_line"):
+            notes.append(str(weekly_watch["alert_line"]))
+    notes.append("Sadece bilgi amaçlıdır; otomatik alım-satım yapılmamıştır, sakin kalabilirsin.")
+    line3 = " ".join(notes)
     return f"{line1}\n{line2}\n{line3}"
 
 

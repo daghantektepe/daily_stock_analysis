@@ -714,6 +714,31 @@ const SimpleInvestorHomePage: React.FC = () => {
             </section>
           ) : null}
 
+          {/* Honest AI Signal Accuracy vs Index Line */}
+          {brief.signal_accuracy ? (
+            <div
+              data-testid="simple-signal-accuracy"
+              className={cn(
+                'flex flex-wrap items-center justify-between gap-2 rounded-2xl border px-4 py-3 text-xs',
+                brief.signal_accuracy.data_status === 'ok'
+                  ? brief.signal_accuracy.proven_vs_benchmark
+                    ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
+                    : 'border-amber-500/35 bg-amber-500/10 text-amber-200'
+                  : 'border-border/60 bg-card/75 text-secondary-text',
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="font-medium text-foreground">{brief.signal_accuracy.summary_line}</span>
+              </div>
+              <span className="font-mono text-[11px] text-secondary-text">
+                {brief.signal_accuracy.data_status === 'missing'
+                  ? 'Veri yok'
+                  : `${brief.signal_accuracy.n}/${brief.signal_accuracy.min_sample} yönlü öneri`}
+              </span>
+            </div>
+          ) : null}
+
           {/* Honest Disclaimer Footer */}
           <div className="rounded-2xl border border-border/60 bg-background/50 px-4 py-3 text-xs leading-relaxed text-secondary-text">
             <strong className="text-foreground">Güvenlik & Şeffaflık Notu: </strong>

@@ -837,3 +837,83 @@ def test_signal_benchmark_comparison_bootstrap_ci90_when_sample_reaches_30(db) -
     report = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
     assert "Endekse göre: al sinyallerinin %67'i 10 günde endeksi geçti (n=30, ort. fark +5.00%, %90 GA" in report
     assert "örnek yetersiz" not in report
+
+
+def test_weekly_watch_ratio_and_four_week_over_70_alert(db, tmp_path) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from src.services.paper_trading_benchmark import (
+        evaluate_weekly_watch_ratio,
+        maybe_send_weekly_performance_report,
+    )
+    from src.storage import DecisionSignalRecord
+
+    now = datetime(2026, 11, 20, 16, 0, tzinfo=timezone.utc)  # Friday 19:00 Istanbul
+    created = now.replace(tzinfo=None) - timedelta(days=1)
+    with db.session_scope() as session:
+        for idx, action in enumerate(["watch", "watch", "watch", "watch", "buy"]):
+            session.add(
+                DecisionSignalRecord(
+                    stock_code=f"W{idx}.IS",
+                    stock_name=f"W{idx}",
+                    market="tr",
+                    source_type="analysis",
+                    source_report_id=100 + idx,
+                    trace_id=f"trace-watch-{idx}",
+                    market_phase="postmarket",
+                    trigger_source="cli",
+                    action=action,
+                    action_label=action,
+                    horizon="3d",
+                    reason="test",
+                    plan_quality="complete",
+                    status="active",
+                    created_at=created,
+                )
+            )
+
+    prior = [
+        {"week": "2026-W44", "total": 10, "watch": 8, "watch_pct": 80.0},
+        {"week": "2026-W45", "total": 10, "watch": 8, "watch_pct": 80.0},
+        {"week": "2026-W46", "total": 10, "watch": 8, "watch_pct": 80.0},
+    ]
+    state_file = tmp_path / "weekly_watch_state.json"
+    import json
+
+    state_file.write_text(json.dumps({"watch_history": prior}), encoding="utf-8")
+
+    watch_res = evaluate_weekly_watch_ratio(
+        db_manager=db,
+        market="tr",
+        now=now,
+        state_history=prior,
+        current_week="2026-W47",
+    )
+    assert watch_res["total"] == 5 and watch_res["watch"] == 4
+    assert watch_res["watch_pct"] == pytest.approx(80.0)
+    assert "Bu hafta: 5 sinyal, %80'si izle" == watch_res["line"]
+    assert watch_res["alert_four_weeks_over_70"] is True
+    assert "onayınız gerekir" in watch_res["alert_line"]
+
+    sent = []
+
+    class _FakeNotifier:
+        def send(self, text, **_kwargs):
+            sent.append(text)
+            return True
+
+    assert (
+        maybe_send_weekly_performance_report(
+            notifier=_FakeNotifier(),
+            db_manager=db,
+            state_path=state_file,
+            now=now,
+            market="tr",
+            history=_fake_history,
+        )
+        is True
+    )
+    assert "Bu hafta: 5 sinyal, %80'si izle" in sent[0]
+    assert "4 hafta üst üste %70'in üzerinde" in sent[0]
+    saved_state = json.loads(state_file.read_text(encoding="utf-8"))
+    assert len(saved_state["watch_history"]) == 4
