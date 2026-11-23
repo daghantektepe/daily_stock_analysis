@@ -51,6 +51,12 @@ const MOCK_BRIEF = {
     },
   ],
   paper_exam: [],
+  signal_accuracy: {
+    data_status: 'insufficient',
+    n: 4,
+    min_sample: 30,
+    summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (4/30)',
+  },
   disclaimer: 'Yalnızca eğitim ve karar destek amaçlıdır.',
 };
 
@@ -93,6 +99,7 @@ test.describe('Phase 6-9 End-to-End Smoke (Mocked API)', () => {
     await page.goto('/simple');
     await expect(page.getByText('Piyasalar Şu An Fırtınalı — Paranı Güvende Tut')).toBeVisible();
     await expect(page.getByText('90.000 ₺')).toBeVisible();
+    await expect(page.getByTestId('simple-signal-accuracy')).toContainText('4/30');
 
     await page.goto('/guide');
     await expect(page.getByRole('heading', { name: /30 Saniyelik Kartlarla Yatırımı Anla/i })).toBeVisible();
@@ -124,9 +131,27 @@ test.describe('Phase 6-9 End-to-End Smoke (Mocked API)', () => {
         body: JSON.stringify({ books: [] }),
       });
     });
+    await page.route('**/api/v1/alpha/research-v4*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data_start: '2008-01-01',
+          data_end: '2026-11-20',
+          short_vs_control: {
+            long_short: { excess_sharpe_5bps: 0.51, return_2008_pct: 17.4 },
+            long_only_control: { excess_sharpe_5bps: 0.68, return_2008_pct: 11.3 },
+            short_adds_value: false,
+            reasons: [],
+          },
+        }),
+      });
+    });
 
     await page.goto('/discover');
     await page.getByRole('button', { name: /Strateji Turnuvası & PAA/i }).click();
     await expect(page.getByText(/QuantStats Görsel Tearsheet/i).first()).toBeVisible();
+    await expect(page.getByTestId('research-v4-card')).toContainText('Short testi (ters ETF): değer katmıyor');
   });
 });

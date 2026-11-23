@@ -122,14 +122,34 @@ if ($Register) {
 # --- Execution Mode ---
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $python = Resolve-DsaPython
-$stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 $env:PYTHONIOENCODING = 'utf-8'
 $env:PYTHONUTF8 = '1'
+if (-not $env:LITELLM_LOCAL_MODEL_COST_MAP) {
+  $env:LITELLM_LOCAL_MODEL_COST_MAP = 'True'
+}
 
 function Write-Log([string]$msg) {
   $line = "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] $msg"
   Add-Content -Path $logFile -Value $line -Encoding UTF8
   Write-Host $line
+}
+
+function Invoke-DsaStep([string[]]$StepArgs, [string]$Label) {
+  # PowerShell 5.1 turns stderr lines from native exes under 2>&1 into terminating ErrorRecords
+  # when $ErrorActionPreference = 'Stop'. Temporarily switch to 'Continue' and check $LASTEXITCODE.
+  $prevPref = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $output = & $python @StepArgs 2>&1
+    $code = $LASTEXITCODE
+    foreach ($entry in $output) {
+      Add-Content -Path $logFile -Value ("$entry") -Encoding UTF8
+    }
+  } finally {
+    $ErrorActionPreference = $prevPref
+  }
+  Write-Log "$Label exit=$code"
+  return $code
 }
 
 Push-Location $root
@@ -138,23 +158,14 @@ try {
 
   $quantArgs = @('scripts\quant_paper.py', 'step', '--notify')
   if (-not $NoRefresh) { $quantArgs += '--refresh' }
-  $qOut = & $python @quantArgs 2>&1
-  $qCode = $LASTEXITCODE
-  foreach ($line in $qOut) { Add-Content -Path $logFile -Value "$line" -Encoding UTF8 }
-  Write-Log "quant_paper.py exit=$qCode"
+  $qCode = Invoke-DsaStep -StepArgs $quantArgs -Label 'quant_paper.py'
 
-  $cOut = & $python 'scripts\crypto_trend.py' 'paper' '--notify' 2>&1
-  $cCode = $LASTEXITCODE
-  foreach ($line in $cOut) { Add-Content -Path $logFile -Value "$line" -Encoding UTF8 }
-  Write-Log "crypto_trend.py exit=$cCode"
+  $cCode = Invoke-DsaStep -StepArgs @('scripts\crypto_trend.py', 'paper', '--notify') -Label 'crypto_trend.py'
 
-  $wOut = & $python 'scripts\paper_trading_report.py' '--weekly-if-due' 2>&1
-  $wCode = $LASTEXITCODE
-  foreach ($line in $wOut) { Add-Content -Path $logFile -Value "$line" -Encoding UTF8 }
-  Write-Log "paper_trading_report.py --weekly-if-due exit=$wCode"
+  $wCode = Invoke-DsaStep -StepArgs @('scripts\paper_trading_report.py', '--weekly-if-due') -Label 'paper_trading_report.py --weekly-if-due'
 
   Write-Log "=== DSA Daily Paper Step Finished ==="
-  if ($qCode -ne 0 -or $cCode -ne 0) {
+  if ($qCode -ne 0 -or $cCode -ne 0 -or $wCode -ne 0) {
     exit 1
   }
   exit 0
