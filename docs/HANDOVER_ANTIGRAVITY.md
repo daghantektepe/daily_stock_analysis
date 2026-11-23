@@ -85,6 +85,13 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
    - **Kabul:** Sayılar `docs/HANDOVER_ANTIGRAVITY.md`'ye eklenir. Örnek 30'dan azsa bu açıkça yazılır.
 4. `.venv\Scripts\python.exe scripts\run_ai_strategy_council.py reevaluate` ile kullanıcının gerçek konsey tüzüklerinin v2 sonucunu kaydet.
 
+**P0-3 güncellemesi (23 Kasım 2026):**
+- **E:\ çıktısı:** `İşlem: 0` ve `160 bekleyen kontrol`, tamamlanan yok.
+- **Kök neden:** Değerlendirici fiyatı yalnızca yerel veritabanından okuyordu. Bir kez analiz edilen hissenin sonraki kapanışları hiç kaydedilmediği için kontroller sonsuza kadar sonuçsuz kalıyordu. Rapor da "değerlendirilemedi" durumunu "bekliyor" diye gösteriyordu.
+- **Düzeltme:** `evaluate_signal_outcomes()` eksik kapanışları veri sağlayıcısından tamamlıyor; rapor nedenleri ayrı gösteriyor.
+- **Sonraki adım:** Kullanıcı `paper_trading_report.py`'yi yeniden çalıştırıp gerçek isabeti bu nota eklemeli.
+- **`İşlem: 0` neden:** Sinyallerden sanal işlem açılması isteğe bağlı (`PAPER_TRADING_ENABLED=false` varsayılan).
+
 ### P1 — Al/sat sinyallerinin değerini kanıtla ya da göster
 
 - **Karşılaştırma:** P0-3'te yeterli örnek varsa yapay zekâ "al" sinyallerinin 5 ve 10 günlük getirisini aynı günlerde endeksle (BIST için XU100, ABD için SPY) ve rastgele hisse seçimiyle kıyasla.

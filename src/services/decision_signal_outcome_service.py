@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import json
 import logging
 import math
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from src.core.backtest_engine import BacktestEngine, EvaluationConfig
 from src.repositories.decision_signal_outcome_repo import (
@@ -88,10 +88,21 @@ class DecisionSignalOutcomeService:
         signal_repo: Optional[DecisionSignalRepository] = None,
         stock_repo: Optional[StockRepository] = None,
         db_manager: Optional[DatabaseManager] = None,
+        refill_missing_bars: bool = False,
+        bar_filler: Optional[Callable[..., int]] = None,
+        today: Optional[date] = None,
     ):
         self.repo = repo or DecisionSignalOutcomeRepository(db_manager)
         self.signal_repo = signal_repo or DecisionSignalRepository(db_manager)
         self.stock_repo = stock_repo or StockRepository(db_manager)
+        # Daily bars are only stored when a stock is analysed again, so a stock analysed
+        # once would never get its forward closes. With refill enabled (or an explicit
+        # filler) missing bars are fetched on demand; the default stays offline.
+        self._bar_filler: Optional[Callable[..., int]] = bar_filler or (
+            self._fetch_and_store_daily_bars if refill_missing_bars else None
+        )
+        self._today = today
+        self._filled_keys: Set[Tuple[str, date]] = set()
 
     def run_outcomes(
         self,
@@ -412,6 +423,20 @@ class DecisionSignalOutcomeService:
             return self._unable_fields(base, reason="missing_anchor_date", direction_expected=direction)
 
         start_bar = self.stock_repo.get_daily_on_date(code=signal.stock_code, target_date=anchor_date)
+        forward_bars = self.stock_repo.get_forward_bars(
+            code=signal.stock_code,
+            analysis_date=anchor_date,
+            eval_window_days=eval_days,
+        )
+        if (start_bar is None or len(forward_bars) < eval_days) and self._fill_missing_bars(
+            signal.stock_code, anchor_date, eval_days
+        ):
+            start_bar = self.stock_repo.get_daily_on_date(code=signal.stock_code, target_date=anchor_date)
+            forward_bars = self.stock_repo.get_forward_bars(
+                code=signal.stock_code,
+                analysis_date=anchor_date,
+                eval_window_days=eval_days,
+            )
         start_price = getattr(start_bar, "close", None)
         if start_price is None:
             return self._unable_fields(
@@ -431,11 +456,6 @@ class DecisionSignalOutcomeService:
                 start_price=start_price,
             )
 
-        forward_bars = self.stock_repo.get_forward_bars(
-            code=signal.stock_code,
-            analysis_date=anchor_date,
-            eval_window_days=eval_days,
-        )
         evaluation = BacktestEngine.evaluate_decision_signal(
             direction_expected=direction,
             anchor_date=anchor_date,
@@ -462,6 +482,48 @@ class DecisionSignalOutcomeService:
             "min_low": evaluation.get("min_low"),
             "stock_return_pct": evaluation.get("stock_return_pct"),
         }
+
+    def _fill_missing_bars(self, code: str, anchor_date: date, eval_days: int) -> bool:
+        """Fetch the anchor..anchor+horizon daily bars once per (code, anchor) per run.
+
+        Skipped while the horizon cannot have elapsed yet (no pointless network
+        calls for genuinely pending signals). Fail-open: errors leave the outcome
+        ``unable`` with a retryable reason so the next run tries again.
+        """
+        code_norm = str(code or "").strip()
+        if self._bar_filler is None or not code_norm:
+            return False
+        today = self._today or date.today()
+        if (today - anchor_date).days < 1:
+            return False
+        key = (code_norm, anchor_date)
+        if key in self._filled_keys:
+            return False
+        self._filled_keys.add(key)
+        start = anchor_date - timedelta(days=7)
+        # One window covers every supported horizon (10 trading days ~ 14+ calendar days).
+        end = min(today, anchor_date + timedelta(days=max(eval_days * 2, 30)))
+        try:
+            saved = int(self._bar_filler(code=code_norm, start_date=start, end_date=end) or 0)
+        except Exception as exc:  # noqa: BLE001 - data provider failure must not stop evaluation
+            logger.warning("[signal-outcome] daily bar refill failed for %s: %s", code_norm, exc)
+            return False
+        return saved > 0
+
+    def _fetch_and_store_daily_bars(self, *, code: str, start_date: date, end_date: date) -> int:
+        from data_provider.base import DataFetcherManager
+
+        days = max((end_date - start_date).days, 10)
+        df, source = DataFetcherManager().get_daily_data(
+            stock_code=code,
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d"),
+            days=days,
+        )
+        if df is None or df.empty:
+            return 0
+        self.stock_repo.save_dataframe(df, code, source or "signal-outcome-refill")
+        return int(len(df))
 
     @staticmethod
     def _direction_for_action(action: Optional[str]) -> Optional[str]:

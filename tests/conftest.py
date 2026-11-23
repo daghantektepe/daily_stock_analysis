@@ -266,3 +266,22 @@ def _ensure_repo_cwd():
     if Path.cwd() != _REPO_ROOT:
         os.chdir(_REPO_ROOT)
 
+
+
+@pytest.fixture(autouse=True)
+def _offline_signal_outcome_bar_refill(monkeypatch, request):
+    """Unit tests must not download real prices when scoring DecisionSignal outcomes.
+
+    ``evaluate_signal_outcomes`` refills missing daily bars from the data providers by
+    default; tests that exercise the refill pass their own ``bar_filler``. Network tests
+    (``-m network``) keep the real fetcher.
+    """
+    if request.node.get_closest_marker("network") is not None:
+        return
+    from src.services.decision_signal_outcome_service import DecisionSignalOutcomeService
+
+    monkeypatch.setattr(
+        DecisionSignalOutcomeService,
+        "_fetch_and_store_daily_bars",
+        lambda self, **_kwargs: 0,
+    )

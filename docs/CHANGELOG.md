@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] 决策信号后验评估在本地缺少日线时永远无法完成（仅分析过一次的股票没有后续收盘价，报告误显示为「bekleyen kontrol」）：`DecisionSignalOutcomeService` 新增可选 `refill_missing_bars` / `bar_filler`（默认关闭以保持离线），`evaluate_signal_outcomes()`（报告脚本、每日运行、周报与 API 共用）默认开启，按（股票、信号日）每次运行最多拉取一次日线并写入库，周期未到时不发起网络请求，失败保持可重试；报告区分「等待后续收盘」与「无法评估（原因）」，方向性样本 <30 时提示命中率尚无统计意义；测试通过 autouse fixture 禁止真实下载
 - [新功能] 新增策略研究 v4（`src/quant/strategies/research_v4.py`、`src/quant/research_v4_lab.py`、`scripts/run_strategy_research_v4.py`）：仅通过买入反向 ETF（SH/PSQ/EFZ/TBF，无保证金、无借券、无期权）测试做空腿，预先登记参数的长短趋势候选与同规则多头对照组均走 v3 同一 5 道门槛，并要求长短版本在 5/25 bps 下 BIL 超额 Sharpe 均高出对照组 ≥0.05 才判定做空有价值；真实数据（2008–2026）结论为否（0.51/0.38 vs 0.68/0.56，做空腿年化贡献 -0.30 个百分点），未纳入模拟盘；报告见 `docs/STRATEGY_RESEARCH_V4_REPORT.md`
 - [文档] 新增 `docs/HANDOVER_ANTIGRAVITY.md`：当前推荐与证据等级、v4 结论、已验证技术状态及按优先级排列的后续任务（含期权/真实做空暂缓原因）
 - [修复] 「Bugün Ne Yapayım?」(`/simple`) 与简易早报不再在缺少策略快照时使用硬编码权重（BIL 80/SHY 20、BIL 83.3/UUP 16.7、BIL 100）、日期（「Güncel」）、汇率（50.56）及最大回撤；`GET /api/v1/alpha/simple-brief` 新增 `data_status`（`ok`/`stale`/`partial`/`missing`，快照超过 5 天标记为过期），无数据时返回 `weather.status=unknown`、`protection_pct=null`、`usdtry_rate=null`（字段改为可空）并省略依赖缺失快照的篮子；Web 页面显示数据状态横幅、无数据空状态，并在无汇率时隐藏 TL/USD 换算；简易早报在无数据时不发送配置

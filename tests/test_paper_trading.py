@@ -549,3 +549,124 @@ def test_paper_trading_costs_and_time_stop(db) -> None:
     assert exits[0]["price"] == pytest.approx(101.796)
 
 
+
+
+def _add_signal(db, code: str, session_date: str, action: str = "buy") -> int:
+    import json
+
+    from src.storage import DecisionSignalRecord
+
+    with db.session_scope() as session:
+        row = DecisionSignalRecord(
+            stock_code=code,
+            stock_name=code,
+            market="tr",
+            source_type="analysis",
+            source_report_id=900,
+            trace_id=f"trace-{code}-{action}-{session_date}",
+            market_phase="postmarket",
+            trigger_source="cli",
+            action=action,
+            action_label=action,
+            horizon="3d",
+            reason="test",
+            data_quality_summary_json='{"level": "good"}',
+            metadata_json=json.dumps({"market_phase_summary": {"session_date": session_date}}),
+            plan_quality="complete",
+            status="active",
+        )
+        session.add(row)
+        session.flush()
+        return int(row.id)
+
+
+def test_outcomes_refill_missing_daily_bars_for_stock_analysed_once(db) -> None:
+    """A stock analysed once has no stored forward closes; the report path must fetch them."""
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes
+
+    _add_signal(db, "ASELS.IS", "2026-11-03", action="buy")
+    calls = []
+
+    def filler(*, code, start_date, end_date):
+        calls.append((code, start_date, end_date))
+        for offset in range(0, 16):
+            _add_close(db, code, date(2026, 11, 3) + timedelta(days=offset), 100.0 + 3.0 * offset)
+        return 16
+
+    outcomes = evaluate_signal_outcomes(market="tr", db_manager=db, bar_filler=filler)
+    assert outcomes["completed"] == 4 and outcomes["hit"] == 4  # 1d/3d/5d/10d all scored
+    assert len(calls) == 1  # one fetch per (stock, signal day), not per horizon
+    code, start, end = calls[0]
+    assert code == "ASELS.IS" and start == date(2026, 10, 27) and end > date(2026, 11, 13)
+
+
+def test_outcomes_without_refill_stay_unscored_and_report_explains_why(db) -> None:
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes, format_paper_trading_report
+
+    _add_signal(db, "ASELS.IS", "2026-11-03", action="buy")
+    _add_signal(db, "THYAO.IS", "2026-11-03", action="watch")
+    outcomes = evaluate_signal_outcomes(market="tr", db_manager=db, refill_missing_bars=False)
+    assert outcomes["completed"] == 0
+    assert outcomes["unable_reasons"]["missing_anchor_price"] == 4
+
+    text = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert "bekleyen kontrol" not in text  # the old message called unscorable checks "pending"
+    assert "kontrolün hiçbiri henüz sonuçlanmadı" in text
+    assert "değerlendirilemedi (sinyal günü fiyatı yok 4" in text
+
+
+def test_refill_failure_is_fail_open_and_retried_next_run(db) -> None:
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes
+
+    _add_signal(db, "ASELS.IS", "2026-11-03", action="buy")
+
+    def broken(**_kwargs):
+        raise RuntimeError("provider down")
+
+    first = evaluate_signal_outcomes(market="tr", db_manager=db, bar_filler=broken)
+    assert first["completed"] == 0 and first["unable_reasons"]["missing_anchor_price"] == 4
+
+    def working(*, code, start_date, end_date):
+        from datetime import timedelta
+
+        for offset in range(0, 16):
+            _add_close(db, code, date(2026, 11, 3) + timedelta(days=offset), 100.0 - 3.0 * offset)
+        return 16
+
+    second = evaluate_signal_outcomes(market="tr", db_manager=db, bar_filler=working)
+    assert second["completed"] == 4 and second["miss"] == 4  # retryable reasons are re-evaluated
+
+
+def test_refill_skipped_until_horizon_can_have_elapsed(db) -> None:
+    from src.services.decision_signal_outcome_service import DecisionSignalOutcomeService
+
+    _add_signal(db, "ASELS.IS", "2026-11-03", action="buy")
+    calls = []
+    service = DecisionSignalOutcomeService(
+        db_manager=db,
+        bar_filler=lambda **kw: calls.append(kw) or 0,
+        today=date(2026, 11, 3),  # same day as the signal: nothing can have closed yet
+    )
+    service.run_outcomes(market="tr", limit=10)
+    assert calls == []
+
+
+def test_service_default_stays_offline(db) -> None:
+    from src.services.decision_signal_outcome_service import DecisionSignalOutcomeService
+
+    assert DecisionSignalOutcomeService(db_manager=db)._bar_filler is None
+    assert DecisionSignalOutcomeService(db_manager=db, refill_missing_bars=True)._bar_filler is not None
+
+
+def test_low_sample_hit_rate_is_flagged() -> None:
+    from src.services.paper_trading_benchmark import _format_signal_outcomes_section
+
+    lines = _format_signal_outcomes_section(
+        {"completed": 6, "total": 10, "hit": 4, "miss": 2, "neutral": 0, "hit_rate_pct": 66.7,
+         "avg_stock_return_pct": 1.2, "unable_reasons": {"insufficient_forward_bars": 3, "non_directional_action": 1}}
+    )
+    text = "\n".join(lines)
+    assert "yönlü sonuç sayısı 6 (< 30)" in text
+    assert "3 ileri kapanış bekliyor" in text and "1 değerlendirilemedi (yönsüz sinyal (izle) 1)" in text

@@ -327,7 +327,7 @@ python scripts/paper_trading_report.py
 ```
 
    `--notify` eklersen özet Telegram'a da gider. Sistem her günlük analizden sonra bekleyen sinyal isabetlerini (`1/3/5/10` işlem günü, ±%2 nötr bant) kendiliğinden hesaplar ve **her Cuma 18:00 sonrası** çalıştırmada sanal işlem özetini, BIST 100 ve dolar kıyasını ve sinyal isabet oranlarını otomatik olarak Telegram'a gönderir (haftada bir kez, `data/weekly_report_state.json`). Ayrıca Web arayüzündeki **Sanal İşlem / KAP** (`/paper-trading`) sayfasından açık pozisyonları, ATR zarar kes / kâr al seviyelerini, BIST 100 & dolar kıyasını ve KAP / haber uyarılarını doğrudan görebilirsin.
-2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Artık günlük çalıştırmalarda ve `paper_trading_report.py` içinde kendiliğinden hesaplanır; istersen API üzerinden de tetikleyebilirsin:
+2. **Sinyal isabeti:** her al/sat sinyali, sonraki günlerin kapanış fiyatıyla karşılaştırılır (1/3/5/10 gün, ±%2 nötr bant). Hisse yalnızca bir kez analiz edildiyse sonraki kapanışlar veritabanında yoktur. Rapor, günlük çalıştırma ve web API'si bu eksik kapanışları veri sağlayıcısından kendiliğinden tamamlar (hisse ve sinyal günü başına bir kez; ufku henüz dolmamış sinyaller için ağa çıkılmaz). Rapor sonuçlanmayan kontrolleri "ileri kapanış bekliyor" ve "değerlendirilemedi (neden)" diye ayırır. Yönlü sonuç sayısı 30'un altındaysa isabet oranının henüz anlamlı olmadığını belirtir. Artık günlük çalıştırmalarda ve `paper_trading_report.py` içinde kendiliğinden hesaplanır; istersen API üzerinden de tetikleyebilirsin:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/decision-signals/outcomes/run -H "Content-Type: application/json" -d '{"market": "tr"}'

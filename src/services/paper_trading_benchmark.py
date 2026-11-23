@@ -224,10 +224,14 @@ def evaluate_signal_outcomes(
     market: Optional[str] = None,
     db_manager: Optional[Any] = None,
     limit: int = 500,
+    refill_missing_bars: bool = True,
+    bar_filler: Optional[Callable[..., int]] = None,
 ) -> Dict[str, Any]:
     """Run pending DecisionSignal outcome evaluations (1/3/5/10d) and summarize hit rates.
 
-    Fail-open: returns ``{}`` on any database or evaluation error.
+    Missing anchor / forward daily closes are fetched from the data providers
+    (``refill_missing_bars``); otherwise a stock analysed only once could never
+    be scored. Fail-open: returns ``{}`` on any database or evaluation error.
     """
     try:
         from src.services.decision_signal_outcome_service import (
@@ -237,7 +241,11 @@ def evaluate_signal_outcomes(
             DecisionSignalOutcomeService,
         )
 
-        service = DecisionSignalOutcomeService(db_manager=db_manager)
+        service = DecisionSignalOutcomeService(
+            db_manager=db_manager,
+            refill_missing_bars=refill_missing_bars,
+            bar_filler=bar_filler,
+        )
         horizons = list(SUPPORTED_OUTCOME_HORIZONS.keys())
         run_result = service.run_outcomes(
             horizons=horizons,
@@ -274,6 +282,7 @@ def evaluate_signal_outcomes(
             "neutral": int(overall.get("neutral") or 0),
             "hit_rate_pct": overall.get("hit_rate_pct"),
             "avg_stock_return_pct": overall.get("avg_stock_return_pct"),
+            "unable_reasons": dict(overall.get("unable_reasons") or {}),
             "by_horizon": by_horizon,
             "by_action": by_action,
         }
@@ -282,14 +291,54 @@ def evaluate_signal_outcomes(
         return {}
 
 
+# Outcomes waiting for forward closes vs. outcomes that cannot be scored at all.
+_WAITING_UNABLE_REASONS = frozenset({"insufficient_forward_bars", "missing_end_close"})
+_UNABLE_REASON_LABELS_TR = {
+    "insufficient_forward_bars": "ileri kapanış bekleniyor",
+    "missing_end_close": "ileri kapanış bekleniyor",
+    "missing_anchor_price": "sinyal günü fiyatı yok",
+    "invalid_anchor_price": "sinyal günü fiyatı geçersiz",
+    "invalid_end_close": "kapanış fiyatı geçersiz",
+    "non_directional_action": "yönsüz sinyal (izle)",
+    "missing_anchor_date": "sinyal tarihi yok",
+    "unsupported_horizon": "desteklenmeyen ufuk",
+}
+MIN_SIGNAL_SAMPLE = 30
+
+
+def _signal_outcome_status_line(outcomes: Dict[str, Any]) -> Optional[str]:
+    """Explain the checks that have no result yet: waiting for closes vs. not scorable."""
+    reasons = {str(k): int(v) for k, v in (outcomes.get("unable_reasons") or {}).items() if int(v or 0) > 0}
+    if not reasons:
+        return None
+    waiting = sum(v for k, v in reasons.items() if k in _WAITING_UNABLE_REASONS)
+    blocked: Dict[str, int] = {}
+    for key, count in reasons.items():
+        if key in _WAITING_UNABLE_REASONS:
+            continue
+        label = _UNABLE_REASON_LABELS_TR.get(key, key)
+        blocked[label] = blocked.get(label, 0) + count
+    parts = []
+    if waiting:
+        parts.append(f"{waiting} ileri kapanış bekliyor")
+    if blocked:
+        detail = ", ".join(f"{label} {count}" for label, count in sorted(blocked.items(), key=lambda kv: -kv[1]))
+        parts.append(f"{sum(blocked.values())} değerlendirilemedi ({detail})")
+    return "Sonuçlanmayan kontroller: " + " · ".join(parts)
+
+
 def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
     if not isinstance(outcomes, dict) or not outcomes:
         return []
     completed = int(outcomes.get("completed") or 0)
     total = int(outcomes.get("total") or 0)
+    status_line = _signal_outcome_status_line(outcomes)
     if completed <= 0:
         if total > 0:
-            return [f"🎯 Sinyal isabeti: henüz yeterli ileri gün kapanışı birikmedi ({total} bekleyen kontrol)"]
+            lines = [f"🎯 Sinyal isabeti: {total} kontrolün hiçbiri henüz sonuçlanmadı."]
+            if status_line:
+                lines.append(status_line)
+            return lines
         return []
     hit = int(outcomes.get("hit") or 0)
     miss = int(outcomes.get("miss") or 0)
@@ -301,6 +350,12 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
         f"🎯 Sinyal isabeti (±%2 nötr bant): {completed} değerlendirme | isabet {rate_str} "
         f"({hit} doğru / {miss} yanlış / {neutral} nötr) | ort. getiri {_pct(avg_ret)}"
     ]
+    if hit + miss < MIN_SIGNAL_SAMPLE:
+        lines.append(
+            f"Not: yönlü sonuç sayısı {hit + miss} (< {MIN_SIGNAL_SAMPLE}); isabet oranı henüz istatistiksel olarak anlamlı değil."
+        )
+    if status_line:
+        lines.append(status_line)
     horizon_parts: List[str] = []
     for horizon, label in _HORIZON_LABELS_TR.items():
         bucket = (outcomes.get("by_horizon") or {}).get(horizon)
