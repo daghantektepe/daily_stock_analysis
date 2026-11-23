@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] G1.1 `evaluate_signal_outcomes()` 新增 10 日方向性信号相对大盘基准（`tr` → `XU100.IS`、`us` → `SPY`，未配置基准的市场如 `cn` 诚实提示「endeks yok」）的超额收益对比，支持可注入 `history_provider` 与单日重复信号去重，样本 `n ≥ 30` 时通过确定性自助法（bootstrap）输出 %90 置信区间，`n < 30` 标注「örnek yetersiz」；单测通过 `_offline_signal_outcome_bar_refill` 保持离线（`tests/test_paper_trading.py` 新增 3 项验证，不改动上游 Web 决策信号统计口径）
 - [文档] 新增 `docs/ANTIGRAVITY_PLAN.md`：按阶段（基线测量、信号相对指数评估、可靠性/技术债、前向验证期检查点与滑点测量、条件性工作）列出任务、涉及文件、验收标准、时间表（前向验证最早于 2027-05-14 结束）及交接启动提示
 - [修复] 周末（周六/周日）生成的决策信号因锚定日永远没有收盘价而无法评估：仅当锚定日为周末且当日无日线时，改用 3 天内最近一个交易日收盘作为起始价（工作日数据缺口仍保持精确锚定、可重试的上游语义）；土耳其语信号报告统计中，同一股票、同一信号日、同一方向、同一周期的重复信号只计一次（保留最新一条），并显示合并数量（Web 决策信号统计口径不变）
 - [改进] `scripts/paper_trading_report.py --details`：只读列出全部信号的动作分布及每条方向性信号的信号日（含星期，用于识别周末/节假日锚点）、当日收盘是否存在、已存储的后续收盘数、最新收盘日与各周期状态；补充 `watch`/`alert` 的土耳其语标签

@@ -195,8 +195,8 @@ Bunlar ancak belirtilen koşul sağlanınca başlar:
 
 | Görev | Durum | Commit | Not |
 | :--- | :--- | :--- | :--- |
-| G0.1–G0.7 Başlangıç ölçümü | ✅ | (sonraki commit) | `2026-11-23` gerçek E:\ ölçümü `HANDOVER_ANTIGRAVITY.md` §7'ye işlendi; tüm komutlar exit 0 |
-| G1.1 Endekse göre sinyal başarısı | ⏳ | — | |
+| G0.1–G0.7 Başlangıç ölçümü | ✅ | `3887fd4` | `2026-11-23` gerçek E:\ ölçümü `HANDOVER_ANTIGRAVITY.md` §7'ye işlendi; tüm komutlar exit 0 |
+| G1.1 Endekse göre sinyal başarısı | ✅ | (sonraki commit) | `evaluate_signal_outcomes(history_provider=...)`, 10g `XU100.IS`/`SPY` kıyası, bootstrap %90 GA (`n>=30`), bilinmeyen pazar `endeks yok`, 30/30 test geçti |
 | G1.2 Sinyal görünürlüğü | ⏳ | — | G1.1'e bağlı |
 | G1.3 "İzle" oranı | ⏳ | — | |
 | G2.1 Raporlar `data/reports`'a | ⏳ | — | |

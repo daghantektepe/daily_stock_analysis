@@ -49,7 +49,8 @@ def main() -> int:
         maybe_send_weekly_performance_report(market=args.market)
         return 0
 
-    outcomes = {} if args.no_outcomes else evaluate_signal_outcomes(market=args.market)
+    no_hist = (lambda *_args: {}) if args.no_benchmark else None
+    outcomes = {} if args.no_outcomes else evaluate_signal_outcomes(market=args.market, history_provider=no_hist)
     summary = PaperTradingService().get_summary(include_benchmarks=not args.no_benchmark)
     text = format_paper_trading_report(summary, outcome_stats=outcomes)
     print(text)

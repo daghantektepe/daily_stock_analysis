@@ -22,6 +22,7 @@ import bisect
 import json
 import logging
 import os
+import random
 import tempfile
 import threading
 import time
@@ -228,12 +229,15 @@ def evaluate_signal_outcomes(
     limit: int = 500,
     refill_missing_bars: bool = True,
     bar_filler: Optional[Callable[..., int]] = None,
+    history_provider: Optional[HistoryProvider] = None,
 ) -> Dict[str, Any]:
     """Run pending DecisionSignal outcome evaluations (1/3/5/10d) and summarize hit rates.
 
     Missing anchor / forward daily closes are fetched from the data providers
     (``refill_missing_bars``); otherwise a stock analysed only once could never
-    be scored. Fail-open: returns ``{}`` on any database or evaluation error.
+    be scored. Directional outcomes are also compared against the market index
+    (``tr`` -> ``XU100.IS``, ``us`` -> ``SPY``) via ``history_provider``.
+    Fail-open: returns ``{}`` on any database or evaluation error.
     """
     try:
         from src.services.decision_signal_outcome_service import (
@@ -264,7 +268,8 @@ def evaluate_signal_outcomes(
             for stats_row in stats_rows
             if not market or str(stats_row.outcome.market or "").strip().lower() == market.strip().lower()
         ]
-        rows, duplicates = _dedupe_repeated_signal_outcomes(service, rows)
+        signal_codes = _signal_stock_codes(service, rows)
+        rows, duplicates = _dedupe_repeated_signal_outcomes(service, rows, signal_codes=signal_codes)
         overall = service._aggregate(rows)
         by_horizon: Dict[str, Dict[str, Any]] = {}
         for horizon in horizons:
@@ -275,6 +280,13 @@ def evaluate_signal_outcomes(
         for bucket in service._breakdown(rows, "action"):
             if int(bucket.get("completed") or 0) > 0:
                 by_action[str(bucket["value"])] = bucket
+        active_history = yfinance_history if history_provider is None else history_provider
+        benchmark_comparison = _evaluate_signal_benchmark_comparison(
+            service,
+            rows,
+            signal_codes=signal_codes,
+            history=active_history,
+        )
         return {
             "evaluated": int(run_result.get("evaluated") or 0),
             "total": int(overall.get("total") or 0),
@@ -289,6 +301,7 @@ def evaluate_signal_outcomes(
             "duplicate_checks_merged": duplicates,
             "by_horizon": by_horizon,
             "by_action": by_action,
+            "benchmark_comparison": benchmark_comparison,
         }
     except Exception as exc:  # noqa: BLE001 - optional reporting helper, fail-open
         logger.info("[paper-benchmark] signal outcome evaluation failed: %s", exc)
@@ -402,15 +415,10 @@ def describe_signal_outcome_details(
     return lines
 
 
-def _dedupe_repeated_signal_outcomes(service: Any, rows: List[Any]) -> tuple:
-    """Count one stock / signal day / direction / horizon once.
-
-    Running the analysis several times a day stores several identical signals;
-    scoring each would count one price move many times. The latest signal wins.
-    """
-    ids = sorted({int(row.signal_id) for row in rows})
+def _signal_stock_codes(service: Any, rows: Sequence[Any]) -> Dict[int, str]:
+    ids = sorted({int(row.signal_id) for row in rows if getattr(row, "signal_id", None) is not None})
     if not ids:
-        return rows, 0
+        return {}
     codes: Dict[int, str] = {}
     try:
         from src.storage import DecisionSignalRecord
@@ -420,8 +428,24 @@ def _dedupe_repeated_signal_outcomes(service: Any, rows: List[Any]) -> tuple:
                 DecisionSignalRecord.id.in_(ids)
             ):
                 codes[int(sig_id)] = str(code)
-    except Exception as exc:  # noqa: BLE001 - fall back to raw rows
-        logger.info("[paper-benchmark] signal de-duplication skipped: %s", exc)
+    except Exception as exc:  # noqa: BLE001 - fail-open
+        logger.info("[paper-benchmark] signal stock code lookup skipped: %s", exc)
+    return codes
+
+
+def _dedupe_repeated_signal_outcomes(
+    service: Any,
+    rows: List[Any],
+    *,
+    signal_codes: Optional[Dict[int, str]] = None,
+) -> tuple:
+    """Count one stock / signal day / direction / horizon once.
+
+    Running the analysis several times a day stores several identical signals;
+    scoring each would count one price move many times. The latest signal wins.
+    """
+    codes = signal_codes if signal_codes is not None else _signal_stock_codes(service, rows)
+    if not codes:
         return rows, 0
     latest: Dict[tuple, Any] = {}
     for row in rows:
@@ -436,6 +460,204 @@ def _dedupe_repeated_signal_outcomes(service: Any, rows: List[Any]) -> tuple:
             latest[key] = row
     deduped = list(latest.values())
     return deduped, len(rows) - len(deduped)
+
+
+_BUY_ACTIONS = frozenset({"buy", "add"})
+_SELL_ACTIONS = frozenset({"reduce", "sell", "avoid"})
+_PRIMARY_BENCHMARK_HORIZON = "10d"
+
+
+def _bootstrap_ci90(
+    values: Sequence[float],
+    *,
+    iterations: int = 1000,
+    seed: int = 42,
+) -> Optional[List[float]]:
+    """Simple percentile bootstrap 90% confidence interval for the mean."""
+    n = len(values)
+    if n < MIN_SIGNAL_SAMPLE:
+        return None
+    rng = random.Random(seed)
+    vals = list(values)
+    means: List[float] = []
+    for _ in range(iterations):
+        sample = [vals[rng.randrange(n)] for _ in range(n)]
+        means.append(sum(sample) / n)
+    means.sort()
+    low_idx = max(0, int(0.05 * (iterations - 1)))
+    high_idx = min(iterations - 1, int(0.95 * (iterations - 1)))
+    return [round(means[low_idx], 2), round(means[high_idx], 2)]
+
+
+def _summarize_benchmark_bucket(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    n = len(samples)
+    if n == 0:
+        return {
+            "n": 0,
+            "beat_count": 0,
+            "beat_rate_pct": None,
+            "beat_rate_ci90_pct": None,
+            "avg_excess_pct": None,
+            "avg_excess_ci90_pct": None,
+            "sample_sufficient": False,
+        }
+    beats = [100.0 if item["beat"] else 0.0 for item in samples]
+    excesses = [float(item["excess_pct"]) for item in samples]
+    beat_count = sum(1 for item in samples if item["beat"])
+    beat_rate = round(beat_count / n * 100.0, 2)
+    avg_excess = round(sum(excesses) / n, 2)
+    return {
+        "n": n,
+        "beat_count": beat_count,
+        "beat_rate_pct": beat_rate,
+        "beat_rate_ci90_pct": _bootstrap_ci90(beats),
+        "avg_excess_pct": avg_excess,
+        "avg_excess_ci90_pct": _bootstrap_ci90(excesses),
+        "sample_sufficient": n >= MIN_SIGNAL_SAMPLE,
+    }
+
+
+def _evaluate_signal_benchmark_comparison(
+    service: Any,
+    rows: Sequence[Any],
+    *,
+    signal_codes: Dict[int, str],
+    history: HistoryProvider,
+) -> Dict[str, Any]:
+    """Compare completed directional signal returns to the market index over the exact window."""
+    directional = [
+        row
+        for row in rows
+        if getattr(row, "eval_status", None) == "completed"
+        and getattr(row, "anchor_date", None) is not None
+        and getattr(row, "eval_window_days", None)
+        and getattr(row, "stock_return_pct", None) is not None
+        and (str(row.action or "") in _BUY_ACTIONS or str(row.action or "") in _SELL_ACTIONS)
+    ]
+    empty_bucket = _summarize_benchmark_bucket([])
+    if not directional:
+        return {
+            "primary_horizon": _PRIMARY_BENCHMARK_HORIZON,
+            "min_sample": MIN_SIGNAL_SAMPLE,
+            "groups": {"buy": dict(empty_bucket), "sell": dict(empty_bucket)},
+            "combined_10d": dict(empty_bucket),
+            "by_horizon": {},
+            "no_benchmark_markets": [],
+            "no_benchmark_count": 0,
+            "missing_index_data_count": 0,
+        }
+
+    window_cache: Dict[tuple, Optional[date]] = {}
+    market_spans: Dict[str, List[date]] = {}
+    no_benchmark_markets_all: List[str] = []
+    no_benchmark_count_primary = 0
+    prepared: List[Dict[str, Any]] = []
+
+    for row in directional:
+        market_key = str(row.market or "").strip().lower()
+        horizon = str(row.horizon or "").strip()
+        if market_key not in BENCHMARKS:
+            label = market_key or "bilinmiyor"
+            if horizon == _PRIMARY_BENCHMARK_HORIZON:
+                no_benchmark_count_primary += 1
+                if label not in no_benchmark_markets_all:
+                    no_benchmark_markets_all.append(label)
+            continue
+
+        code = signal_codes.get(int(row.signal_id))
+        if not code:
+            continue
+        eval_days = int(row.eval_window_days)
+        w_key = (code, row.anchor_date, eval_days)
+        if w_key not in window_cache:
+            bars = service.stock_repo.get_forward_bars(
+                code=code, analysis_date=row.anchor_date, eval_window_days=eval_days
+            )
+            window_cache[w_key] = bars[eval_days - 1].date if len(bars) >= eval_days else None
+        end_date = window_cache[w_key]
+        if end_date is None:
+            continue
+        span = market_spans.setdefault(market_key, [row.anchor_date, end_date])
+        if row.anchor_date < span[0]:
+            span[0] = row.anchor_date
+        if end_date > span[1]:
+            span[1] = end_date
+        group = "buy" if str(row.action or "") in _BUY_ACTIONS else "sell"
+        prepared.append({
+            "market": market_key,
+            "horizon": horizon,
+            "group": group,
+            "anchor_date": row.anchor_date,
+            "end_date": end_date,
+            "stock_return_pct": float(row.stock_return_pct),
+        })
+
+    series_by_market: Dict[str, _Series] = {}
+    for market_key, (min_start, max_end) in market_spans.items():
+        index_sym = BENCHMARKS[market_key]["index"]
+        try:
+            closes = history(index_sym, min_start - timedelta(days=10), max_end) or {}
+        except Exception as exc:  # noqa: BLE001 - fail-open
+            logger.info("[paper-benchmark] signal index fetch failed market=%s: %s", market_key, exc)
+            closes = {}
+        series_by_market[market_key] = _Series(closes)
+
+    samples_by_horizon: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+    missing_index_primary = 0
+    for item in prepared:
+        series = series_by_market.get(item["market"])
+        start_idx = series.at(item["anchor_date"]) if series else None
+        end_idx = series.at(item["end_date"]) if series else None
+        if not start_idx or not end_idx or start_idx <= 0 or end_idx <= 0:
+            if item["horizon"] == _PRIMARY_BENCHMARK_HORIZON:
+                missing_index_primary += 1
+            continue
+        index_ret = (end_idx - start_idx) / start_idx * 100.0
+        excess = item["stock_return_pct"] - index_ret
+        beat = excess > 0.0 if item["group"] == "buy" else excess < 0.0
+        bucket = samples_by_horizon.setdefault(item["horizon"], {"buy": [], "sell": []})
+        bucket[item["group"]].append({
+            "excess_pct": excess,
+            "beat": beat,
+        })
+
+    by_horizon_summary = {
+        horizon: {
+            "buy": _summarize_benchmark_bucket(groups["buy"]),
+            "sell": _summarize_benchmark_bucket(groups["sell"]),
+        }
+        for horizon, groups in samples_by_horizon.items()
+    }
+    primary_raw = samples_by_horizon.get(_PRIMARY_BENCHMARK_HORIZON, {"buy": [], "sell": []})
+    primary_groups = {
+        "buy": _summarize_benchmark_bucket(primary_raw["buy"]),
+        "sell": _summarize_benchmark_bucket(primary_raw["sell"]),
+    }
+    combined_10d = _summarize_benchmark_bucket([*primary_raw["buy"], *primary_raw["sell"]])
+    return {
+        "primary_horizon": _PRIMARY_BENCHMARK_HORIZON,
+        "min_sample": MIN_SIGNAL_SAMPLE,
+        "groups": primary_groups,
+        "combined_10d": combined_10d,
+        "by_horizon": by_horizon_summary,
+        "no_benchmark_markets": sorted(no_benchmark_markets_all),
+        "no_benchmark_count": no_benchmark_count_primary,
+        "missing_index_data_count": missing_index_primary,
+    }
+
+
+def _format_benchmark_group_line(label: str, bucket: Dict[str, Any]) -> str:
+    n = int(bucket.get("n") or 0)
+    beat_rate = bucket.get("beat_rate_pct")
+    avg_excess = bucket.get("avg_excess_pct")
+    rate_str = "n/a" if beat_rate is None else f"%{beat_rate:.0f}"
+    excess_str = _pct(avg_excess)
+    ci90 = bucket.get("beat_rate_ci90_pct")
+    if bucket.get("sample_sufficient") and isinstance(ci90, (list, tuple)) and len(ci90) == 2:
+        sample_note = f"%90 GA %{ci90[0]:.0f}–%{ci90[1]:.0f}"
+    else:
+        sample_note = "örnek yetersiz"
+    return f"Endekse göre: {label} sinyallerinin {rate_str}'i 10 günde endeksi geçti (n={n}, ort. fark {excess_str}, {sample_note})"
 
 
 def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
@@ -499,6 +721,20 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
         action_parts.append(f"{label} {a_rate_str} ({bucket.get('hit', 0)}/{a_denom})")
     if action_parts:
         lines.append("Yön bazında: " + " | ".join(action_parts))
+    bench = outcomes.get("benchmark_comparison") or {}
+    groups = bench.get("groups") or {}
+    for key, label in (("buy", "al"), ("sell", "azalt/sat")):
+        bucket = groups.get(key) or {}
+        if int(bucket.get("n") or 0) > 0:
+            lines.append(_format_benchmark_group_line(label, bucket))
+    no_bench_markets = bench.get("no_benchmark_markets") or []
+    no_bench_count = int(bench.get("no_benchmark_count") or 0)
+    if no_bench_count > 0:
+        markets_str = ", ".join(str(m) for m in no_bench_markets)
+        lines.append(f"Endekse göre: {markets_str} pazarı için endeks yok (n={no_bench_count})")
+    missing_idx = int(bench.get("missing_index_data_count") or 0)
+    if missing_idx > 0:
+        lines.append(f"Endekse göre: 10g karşılaştırma için endeks fiyat verisi bulunamadı (n={missing_idx})")
     return lines
 
 

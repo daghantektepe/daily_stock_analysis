@@ -551,7 +551,7 @@ def test_paper_trading_costs_and_time_stop(db) -> None:
 
 
 
-def _add_signal(db, code: str, session_date: str, action: str = "buy") -> int:
+def _add_signal(db, code: str, session_date: str, action: str = "buy", *, market: str = "tr") -> int:
     import json
     import uuid
 
@@ -561,7 +561,7 @@ def _add_signal(db, code: str, session_date: str, action: str = "buy") -> int:
         row = DecisionSignalRecord(
             stock_code=code,
             stock_name=code,
-            market="tr",
+            market=market,
             source_type="analysis",
             source_report_id=900,
             trace_id=f"trace-{code}-{action}-{session_date}-{uuid.uuid4().hex[:8]}",
@@ -734,3 +734,106 @@ def test_repeated_same_day_signals_are_counted_once(db) -> None:
     assert outcomes["duplicate_checks_merged"] == 8
     text = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
     assert "Aynı gün tekrarlanan sinyaller tek sayıldı (8 kontrol birleştirildi)" in text
+
+
+def test_signal_benchmark_comparison_buy_sell_weekend_and_dedupe(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes, format_paper_trading_report
+
+    # Weekend Sunday buy in TR: Friday anchor (Nov 6) close = 100 -> 10th trading bar (Nov 16) close = 115 (+15%)
+    _add_signal(db, "THYAO.IS", "2026-11-08", action="buy", market="tr")
+    _add_close(db, "THYAO.IS", date(2026, 11, 6), 100.0)
+    for offset in range(1, 12):
+        _add_close(db, "THYAO.IS", date(2026, 11, 8) + timedelta(days=offset), 100.0 + offset * (15.0 / 10.0))
+
+    # Duplicate US sell signals on Nov 2 (Monday): AAPL drops -8% over 10 bars while SPY rises +5% -> beat (excess = -13%)
+    _add_signal(db, "AAPL", "2026-11-02", action="reduce", market="us")
+    _add_signal(db, "AAPL", "2026-11-02", action="sell", market="us")
+    for offset in range(0, 12):
+        _add_close(db, "AAPL", date(2026, 11, 2) + timedelta(days=offset), 100.0 - offset * 0.8)
+
+    idx_prices = {
+        "XU100.IS": {
+            date(2026, 11, 6): 10000.0,   # Friday close before Nov 8 Sunday
+            date(2026, 11, 18): 10500.0,  # 10th forward bar after Nov 8 -> +5% index gain (THYAO +15% -> +10% excess)
+        },
+        "SPY": {
+            date(2026, 11, 2): 500.0,
+            date(2026, 11, 12): 525.0,    # 10th forward bar after Nov 2 -> +5% SPY gain (AAPL -8% -> -13% excess)
+        },
+    }
+
+    def fake_hist(symbol, start, end):
+        return {d: v for d, v in idx_prices.get(symbol, {}).items() if start <= d <= end}
+
+    outcomes = evaluate_signal_outcomes(db_manager=db, refill_missing_bars=False, history_provider=fake_hist)
+    bench = outcomes["benchmark_comparison"]
+    assert bench["groups"]["buy"]["n"] == 1
+    assert bench["groups"]["buy"]["beat_rate_pct"] == 100.0
+    assert bench["groups"]["buy"]["avg_excess_pct"] == pytest.approx(10.0, abs=0.1)
+    assert bench["groups"]["buy"]["sample_sufficient"] is False
+    assert bench["groups"]["sell"]["n"] == 1  # repeated Nov 2 signals counted once
+    assert bench["groups"]["sell"]["beat_rate_pct"] == 100.0
+    assert bench["groups"]["sell"]["avg_excess_pct"] == pytest.approx(-13.0, abs=0.1)
+
+    report = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert "Endekse göre: al sinyallerinin %100'i 10 günde endeksi geçti (n=1, ort. fark +10.00%, örnek yetersiz)" in report
+    assert "Endekse göre: azalt/sat sinyallerinin %100'i 10 günde endeksi geçti (n=1, ort. fark -13.00%, örnek yetersiz)" in report
+
+
+def test_signal_benchmark_comparison_unknown_market_reports_no_index(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes, format_paper_trading_report
+
+    _add_signal(db, "588200", "2026-11-02", action="buy", market="cn")
+    for offset in range(0, 12):
+        _add_close(db, "588200", date(2026, 11, 2) + timedelta(days=offset), 1.0 + 0.01 * offset)
+
+    outcomes = evaluate_signal_outcomes(db_manager=db, refill_missing_bars=False, history_provider=lambda *_: {})
+    bench = outcomes["benchmark_comparison"]
+    assert bench["no_benchmark_count"] == 1
+    assert bench["no_benchmark_markets"] == ["cn"]
+    report = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert "Endekse göre: cn pazarı için endeks yok (n=1)" in report
+
+
+def test_signal_benchmark_comparison_bootstrap_ci90_when_sample_reaches_30(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes, format_paper_trading_report
+
+    base = date(2026, 9, 1)
+    idx_closes = {}
+    for day_offset in range(0, 80):
+        idx_closes[base + timedelta(days=day_offset)] = 500.0  # flat index (+0%)
+
+    # 30 distinct stock signals -> 20 beat (+10%), 10 lag (-5%)
+    for i in range(30):
+        code = f"STK{i:02d}"
+        sig_day = base + timedelta(days=i)
+        _add_signal(db, code, sig_day.isoformat(), action="buy", market="us")
+        _add_close(db, code, sig_day, 100.0)
+        end_px = 110.0 if i < 20 else 95.0
+        for fwd in range(1, 11):
+            _add_close(db, code, sig_day + timedelta(days=fwd), 100.0 + (end_px - 100.0) * fwd / 10.0)
+
+    outcomes = evaluate_signal_outcomes(
+        db_manager=db,
+        refill_missing_bars=False,
+        history_provider=lambda sym, start, end: (
+            {d: c for d, c in idx_closes.items() if start <= d <= end} if sym == "SPY" else {}
+        ),
+    )
+    buy_stats = outcomes["benchmark_comparison"]["groups"]["buy"]
+    assert buy_stats["n"] == 30
+    assert buy_stats["sample_sufficient"] is True
+    assert buy_stats["beat_rate_pct"] == pytest.approx(66.67, abs=0.1)
+    assert buy_stats["beat_rate_ci90_pct"] is not None
+    low, high = buy_stats["beat_rate_ci90_pct"]
+    assert 40.0 <= low <= buy_stats["beat_rate_pct"] <= high <= 90.0
+
+    report = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert "Endekse göre: al sinyallerinin %67'i 10 günde endeksi geçti (n=30, ort. fark +5.00%, %90 GA" in report
+    assert "örnek yetersiz" not in report

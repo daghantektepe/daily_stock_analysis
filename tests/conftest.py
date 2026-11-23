@@ -278,10 +278,16 @@ def _offline_signal_outcome_bar_refill(monkeypatch, request):
     """
     if request.node.get_closest_marker("network") is not None:
         return
+    from src.services import paper_trading_benchmark
     from src.services.decision_signal_outcome_service import DecisionSignalOutcomeService
 
     monkeypatch.setattr(
         DecisionSignalOutcomeService,
         "_fetch_and_store_daily_bars",
         lambda self, **_kwargs: 0,
+    )
+    monkeypatch.setattr(
+        paper_trading_benchmark,
+        "yfinance_history",
+        lambda _symbol, _start, _end: {},
     )
