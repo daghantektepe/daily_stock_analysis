@@ -144,3 +144,18 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
    - `python -m pytest -m "not network"`
    - `cd apps/dsa-web`, ardından `npm run lint` ve `npm run build`
    - `python scripts/check_ai_assets.py` (AI yönetim dosyaları değişirse)
+
+---
+
+## 7. E:\ ölçüm kaydı — 2026-11-23
+
+| Komut | Çıkış | Özet ve önemli ham satırlar |
+| :--- | :---: | :--- |
+| G0.1 `git pull` | 0 | Fast-forward (`aafa1f1..a45344c`), çakışma yok. |
+| G0.2 `pytest tests/test_strategy_research_v4.py -q` | 0 | `8 passed in 18.02s`; dondurulmuş parmak izleri doğrulandı. |
+| G0.3 `scripts\quant_paper.py step` | 0 | 6 defter işlendi: `paa` `$10,023.25` (%+0.23, hedef `BIL %100.0`), `meta_a` `$10,009.81` (%+0.10, hedef `BIL %80.0 · SHY %20.0`), `v3_trp` `$9,995.00` (%-0.05, `BIL %83.3 · UUP %16.7`), AI Konseyi 3 defter güncel. `Strateji verisi: Strateji turnuvası: güncel (3.3 saat önce yenilenmiş) \| v3 araştırması: güncel (3.3 saat önce yenilenmiş)`. |
+| G0.4 `daily_paper_step.ps1 -Status` | 0 | Görev: `DailyStockAnalysis-DailyPaperStep` (`Ready`), Son çalıştırma: `2026-11-23 19:09:15`, `Last Result: 0`, Sonraki: `2026-11-24 00:30:00`. Kripto trend: `$10,000.00` (%100 nakit, BTC `$61,271.08`, ETH `$1,724.33`, 0/5 SMA). |
+| G0.5 `scripts\quant_forward.py status` | 0 | Üç strateji de `2026-11-20` tarihinde dondurulmuş (`paa`: `87e22a6b3559`, `meta_a`: `37a7ab36a0d9`, `v3_trp`: `ae4754108564`), ileri gün `0/120` (ilk kapanış bekleniyor). |
+| G0.6 `run_ai_strategy_council.py reevaluate` | 0 | `Claude Code CLI` (`vol_target_trend`): `FAIL` (`FAIL_WEAK`, OOS Ex-BIL Sharpe `-0.05`, 25 bps `-0.21`); `OpenAI Codex CLI` (`vol_target_trend`): `FAIL` (`FAIL_WEAK`, OOS Ex-BIL Sharpe `-0.14`, 25 bps `-0.27`); `Google Gemini CLI` (`paa_custom`): `PASS` (`PASS_ELITE`, OOS CAGR `+8.4%`, Ex-BIL `+4.5%`, Sharpe `+0.42`, MaxDD `-14.4%`, 25 bps Sharpe `+0.31`, 2022 ayı `+%0.6` vs SPY `-18.2%`). |
+| G0.7 `paper_trading_report.py --details` | 0 | `İşlem: 0 \| Açık: 0 \| Kapanan: 0`. `Sinyal isabeti (±%2 nötr bant): 1 değerlendirme \| isabet n/a (0 doğru / 0 yanlış / 1 nötr) \| ort. getiri +0.86%`. Sinyal dağılımı: `izle 30, azalt 8, al 1, sat 1` (tekrar eden 108 kontrol birleştirildi). `#40 588200 al` (2026-11-22 Paz) 1d nötr (`+0.86%`), 3d/5d/10d bekliyor; 9 ABD sinyali (`URI`, `AMD`, `PANW` — 2026-11-20 Cum) Pazartesi kapanışı bekliyor. Not: `588200` çekilirken `efinance`/`akshare`/`pytdx` uyarı/hata logları çıktı. |
+

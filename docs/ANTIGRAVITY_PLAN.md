@@ -195,7 +195,7 @@ Bunlar ancak belirtilen koşul sağlanınca başlar:
 
 | Görev | Durum | Commit | Not |
 | :--- | :--- | :--- | :--- |
-| G0.1–G0.7 Başlangıç ölçümü | ⏳ | — | |
+| G0.1–G0.7 Başlangıç ölçümü | ✅ | (sonraki commit) | `2026-11-23` gerçek E:\ ölçümü `HANDOVER_ANTIGRAVITY.md` §7'ye işlendi; tüm komutlar exit 0 |
 | G1.1 Endekse göre sinyal başarısı | ⏳ | — | |
 | G1.2 Sinyal görünürlüğü | ⏳ | — | G1.1'e bağlı |
 | G1.3 "İzle" oranı | ⏳ | — | |
