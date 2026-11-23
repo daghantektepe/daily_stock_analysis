@@ -437,6 +437,13 @@ class DecisionSignalOutcomeService:
                 analysis_date=anchor_date,
                 eval_window_days=eval_days,
             )
+        if start_bar is None and anchor_date.weekday() >= 5:
+            # A weekend signal day never gets its own close; the price known when the
+            # signal was made is the last close before it (Friday). Weekday gaps keep the
+            # exact-day rule and stay retryable until the data arrives.
+            previous = self.stock_repo.get_start_daily(code=signal.stock_code, analysis_date=anchor_date)
+            if previous is not None and (anchor_date - previous.date).days <= 3:
+                start_bar = previous
         start_price = getattr(start_bar, "close", None)
         if start_price is None:
             return self._unable_fields(

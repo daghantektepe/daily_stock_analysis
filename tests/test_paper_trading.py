@@ -553,6 +553,7 @@ def test_paper_trading_costs_and_time_stop(db) -> None:
 
 def _add_signal(db, code: str, session_date: str, action: str = "buy") -> int:
     import json
+    import uuid
 
     from src.storage import DecisionSignalRecord
 
@@ -563,7 +564,7 @@ def _add_signal(db, code: str, session_date: str, action: str = "buy") -> int:
             market="tr",
             source_type="analysis",
             source_report_id=900,
-            trace_id=f"trace-{code}-{action}-{session_date}",
+            trace_id=f"trace-{code}-{action}-{session_date}-{uuid.uuid4().hex[:8]}",
             market_phase="postmarket",
             trigger_source="cli",
             action=action,
@@ -691,3 +692,45 @@ def test_signal_details_show_action_mix_weekday_and_stored_closes(db) -> None:
     assert "1d isabet" in text and "10d ileri kapanış bekleniyor" in text
     assert "THYAO.IS sat · sinyal günü 2026-11-08 (Paz) · o günün fiyatı YOK" in text
     assert "THYAO.IS izle" not in text  # non-directional signals are only counted
+
+
+def test_weekend_signal_uses_friday_close_as_start_price(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes
+
+    _add_signal(db, "588200", "2026-11-22", action="buy")  # Sunday, like the real E:\\ case
+    _add_close(db, "588200", date(2026, 11, 20), 100.0)  # Friday
+    for offset in range(0, 14):  # Monday 23 Nov onward (weekend bars harmless for the test)
+        _add_close(db, "588200", date(2026, 11, 23) + timedelta(days=offset), 104.0 + offset)
+    outcomes = evaluate_signal_outcomes(market="tr", db_manager=db, refill_missing_bars=False)
+    assert outcomes["completed"] == 4 and outcomes["hit"] == 4
+    assert "missing_anchor_price" not in outcomes["unable_reasons"]
+
+
+def test_weekend_signal_without_recent_friday_close_stays_unscored(db) -> None:
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes
+
+    _add_signal(db, "588200", "2026-11-22", action="buy")
+    _add_close(db, "588200", date(2026, 11, 13), 100.0)  # 9 days earlier: too stale to stand in
+    _add_close(db, "588200", date(2026, 11, 23), 104.0)
+    outcomes = evaluate_signal_outcomes(market="tr", db_manager=db, refill_missing_bars=False)
+    assert outcomes["completed"] == 0 and outcomes["unable_reasons"]["missing_anchor_price"] == 4
+
+
+def test_repeated_same_day_signals_are_counted_once(db) -> None:
+    from datetime import timedelta
+
+    from src.services.paper_trading_benchmark import evaluate_signal_outcomes, format_paper_trading_report
+
+    for _ in range(3):  # analysis run three times on the same day
+        _add_signal(db, "URI", "2026-11-03", action="reduce")
+    _add_signal(db, "AMD", "2026-11-03", action="reduce")
+    for code in ("URI", "AMD"):
+        for offset in range(0, 16):
+            _add_close(db, code, date(2026, 11, 3) + timedelta(days=offset), 100.0 - 3.0 * offset)
+    outcomes = evaluate_signal_outcomes(market="tr", db_manager=db, refill_missing_bars=False)
+    assert outcomes["completed"] == 8  # 2 distinct stocks x 4 horizons, not 4 x 4
+    assert outcomes["duplicate_checks_merged"] == 8
+    text = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert "Aynı gün tekrarlanan sinyaller tek sayıldı (8 kontrol birleştirildi)" in text

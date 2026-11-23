@@ -264,6 +264,7 @@ def evaluate_signal_outcomes(
             for stats_row in stats_rows
             if not market or str(stats_row.outcome.market or "").strip().lower() == market.strip().lower()
         ]
+        rows, duplicates = _dedupe_repeated_signal_outcomes(service, rows)
         overall = service._aggregate(rows)
         by_horizon: Dict[str, Dict[str, Any]] = {}
         for horizon in horizons:
@@ -285,6 +286,7 @@ def evaluate_signal_outcomes(
             "hit_rate_pct": overall.get("hit_rate_pct"),
             "avg_stock_return_pct": overall.get("avg_stock_return_pct"),
             "unable_reasons": dict(overall.get("unable_reasons") or {}),
+            "duplicate_checks_merged": duplicates,
             "by_horizon": by_horizon,
             "by_action": by_action,
         }
@@ -400,17 +402,59 @@ def describe_signal_outcome_details(
     return lines
 
 
+def _dedupe_repeated_signal_outcomes(service: Any, rows: List[Any]) -> tuple:
+    """Count one stock / signal day / direction / horizon once.
+
+    Running the analysis several times a day stores several identical signals;
+    scoring each would count one price move many times. The latest signal wins.
+    """
+    ids = sorted({int(row.signal_id) for row in rows})
+    if not ids:
+        return rows, 0
+    codes: Dict[int, str] = {}
+    try:
+        from src.storage import DecisionSignalRecord
+
+        with service.repo.db.get_session() as session:
+            for sig_id, code in session.query(DecisionSignalRecord.id, DecisionSignalRecord.stock_code).filter(
+                DecisionSignalRecord.id.in_(ids)
+            ):
+                codes[int(sig_id)] = str(code)
+    except Exception as exc:  # noqa: BLE001 - fall back to raw rows
+        logger.info("[paper-benchmark] signal de-duplication skipped: %s", exc)
+        return rows, 0
+    latest: Dict[tuple, Any] = {}
+    for row in rows:
+        key = (
+            codes.get(int(row.signal_id), f"#{row.signal_id}"),
+            row.anchor_date,
+            row.direction_expected or row.action,
+            row.horizon,
+        )
+        kept = latest.get(key)
+        if kept is None or int(row.signal_id) > int(kept.signal_id):
+            latest[key] = row
+    deduped = list(latest.values())
+    return deduped, len(rows) - len(deduped)
+
+
 def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
     if not isinstance(outcomes, dict) or not outcomes:
         return []
     completed = int(outcomes.get("completed") or 0)
     total = int(outcomes.get("total") or 0)
     status_line = _signal_outcome_status_line(outcomes)
+    merged = int(outcomes.get("duplicate_checks_merged") or 0)
+    merged_line = (
+        f"Aynı gün tekrarlanan sinyaller tek sayıldı ({merged} kontrol birleştirildi)." if merged > 0 else None
+    )
     if completed <= 0:
         if total > 0:
             lines = [f"🎯 Sinyal isabeti: {total} kontrolün hiçbiri henüz sonuçlanmadı."]
             if status_line:
                 lines.append(status_line)
+            if merged_line:
+                lines.append(merged_line)
             return lines
         return []
     hit = int(outcomes.get("hit") or 0)
@@ -429,6 +473,8 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
         )
     if status_line:
         lines.append(status_line)
+    if merged_line:
+        lines.append(merged_line)
     horizon_parts: List[str] = []
     for horizon, label in _HORIZON_LABELS_TR.items():
         bucket = (outcomes.get("by_horizon") or {}).get(horizon)

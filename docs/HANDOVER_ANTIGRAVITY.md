@@ -91,7 +91,12 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 - **Düzeltme:** `evaluate_signal_outcomes()` eksik kapanışları veri sağlayıcısından tamamlıyor; rapor nedenleri ayrı gösteriyor.
 - **Sonraki adım:** Kullanıcı `paper_trading_report.py`'yi yeniden çalıştırıp gerçek isabeti bu nota eklemeli.
 - **Düzeltme sonrası E:\\ çıktısı:** 160 kontrol = 40 sinyal. 30 sinyal "izle" (120 kontrol), yani yönsüz ve puanlanamaz. 10 yönlü sinyalden 9'u ileri kapanış bekliyor (36), 1'inin sinyal günü fiyatı yok (4). Bulgu: yapay zekâ çoğunlukla yön vermiyor. Ayrıntı için kullanıcıdan `paper_trading_report.py --details` çıktısı istendi.
-- **Kontrol edilmesi gerekenler:** Sinyal günü fiyatı olmayan sinyal hafta sonu ya da tatil gününe mi bağlı? Eğer öyleyse anchor kuralı upstream'de bilinçli olarak "tam gün" seçilmiş; değiştirmeden önce upstream sözleşmesini (`get_daily_on_date`) değerlendirin. Bekleyen 9 sinyal gerçekten son günlerden mi?
+- **`--details` sonucu (23 Kasım 2026):**
+  - Yönlü sinyaller: 9 ABD sinyali (URI, AMD, PANW), hepsi 20 Kasım Cuma tarihli. Bekliyorlar, çünkü Pazartesi kapanışı henüz oluşmadı; bu doğru davranış.
+  - 588200 (Çin ETF'i): 22 Kasım Pazar sinyali. Hafta sonu için Cuma kapanışı başlangıç fiyatı olarak kullanılmaya başlandı.
+  - Tekrarlar: Aynı gün URI ×4, AMD ×3, PANW ×2 sinyal vardı. Rapor istatistiğinde artık tek sayılıyor.
+  - Sinyal dağılımı: izle 30, azalt 8, al 1, sat 1. Yapay zekâ kriz rejiminde çok temkinli.
+- **Kontrol edilmesi gerekenler (eski):** Sinyal günü fiyatı olmayan sinyal hafta sonu ya da tatil gününe mi bağlı? Eğer öyleyse anchor kuralı upstream'de bilinçli olarak "tam gün" seçilmiş; değiştirmeden önce upstream sözleşmesini (`get_daily_on_date`) değerlendirin. Bekleyen 9 sinyal gerçekten son günlerden mi?
 - **`İşlem: 0` neden:** Sinyallerden sanal işlem açılması isteğe bağlı (`PAPER_TRADING_ENABLED=false` varsayılan).
 
 ### P1 — Al/sat sinyallerinin değerini kanıtla ya da göster

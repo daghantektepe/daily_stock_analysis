@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] 周末（周六/周日）生成的决策信号因锚定日永远没有收盘价而无法评估：仅当锚定日为周末且当日无日线时，改用 3 天内最近一个交易日收盘作为起始价（工作日数据缺口仍保持精确锚定、可重试的上游语义）；土耳其语信号报告统计中，同一股票、同一信号日、同一方向、同一周期的重复信号只计一次（保留最新一条），并显示合并数量（Web 决策信号统计口径不变）
 - [改进] `scripts/paper_trading_report.py --details`：只读列出全部信号的动作分布及每条方向性信号的信号日（含星期，用于识别周末/节假日锚点）、当日收盘是否存在、已存储的后续收盘数、最新收盘日与各周期状态；补充 `watch`/`alert` 的土耳其语标签
 - [修复] 决策信号后验评估在本地缺少日线时永远无法完成（仅分析过一次的股票没有后续收盘价，报告误显示为「bekleyen kontrol」）：`DecisionSignalOutcomeService` 新增可选 `refill_missing_bars` / `bar_filler`（默认关闭以保持离线），`evaluate_signal_outcomes()`（报告脚本、每日运行、周报与 API 共用）默认开启，按（股票、信号日）每次运行最多拉取一次日线并写入库，周期未到时不发起网络请求，失败保持可重试；报告区分「等待后续收盘」与「无法评估（原因）」，方向性样本 <30 时提示命中率尚无统计意义；测试通过 autouse fixture 禁止真实下载
 - [新功能] 新增策略研究 v4（`src/quant/strategies/research_v4.py`、`src/quant/research_v4_lab.py`、`scripts/run_strategy_research_v4.py`）：仅通过买入反向 ETF（SH/PSQ/EFZ/TBF，无保证金、无借券、无期权）测试做空腿，预先登记参数的长短趋势候选与同规则多头对照组均走 v3 同一 5 道门槛，并要求长短版本在 5/25 bps 下 BIL 超额 Sharpe 均高出对照组 ≥0.05 才判定做空有价值；真实数据（2008–2026）结论为否（0.51/0.38 vs 0.68/0.56，做空腿年化贡献 -0.30 个百分点），未纳入模拟盘；报告见 `docs/STRATEGY_RESEARCH_V4_REPORT.md`
