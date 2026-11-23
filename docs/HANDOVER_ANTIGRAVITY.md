@@ -4,6 +4,8 @@
 **Dal:** `feat/cli-mcp-quant-tournament`
 **Kurulum:** Kullanıcı `E:\daily_stock_analysis` üzerinde Windows PowerShell 5.1 kullanıyor.
 
+**Uygulama planı:** sırayla yapılacak işler, takvim ve kabul ölçütleri `docs/ANTIGRAVITY_PLAN.md`'dedir.
+
 Bu not `docs/CLAUDE_HANDOVER.md`'nin devamıdır. O dosyanın 3. bölümü, v1.0.0 notundaki doğrulanamayan iddiaların düzeltmelerini içerir; önce onu okuyun. Buradaki her sayı bu oturumda koddan ya da gerçek veriyle yeniden üretildi.
 
 ---
