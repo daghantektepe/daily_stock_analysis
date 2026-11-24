@@ -50,12 +50,28 @@ const MOCK_BRIEF = {
       ],
     },
   ],
-  paper_exam: [],
+  paper_exam: [
+    {
+      strategy_key: 'meta_a',
+      plain_label: 'Dengeli Şampiyon (Meta-A v2)',
+      frozen_date: '2026-11-20',
+      fingerprint: '37a7ab36a0d9',
+      forward_days: 1,
+      target_days: 120,
+      nav_usd: 10025.42,
+      initial_capital_usd: 10000,
+      return_pct: 0.16,
+      benchmark_return_pct: 4.71,
+      status_plain: 'Canlı sınav sürüyor (1/120 işlem günü)',
+    },
+  ],
   signal_accuracy: {
     data_status: 'insufficient',
-    n: 4,
+    n: 0,
     min_sample: 30,
-    summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (4/30)',
+    summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (0/30)',
+    preview_line: "Erken ön izleme (1g): son 3 yönlü önerinin %33'i endeksi geçti (10 günlük ana ölçüm bekleniyor).",
+    weekly_watch_line: "Bu hafta: 27 sinyal, %82'si izle",
   },
   disclaimer: 'Yalnızca eğitim ve karar destek amaçlıdır.',
 };
@@ -99,7 +115,10 @@ test.describe('Phase 6-9 End-to-End Smoke (Mocked API)', () => {
     await page.goto('/simple');
     await expect(page.getByText('Piyasalar Şu An Fırtınalı — Paranı Güvende Tut')).toBeVisible();
     await expect(page.getByText('90.000 ₺')).toBeVisible();
-    await expect(page.getByTestId('simple-signal-accuracy')).toContainText('4/30');
+    await expect(page.getByText(/100\.000 ₺ başlangıçla karşılığı:/)).toBeVisible();
+    await expect(page.getByTestId('simple-signal-accuracy')).toContainText('0/30');
+    await expect(page.getByTestId('simple-signal-accuracy')).toContainText('Erken ön izleme (1g)');
+    await expect(page.getByTestId('simple-signal-accuracy')).toContainText("Bu hafta: 27 sinyal, %82'si izle");
 
     await page.goto('/guide');
     await expect(page.getByRole('heading', { name: /30 Saniyelik Kartlarla Yatırımı Anla/i })).toBeVisible();
@@ -148,10 +167,28 @@ test.describe('Phase 6-9 End-to-End Smoke (Mocked API)', () => {
         }),
       });
     });
+    await page.route('**/api/v1/alpha/research-v5*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data_start: '2007-01-03',
+          data_end: '2026-11-24',
+          mincorr_vs_control: {
+            mincorr: { excess_sharpe_5bps: 0.61, excess_sharpe_25bps: 0.43, return_2022_pct: 1.2 },
+            invvol_control: { excess_sharpe_5bps: 0.61, excess_sharpe_25bps: 0.47, return_2022_pct: 0.1 },
+            mincorr_adds_value: false,
+            reasons: [],
+          },
+        }),
+      });
+    });
 
     await page.goto('/discover');
     await page.getByRole('button', { name: /Strateji Turnuvası & PAA/i }).click();
     await expect(page.getByText(/QuantStats Görsel Tearsheet/i).first()).toBeVisible();
     await expect(page.getByTestId('research-v4-card')).toContainText('Short testi (ters ETF): değer katmıyor');
+    await expect(page.getByTestId('research-v5-card')).toContainText('Korelasyon testi (Min-Corr vs 1/vol): değer katmıyor');
   });
 });
