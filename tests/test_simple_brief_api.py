@@ -248,3 +248,25 @@ def test_simple_brief_signal_accuracy_states_and_morning_3_lines(tmp_path: Path,
     text_ok = format_simple_morning_summary(ok_brief)
     assert len(text_ok.splitlines()) == 3
     assert "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı." in text_ok
+
+
+def test_paper_exam_ignores_pre_freeze_history_rows(tmp_path: Path) -> None:
+    _write_snapshots(tmp_path)
+    (tmp_path / "quant_meta_a.json").write_text(
+        json.dumps({
+            "initial_capital": 10000.0,
+            "nav": 10025.42,
+            "history": [
+                {"date": "2026-11-18", "nav": 10000.0, "benchmark_nav": 10000.0},
+                {"date": "2026-11-20", "nav": 10009.81, "benchmark_nav": 9800.0},
+                {"date": "2026-11-23", "nav": 10025.42, "benchmark_nav": 10261.58},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    brief = _brief(tmp_path)
+    meta_exam = next(item for item in brief["paper_exam"] if item["strategy_key"] == "meta_a")
+    assert meta_exam["forward_days"] == 1
+    assert meta_exam["return_pct"] == pytest.approx(0.16, abs=0.01)
+    assert meta_exam["benchmark_return_pct"] == pytest.approx(4.71, abs=0.01)
+

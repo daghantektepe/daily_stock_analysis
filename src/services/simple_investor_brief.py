@@ -276,16 +276,28 @@ def _load_paper_exam_items(book_dir: Path, forward_path: Path) -> List[Dict[str,
             fwd_rows = [h for h in history if str(h.get("date", "")) >= str(frozen_date)]
             forward_days = max(0, len(fwd_rows) - 1)
         else:
+            fwd_rows = []
             forward_days = 0
         nav = float(book.get("nav") or book.get("initial_capital") or 10000.0)
         init_cap = float(book.get("initial_capital") or 10000.0)
-        ret_pct = round(((nav / init_cap) - 1.0) * 100.0, 2) if init_cap > 0 else 0.0
-        bench_ret = None
-        if history and history[0].get("benchmark_nav") and history[-1].get("benchmark_nav"):
-            b0 = float(history[0]["benchmark_nav"])
-            b1 = float(history[-1]["benchmark_nav"])
-            if b0 > 0:
-                bench_ret = round(((b1 / b0) - 1.0) * 100.0, 2)
+        if frozen_date and fwd_rows:
+            base_nav = float(fwd_rows[0].get("nav") or init_cap)
+            end_nav = float(fwd_rows[-1].get("nav") or nav)
+            ret_pct = round(((end_nav / base_nav) - 1.0) * 100.0, 2) if base_nav > 0 else 0.0
+            bench_ret = None
+            if fwd_rows[0].get("benchmark_nav") and fwd_rows[-1].get("benchmark_nav"):
+                b0 = float(fwd_rows[0]["benchmark_nav"])
+                b1 = float(fwd_rows[-1]["benchmark_nav"])
+                if b0 > 0:
+                    bench_ret = round(((b1 / b0) - 1.0) * 100.0, 2)
+        else:
+            ret_pct = round(((nav / init_cap) - 1.0) * 100.0, 2) if init_cap > 0 else 0.0
+            bench_ret = None
+            if history and history[0].get("benchmark_nav") and history[-1].get("benchmark_nav"):
+                b0 = float(history[0]["benchmark_nav"])
+                b1 = float(history[-1]["benchmark_nav"])
+                if b0 > 0:
+                    bench_ret = round(((b1 / b0) - 1.0) * 100.0, 2)
         out.append({
             "strategy_key": key,
             "plain_label": label_map.get(key, key),

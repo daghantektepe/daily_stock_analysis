@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] `src/services/simple_investor_brief.py` 中 `_load_paper_exam_items()` 计算「Canlı Sanal Sınav」（`/simple`）前向收益率与 SPY 基准收益率时改以冻结日（`frozen_date`）当日净值与基准净值为起点（忽略冻结前的历史行），与 `quant_forward.py status` 及 `/discover` 前向验证门禁卡口径完全一致；重新打包并校验独立桌面版 `dist/DailyStockAnalysis/DailyStockAnalysis.exe`
 - [改进] WebUI 前向验证与模拟交易信号基准卡片对齐：`ForwardValidationCard.tsx` 在前向交易日 `<5` 天时展示「Henüz kısa (<5g)」并将阈值指示器保持中性（避免第 1–4 天因 `0.00 ± 15.9` 误亮红灯）；`PaperTradingPage.tsx` 新增相对大盘基准对比卡片（`paper-signal-benchmark`，10 日主口径未到期时自动展示 1d/3d/5d 预览及无基准市场提示）、同日合并检查计数与周度观望占比条（`paper-weekly-watch`），并新增对应 Vitest 单元测试
 - [改进] 前向验证第 1/120 交易日实盘输出优化：`describe_signal_outcome_details()` 与 `evaluate_weekly_watch_ratio()` 对同日同股同动作重复信号去重（详情行标注 `aynı gün ×N tekrar`，避免同日多次运行夸大周度观望计数）；當 10 日基准对比样本尚未到期（`n=0`）而 1d/3d/5d 已到期时，`_format_signal_outcomes_section()` 输出 `Endekse göre (10g henüz dolmadı · 1g/3g/5g ön izleme)` 预览行；`format_forward_report()` 在前向交易日 `<5` 天时以 `BIL üstü Sharpe henüz kısa (<5 gün)` 替代无统计意义的 `0.00 ± 15.87`
 - [修复] 修复 Windows 计划任务 `scripts/windows/daily_paper_step.ps1` 在 PowerShell 5.1 下因 `$ErrorActionPreference = 'Stop'` 与 `2>&1` 导致外部 Python 输出 stderr 日志时提前中止（`NativeCommandError`）的问题：为各步骤包装 `Invoke-DsaStep` 并预设 `LITELLM_LOCAL_MODEL_COST_MAP=True`，确保 00:30/18:30 每日任务完整跑完三项步骤并正确写入日志；同步更新 Playwright E2E 冒烟用例覆盖 `/simple` 信号胜率条与 `/discover` v4 对照卡
