@@ -345,10 +345,16 @@ def format_forward_report(results: Sequence[Dict[str, Any]]) -> str:
             pct = res.get("backtest_percentile")
             slip = res.get("slippage") or {}
             bench = res.get("benchmark_return_pct")
+            fwd_days = int(res.get("forward_days") or 0)
+            sharpe_part = (
+                f" | BIL üstü Sharpe {res['excess_sharpe']:.2f} ± {res['excess_sharpe_se']:.2f} (eşik {gate['min_excess_sharpe']:.2f})"
+                if fwd_days >= 5
+                else f" | BIL üstü Sharpe henüz kısa (<5 gün, eşik {gate['min_excess_sharpe']:.2f})"
+            )
             lines.append(
                 f"  {res['forward_days']}/{gate['min_trading_days']} gün | getiri %{res['forward_return_pct']:+.2f}"
                 + (f" (SPY %{bench:+.2f})" if bench is not None else "")
-                + f" | BIL üstü Sharpe {res['excess_sharpe']:.2f} ± {res['excess_sharpe_se']:.2f} (eşik {gate['min_excess_sharpe']:.2f})"
+                + sharpe_part
                 + f" | en büyük düşüş %{res['max_drawdown_pct']:.1f} (sınır -%{gate['max_drawdown_pct']:.0f})"
             )
             lines.append(

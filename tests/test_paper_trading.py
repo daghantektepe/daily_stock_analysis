@@ -917,3 +917,92 @@ def test_weekly_watch_ratio_and_four_week_over_70_alert(db, tmp_path) -> None:
     assert "4 hafta üst üste %70'in üzerinde" in sent[0]
     saved_state = json.loads(state_file.read_text(encoding="utf-8"))
     assert len(saved_state["watch_history"]) == 4
+
+
+def test_signal_details_and_weekly_watch_dedupe_same_day_repeats_and_1d_benchmark_preview(db) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from src.services.paper_trading_benchmark import (
+        describe_signal_outcome_details,
+        evaluate_signal_outcomes,
+        evaluate_weekly_watch_ratio,
+        format_paper_trading_report,
+    )
+    from src.storage import DecisionSignalRecord
+
+    # 3 repeated same-day reduce signals for URI and 3 repeated same-day watch signals for AAPL on 2026-11-20
+    created = datetime(2026, 11, 20, 14, 0)
+    with db.session_scope() as session:
+        for idx in range(3):
+            session.add(
+                DecisionSignalRecord(
+                    stock_code="URI",
+                    stock_name="URI",
+                    market="us",
+                    source_type="analysis",
+                    source_report_id=200 + idx,
+                    trace_id=f"trace-uri-{idx}",
+                    market_phase="postmarket",
+                    trigger_source="cli",
+                    action="reduce",
+                    action_label="azalt",
+                    horizon="3d",
+                    reason="test",
+                    plan_quality="complete",
+                    status="active",
+                    created_at=created + timedelta(minutes=idx),
+                )
+            )
+            session.add(
+                DecisionSignalRecord(
+                    stock_code="AAPL",
+                    stock_name="AAPL",
+                    market="us",
+                    source_type="analysis",
+                    source_report_id=300 + idx,
+                    trace_id=f"trace-aapl-{idx}",
+                    market_phase="postmarket",
+                    trigger_source="cli",
+                    action="watch",
+                    action_label="izle",
+                    horizon="3d",
+                    reason="test",
+                    plan_quality="complete",
+                    status="active",
+                    created_at=created + timedelta(minutes=idx),
+                )
+            )
+
+    # Only 1 forward bar available (2026-11-23), so 1d completes while 3d/5d/10d are still waiting
+    _add_close(db, "URI", date(2026, 11, 20), 100.0)
+    _add_close(db, "URI", date(2026, 11, 23), 97.0)  # -3% on 1d
+    spy_closes = {
+        date(2026, 11, 20): 500.0,
+        date(2026, 11, 23): 505.0,  # +1% on 1d -> sell beat (excess = -4%)
+    }
+
+    outcomes = evaluate_signal_outcomes(
+        db_manager=db,
+        refill_missing_bars=False,
+        history_provider=lambda sym, start, end: (
+            {d: c for d, c in spy_closes.items() if start <= d <= end} if sym == "SPY" else {}
+        ),
+    )
+    report = format_paper_trading_report(_service(db).get_summary(), outcome_stats=outcomes)
+    assert (
+        "Endekse göre (10g henüz dolmadı · 1g ön izleme): azalt/sat sinyallerinin %100'i 1g ufukta endeksi geçti "
+        "(n=1, ort. fark -4.00%, örnek yetersiz)"
+    ) in report
+
+    details = describe_signal_outcome_details(db_manager=db)
+    assert "aynı gün tekrarlanan 4 kayıt birleştirildi" in details[0]
+    uri_lines = [line for line in details if "URI azalt" in line]
+    assert len(uri_lines) == 1
+    assert "(aynı gün ×3 tekrar)" in uri_lines[0]
+
+    watch_res = evaluate_weekly_watch_ratio(
+        db_manager=db,
+        now=datetime(2026, 11, 24, 12, 0, tzinfo=timezone.utc),
+    )
+    assert watch_res["total"] == 2 and watch_res["watch"] == 1
+    assert watch_res["watch_pct"] == pytest.approx(50.0)

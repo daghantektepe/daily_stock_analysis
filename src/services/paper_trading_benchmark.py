@@ -380,16 +380,53 @@ def describe_signal_outcome_details(
     if not signals:
         return ["Kayıtlı sinyal yok."]
 
-    mix = Counter(_ACTION_LABELS_TR.get(str(sig.action), str(sig.action)) for sig in signals)
-    lines = ["Sinyal dağılımı: " + ", ".join(f"{label} {count}" for label, count in mix.most_common())]
-    status_tr = {"hit": "isabet", "miss": "ıska", "neutral": "nötr"}
+    unique_for_mix: Dict[tuple, Any] = {}
     for sig in signals:
-        if service._direction_for_action(sig.action) is None:
+        anchor = service._anchor_date(sig)
+        mix_key = (
+            (str(sig.stock_code), anchor.isoformat(), str(sig.action))
+            if anchor is not None
+            else ("id", int(getattr(sig, "id", 0) or 0))
+        )
+        prev = unique_for_mix.get(mix_key)
+        if prev is None or int(getattr(sig, "id", 0) or 0) >= int(getattr(prev, "id", 0) or 0):
+            unique_for_mix[mix_key] = sig
+    merged_mix_count = len(signals) - len(unique_for_mix)
+    mix = Counter(_ACTION_LABELS_TR.get(str(sig.action), str(sig.action)) for sig in unique_for_mix.values())
+    mix_line = "Sinyal dağılımı: " + ", ".join(f"{label} {count}" for label, count in mix.most_common())
+    if merged_mix_count > 0:
+        mix_line += f" (aynı gün tekrarlanan {merged_mix_count} kayıt birleştirildi)"
+    lines = [mix_line]
+
+    directional_entries: List[tuple] = []
+    seen_directional: Dict[tuple, int] = {}
+    repeat_counts: Dict[tuple, int] = {}
+    for sig in signals:
+        direction = service._direction_for_action(sig.action)
+        if direction is None:
             continue
         anchor = service._anchor_date(sig)
         if anchor is None:
+            directional_entries.append((sig, None, 1))
+            continue
+        dedupe_key = (str(sig.stock_code), anchor.isoformat(), direction)
+        repeat_counts[dedupe_key] = repeat_counts.get(dedupe_key, 0) + 1
+        if dedupe_key not in seen_directional:
+            seen_directional[dedupe_key] = len(directional_entries)
+            directional_entries.append((sig, anchor, 1))
+        else:
+            idx = seen_directional[dedupe_key]
+            prev_sig, prev_anchor, _ = directional_entries[idx]
+            winner = sig if int(getattr(sig, "id", 0) or 0) >= int(getattr(prev_sig, "id", 0) or 0) else prev_sig
+            directional_entries[idx] = (winner, prev_anchor, repeat_counts[dedupe_key])
+
+    status_tr = {"hit": "isabet", "miss": "ıska", "neutral": "nötr"}
+    for sig, anchor, _ in directional_entries:
+        if anchor is None:
             lines.append(f"- #{sig.id} {sig.stock_code} {sig.action}: sinyal tarihi yok")
             continue
+        direction = service._direction_for_action(sig.action)
+        repeats = repeat_counts.get((str(sig.stock_code), anchor.isoformat(), direction), 1)
         has_anchor = service.stock_repo.get_daily_on_date(code=sig.stock_code, target_date=anchor) is not None
         forward = service.stock_repo.get_forward_bars(code=sig.stock_code, analysis_date=anchor, eval_window_days=10)
         latest = service.stock_repo.get_start_daily(code=sig.stock_code, analysis_date=_date.today())
@@ -405,12 +442,14 @@ def describe_signal_outcome_details(
             else:
                 reason = _UNABLE_REASON_LABELS_TR.get(str(row.unable_reason), str(row.unable_reason))
                 horizon_parts.append(f"{horizon} {reason}")
+        repeat_suffix = f" (aynı gün ×{repeats} tekrar)" if repeats > 1 else ""
         lines.append(
             f"- #{sig.id} {sig.stock_code} {_ACTION_LABELS_TR.get(str(sig.action), sig.action)} · "
             f"sinyal günü {anchor.isoformat()} ({_WEEKDAYS_TR[anchor.weekday()]}) · "
             f"o günün fiyatı {'var' if has_anchor else 'YOK'} · ileri kapanış {len(forward)}/10 · "
             f"son kayıtlı kapanış {latest.date.isoformat() if latest is not None else 'yok'} · "
             + ", ".join(horizon_parts)
+            + repeat_suffix
         )
     return lines
 
@@ -660,6 +699,24 @@ def _format_benchmark_group_line(label: str, bucket: Dict[str, Any]) -> str:
     return f"Endekse göre: {label} sinyallerinin {rate_str}'i 10 günde endeksi geçti (n={n}, ort. fark {excess_str}, {sample_note})"
 
 
+def _format_benchmark_preview_line(label: str, bucket: Dict[str, Any], horizon_label: str) -> str:
+    n = int(bucket.get("n") or 0)
+    beat_rate = bucket.get("beat_rate_pct")
+    avg_excess = bucket.get("avg_excess_pct")
+    rate_str = "n/a" if beat_rate is None else f"%{beat_rate:.0f}"
+    excess_str = _pct(avg_excess)
+    ci90 = bucket.get("beat_rate_ci90_pct")
+    if bucket.get("sample_sufficient") and isinstance(ci90, (list, tuple)) and len(ci90) == 2:
+        sample_note = f"%90 GA %{ci90[0]:.0f}–%{ci90[1]:.0f}"
+    else:
+        sample_note = "örnek yetersiz"
+    return (
+        f"Endekse göre (10g henüz dolmadı · {horizon_label} ön izleme): "
+        f"{label} sinyallerinin {rate_str}'i {horizon_label} ufukta endeksi geçti "
+        f"(n={n}, ort. fark {excess_str}, {sample_note})"
+    )
+
+
 def _weekly_watch_lines(outcomes: Dict[str, Any]) -> List[str]:
     watch_stats = outcomes.get("weekly_watch") or {}
     out: List[str] = []
@@ -734,10 +791,25 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
         lines.append("Yön bazında: " + " | ".join(action_parts))
     bench = outcomes.get("benchmark_comparison") or {}
     groups = bench.get("groups") or {}
+    printed_primary_bench = False
     for key, label in (("buy", "al"), ("sell", "azalt/sat")):
         bucket = groups.get(key) or {}
         if int(bucket.get("n") or 0) > 0:
             lines.append(_format_benchmark_group_line(label, bucket))
+            printed_primary_bench = True
+    if not printed_primary_bench:
+        by_h = bench.get("by_horizon") or {}
+        for preview_h in ("5d", "3d", "1d"):
+            h_groups = by_h.get(preview_h) or {}
+            h_label = _HORIZON_LABELS_TR.get(preview_h, preview_h)
+            preview_added = False
+            for key, label in (("buy", "al"), ("sell", "azalt/sat")):
+                bucket = h_groups.get(key) or {}
+                if int(bucket.get("n") or 0) > 0:
+                    lines.append(_format_benchmark_preview_line(label, bucket, h_label))
+                    preview_added = True
+            if preview_added:
+                break
     no_bench_markets = bench.get("no_benchmark_markets") or []
     no_bench_count = int(bench.get("no_benchmark_count") or 0)
     if no_bench_count > 0:
@@ -848,6 +920,7 @@ def evaluate_weekly_watch_ratio(
 
     total = 0
     watch = 0
+    duplicates_merged = 0
     try:
         from src.storage import DatabaseManager, DecisionSignalRecord
 
@@ -855,16 +928,33 @@ def evaluate_weekly_watch_ratio(
         market_norm = str(market or "").strip().lower()
         with manager.get_session() as session:
             rows = (
-                session.query(DecisionSignalRecord.action, DecisionSignalRecord.market)
+                session.query(
+                    DecisionSignalRecord.stock_code,
+                    DecisionSignalRecord.action,
+                    DecisionSignalRecord.market,
+                    DecisionSignalRecord.created_at,
+                )
                 .filter(DecisionSignalRecord.created_at >= start_utc)
                 .filter(DecisionSignalRecord.created_at <= end_utc)
                 .all()
             )
-            for action, row_market in rows:
+            seen_keys = set()
+            for stock_code, action, row_market, created_at in rows:
                 if market_norm and str(row_market or "").strip().lower() != market_norm:
                     continue
+                action_norm = str(action or "").strip().lower()
+                day_str = (
+                    created_at.date().isoformat()
+                    if isinstance(created_at, datetime)
+                    else str(created_at or "")[:10]
+                )
+                dedupe_key = (str(stock_code or "").strip().upper(), day_str, action_norm)
+                if dedupe_key in seen_keys:
+                    duplicates_merged += 1
+                    continue
+                seen_keys.add(dedupe_key)
                 total += 1
-                if str(action or "").strip().lower() == "watch":
+                if action_norm == "watch":
                     watch += 1
     except Exception as exc:  # noqa: BLE001 - optional weekly telemetry, fail-open
         logger.info("[paper-benchmark] weekly watch ratio query skipped: %s", exc)
@@ -872,6 +962,7 @@ def evaluate_weekly_watch_ratio(
             "week": week_key,
             "total": 0,
             "watch": 0,
+            "duplicates_merged": 0,
             "watch_pct": None,
             "line": None,
             "consecutive_over_70": 0,

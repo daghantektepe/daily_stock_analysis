@@ -255,3 +255,16 @@ def test_run_forward_validation_adds_expectation_summary() -> None:
          "max_drawdown_pct": -8.3, "window_return_pct": {"120": {"p5": -3.2, "p50": 4.9, "p95": 16.5}}}, 120)
     assert summary["band_pct"]["p50"] == 4.9 and summary["horizon_days"] == 120
     assert fv.expectation_summary({}, 120) == {}
+
+
+def test_format_forward_report_hides_noisy_sharpe_under_5_days() -> None:
+    fp = {"sha256": "a" * 64, "functions": ["f"], "settings": {}}
+    day1 = evaluate_forward_record(_book(1), _frozen(fp), fp)
+    text_day1 = format_forward_report([day1])
+    assert "BIL üstü Sharpe henüz kısa (<5 gün, eşik 0.50)" in text_day1
+    assert "± 15.87" not in text_day1
+
+    day10 = evaluate_forward_record(_book(10), _frozen(fp), fp)
+    text_day10 = format_forward_report([day10])
+    assert "BIL üstü Sharpe " in text_day10 and "±" in text_day10
+

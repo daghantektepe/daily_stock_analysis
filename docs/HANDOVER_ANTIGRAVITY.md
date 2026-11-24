@@ -159,3 +159,13 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 | G0.6 `run_ai_strategy_council.py reevaluate` | 0 | `Claude Code CLI` (`vol_target_trend`): `FAIL` (`FAIL_WEAK`, OOS Ex-BIL Sharpe `-0.05`, 25 bps `-0.21`); `OpenAI Codex CLI` (`vol_target_trend`): `FAIL` (`FAIL_WEAK`, OOS Ex-BIL Sharpe `-0.14`, 25 bps `-0.27`); `Google Gemini CLI` (`paa_custom`): `PASS` (`PASS_ELITE`, OOS CAGR `+8.4%`, Ex-BIL `+4.5%`, Sharpe `+0.42`, MaxDD `-14.4%`, 25 bps Sharpe `+0.31`, 2022 ayı `+%0.6` vs SPY `-18.2%`). |
 | G0.7 `paper_trading_report.py --details` | 0 | `İşlem: 0 \| Açık: 0 \| Kapanan: 0`. `Sinyal isabeti (±%2 nötr bant): 1 değerlendirme \| isabet n/a (0 doğru / 0 yanlış / 1 nötr) \| ort. getiri +0.86%`. Sinyal dağılımı: `izle 30, azalt 8, al 1, sat 1` (tekrar eden 108 kontrol birleştirildi). `#40 588200 al` (2026-11-22 Paz) 1d nötr (`+0.86%`), 3d/5d/10d bekliyor; 9 ABD sinyali (`URI`, `AMD`, `PANW` — 2026-11-20 Cum) Pazartesi kapanışı bekliyor. Not: `588200` çekilirken `efinance`/`akshare`/`pytdx` uyarı/hata logları çıktı. |
 
+### 2026-11-24 — İleri sınav 1/120. gün kaydı
+
+- **Otomatik görev (`DailyStockAnalysis-DailyPaperStep`):** `2026-11-24 20:50:22` tarihinde otomatik çalıştı (`Last Result: 0`).
+- **`scripts\quant_forward.py status`:** Dondurulmuş 3 strateji de **`1/120`** ileri işlem gününe (`2026-11-20 → 2026-11-23`) ulaştı (parmak izleri korundu):
+  - **PAA (korumacı varlık dağılımı):** `1/120 gün | getiri %-0.05 (SPY %+4.71)` (`$10,018.34`, en büyük düşüş `%-0.1`)
+  - **Meta-A (%55 PAA + %45 çift momentum):** `1/120 gün | getiri %+0.16 (SPY %+4.71)` (`$10,025.42`, en büyük düşüş `%0.0`)
+  - **Araştırma v3 — Üçlü rejim portföyü (`v3_trp`):** `1/120 gün | getiri %+0.10 (SPY %+4.71)` (`$10,004.91`, en büyük düşüş `%-0.1`)
+- **`scripts\paper_trading_report.py --details`:** `2026-11-20` tarihli ABD `azalt` sinyallerinin (`URI`, `AMD`, `PANW`) `1d` kontrolü tamamlandı; aynı gün tekrarlanan sinyaller detay listesinde ve haftalık izle oranında da tekilleştirildi, 10 günlük ufuk dolana kadar `1g ön izleme` endeks karşılaştırma satırı eklendi.
+
+
