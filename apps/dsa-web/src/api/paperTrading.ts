@@ -51,11 +51,45 @@ export interface SignalOutcomeBucket {
   avg_stock_return_pct?: number | null;
 }
 
+export interface SignalBenchmarkBucket {
+  n?: number;
+  beats?: number;
+  beat_rate_pct?: number | null;
+  avg_excess_pct?: number | null;
+  sample_sufficient?: boolean;
+  beat_rate_ci90_pct?: [number, number] | number[] | null;
+}
+
+export interface SignalBenchmarkComparison {
+  primary_horizon?: string;
+  min_sample?: number;
+  groups?: Record<string, SignalBenchmarkBucket>;
+  combined_10d?: SignalBenchmarkBucket;
+  by_horizon?: Record<string, Record<string, SignalBenchmarkBucket>>;
+  no_benchmark_markets?: string[];
+  no_benchmark_count?: number;
+  missing_index_data_count?: number;
+}
+
+export interface WeeklyWatchSummary {
+  week?: string;
+  total?: number;
+  watch?: number;
+  duplicates_merged?: number;
+  watch_pct?: number | null;
+  line?: string | null;
+  consecutive_over_70?: number;
+  alert_four_weeks_over_70?: boolean;
+  alert_line?: string | null;
+}
+
 export interface SignalOutcomesSummary {
   evaluated?: number;
   total?: number;
   completed?: number;
   unable?: number;
+  unable_reasons?: Record<string, number>;
+  duplicate_checks_merged?: number;
   hit?: number;
   miss?: number;
   neutral?: number;
@@ -63,6 +97,8 @@ export interface SignalOutcomesSummary {
   avg_stock_return_pct?: number | null;
   by_horizon?: Record<string, SignalOutcomeBucket>;
   by_action?: Record<string, SignalOutcomeBucket>;
+  benchmark_comparison?: SignalBenchmarkComparison;
+  weekly_watch?: WeeklyWatchSummary;
 }
 
 export interface MarketRegimeInfo {

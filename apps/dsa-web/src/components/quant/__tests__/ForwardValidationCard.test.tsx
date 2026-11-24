@@ -84,4 +84,16 @@ describe('ForwardValidationCard', () => {
     expect(screen.getByText('⚠ Aşırı uyum belirtisi olabilir.')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   });
+
+  it('hides noisy Sharpe ratio and keeps status neutral when forward_days < 5', () => {
+    render(
+      <ForwardValidationCard
+        items={[item({ forward_days: 1, excess_sharpe: 0, excess_sharpe_se: 15.87 })]}
+      />,
+    );
+    const card = screen.getByTestId('forward-item-meta_a');
+    expect(within(card).getByText('Henüz kısa (<5g)')).toBeInTheDocument();
+    expect(within(card).queryByText(/15\.9/)).not.toBeInTheDocument();
+    expect(within(card).queryAllByLabelText('eşik karşılanmıyor')).toHaveLength(0);
+  });
 });

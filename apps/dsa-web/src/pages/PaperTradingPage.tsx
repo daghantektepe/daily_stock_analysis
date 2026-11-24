@@ -643,25 +643,145 @@ const PaperTradingPage: React.FC = () => {
             </div>
           )}
 
-          {outcomes && (outcomes.completed ?? 0) > 0 ? (
-            <div className="mt-3 rounded-xl border border-border/60 bg-card/50 p-3 text-xs">
-              <p className="font-semibold text-foreground">Ufuk Bazında Sinyal İsabeti (±%2 nötr bant)</p>
-              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {Object.entries(horizonLabels).map(([hKey, hLabel]) => {
-                  const bucket = outcomes.by_horizon?.[hKey];
-                  return (
-                    <div key={hKey} className="rounded-lg border border-border/40 px-2.5 py-1.5">
-                      <span className="text-secondary-text">{hLabel}</span>
-                      <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">
-                        {bucket?.hit_rate_pct != null ? `%${bucket.hit_rate_pct.toFixed(0)}` : '--'}
+          {outcomes && ((outcomes.completed ?? 0) > 0 || (outcomes.weekly_watch?.total ?? 0) > 0) ? (
+            <div className="mt-3 space-y-2.5 rounded-xl border border-border/60 bg-card/50 p-3 text-xs">
+              {(outcomes.completed ?? 0) > 0 ? (
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold text-foreground">Ufuk Bazında Sinyal İsabeti (±%2 nötr bant)</p>
+                    {(outcomes.duplicate_checks_merged ?? 0) > 0 ? (
+                      <span className="text-[11px] text-secondary-text">
+                        Aynı gün tekrarlanan {outcomes.duplicate_checks_merged} kontrol birleştirildi
+                      </span>
+                    ) : null}
+                  </div>
+                  {(outcomes.hit ?? 0) + (outcomes.miss ?? 0) < 30 ? (
+                    <p className="mt-1 text-[11px] text-secondary-text">
+                      Not: yönlü sonuç sayısı {(outcomes.hit ?? 0) + (outcomes.miss ?? 0)} (&lt; 30); isabet oranı henüz
+                      istatistiksel olarak anlamlı değil.
+                    </p>
+                  ) : null}
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {Object.entries(horizonLabels).map(([hKey, hLabel]) => {
+                      const bucket = outcomes.by_horizon?.[hKey];
+                      return (
+                        <div key={hKey} className="rounded-lg border border-border/40 px-2.5 py-1.5">
+                          <span className="text-secondary-text">{hLabel}</span>
+                          <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">
+                            {bucket?.hit_rate_pct != null ? `%${bucket.hit_rate_pct.toFixed(0)}` : '--'}
+                          </p>
+                          <p className="text-[11px] text-secondary-text">
+                            Ort: {fmtPct(bucket?.avg_stock_return_pct)} ({bucket?.hit ?? 0}/
+                            {(bucket?.hit ?? 0) + (bucket?.miss ?? 0)})
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              {(() => {
+                const bench = outcomes.benchmark_comparison;
+                if (!bench) return null;
+                const primaryGroups = bench.groups ?? {};
+                const primaryEntries = (
+                  [
+                    ['buy', 'Al Sinyalleri'],
+                    ['sell', 'Azalt / Sat Sinyalleri'],
+                  ] as const
+                ).filter(([k]) => (primaryGroups[k]?.n ?? 0) > 0);
+
+                let previewHorizonLabel: string | null = null;
+                let previewEntries: Array<readonly ['buy' | 'sell', string]> = [];
+                if (primaryEntries.length === 0 && bench.by_horizon) {
+                  for (const hKey of ['5d', '3d', '1d']) {
+                    const hGroups = bench.by_horizon[hKey] ?? {};
+                    const found = (
+                      [
+                        ['buy', 'Al Sinyalleri'],
+                        ['sell', 'Azalt / Sat Sinyalleri'],
+                      ] as const
+                    ).filter(([k]) => (hGroups[k]?.n ?? 0) > 0);
+                    if (found.length > 0) {
+                      previewHorizonLabel = horizonLabels[hKey] ?? hKey;
+                      previewEntries = [...found];
+                      break;
+                    }
+                  }
+                }
+
+                const activeGroups =
+                  primaryEntries.length > 0
+                    ? primaryGroups
+                    : previewHorizonLabel
+                      ? bench.by_horizon?.[
+                          Object.keys(horizonLabels).find((k) => horizonLabels[k] === previewHorizonLabel) ?? '1d'
+                        ] ?? {}
+                      : {};
+                const activeEntries = primaryEntries.length > 0 ? primaryEntries : previewEntries;
+                const noBenchCount = bench.no_benchmark_count ?? 0;
+                const noBenchMarkets = bench.no_benchmark_markets ?? [];
+
+                if (activeEntries.length === 0 && noBenchCount === 0) return null;
+
+                return (
+                  <div
+                    className="rounded-lg border border-border/50 bg-background/40 px-3 py-2"
+                    data-testid="paper-signal-benchmark"
+                  >
+                    <p className="font-semibold text-foreground">
+                      {primaryEntries.length > 0
+                        ? 'Endekse Göre Sinyal Başarısı (10 Gün · BIST 100 / SPY)'
+                        : `Endekse Göre Sinyal Başarısı (10g henüz dolmadı · ${previewHorizonLabel} ön izleme)`}
+                    </p>
+                    {activeEntries.length > 0 ? (
+                      <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {activeEntries.map(([key, label]) => {
+                          const bucket = activeGroups[key];
+                          if (!bucket) return null;
+                          const ci = bucket.beat_rate_ci90_pct;
+                          const ciText =
+                            bucket.sample_sufficient && Array.isArray(ci) && ci.length === 2
+                              ? `%90 GA %${Number(ci[0]).toFixed(0)}–%${Number(ci[1]).toFixed(0)}`
+                              : 'örnek yetersiz (<30)';
+                          return (
+                            <div key={key} className="rounded border border-border/40 px-2.5 py-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-secondary-text">{label}</span>
+                                <span className="font-mono font-semibold text-foreground">
+                                  {bucket.beat_rate_pct != null ? `%${bucket.beat_rate_pct.toFixed(0)}` : '--'} endeksi
+                                  geçti
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-secondary-text">
+                                n={bucket.n ?? 0} · ort. fark {fmtPct(bucket.avg_excess_pct)} · {ciText}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {noBenchCount > 0 ? (
+                      <p className="mt-1 text-[11px] text-secondary-text">
+                        Endekse göre: {noBenchMarkets.join(', ')} pazarı için endeks yok (n={noBenchCount})
                       </p>
-                      <p className="text-[11px] text-secondary-text">
-                        Ort: {fmtPct(bucket?.avg_stock_return_pct)} ({bucket?.hit ?? 0}/{(bucket?.hit ?? 0) + (bucket?.miss ?? 0)})
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
+                    ) : null}
+                  </div>
+                );
+              })()}
+
+              {outcomes.weekly_watch?.line ? (
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/30 px-3 py-1.5 text-[11px]"
+                  data-testid="paper-weekly-watch"
+                >
+                  <span className="text-secondary-text">{outcomes.weekly_watch.line}</span>
+                  {outcomes.weekly_watch.alert_line ? (
+                    <span className="font-medium text-amber-300">{outcomes.weekly_watch.alert_line}</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </SectionCard>

@@ -72,6 +72,7 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
   const meta = STATUS_META[item.status] ?? STATUS_META.NOT_FROZEN;
   const progress = Math.min(100, Math.round((item.forward_days / gate.min_trading_days) * 100));
   const hasData = item.forward_days > 0;
+  const hasSharpeSample = item.forward_days >= 5;
   const band = item.expectation?.band_pct ?? {};
   const slipFills = item.slippage?.fills ?? 0;
   const slipAvg = item.slippage?.avg_bps;
@@ -113,11 +114,19 @@ const ForwardItem: React.FC<{ item: ForwardValidationItem }> = ({ item }) => {
         <CheckRow
           label="BIL üstü Sharpe"
           glossaryTerm="ex_bil_sharpe"
-          value={hasData ? `${fmtNum(item.excess_sharpe)} ± ${fmtNum(item.excess_sharpe_se, 1)}` : '—'}
+          value={
+            !hasData
+              ? '—'
+              : hasSharpeSample
+                ? `${fmtNum(item.excess_sharpe)} ± ${fmtNum(item.excess_sharpe_se, 1)}`
+                : 'Henüz kısa (<5g)'
+          }
           target={`≥ ${gate.min_excess_sharpe.toFixed(2)}`}
-          ok={hasData && item.excess_sharpe !== null && item.excess_sharpe !== undefined
-            ? item.excess_sharpe >= gate.min_excess_sharpe
-            : null}
+          ok={
+            hasSharpeSample && item.excess_sharpe !== null && item.excess_sharpe !== undefined
+              ? item.excess_sharpe >= gate.min_excess_sharpe
+              : null
+          }
         />
         <CheckRow
           label="En büyük düşüş"
@@ -194,7 +203,7 @@ export const ForwardValidationCard: React.FC<ForwardValidationCardProps> = ({ it
 
   const askCopilot = () => {
     openCopilotDrawer(
-      'dsa_get_forward_validation aracıyla PAA ve Meta-Portföy A ileri doğrulama kapısının durumunu yorumla: kaç gün toplandı, BIL üstü Sharpe ve hata payı, en büyük düşüş, backtest bandına göre konum ve gerçek paraya geçmeden önce eksik kalanlar.',
+      'dsa_get_forward_validation aracıyla PAA, Meta-Portföy A ve Araştırma v3 (v3_trp) ileri doğrulama kapısının durumunu yorumla: kaç gün toplandı, BIL üstü Sharpe ve hata payı, en büyük düşüş, backtest bandına göre konum ve gerçek paraya geçmeden önce eksik kalanlar.',
     );
   };
 
