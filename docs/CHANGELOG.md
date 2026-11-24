@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] `/simple`（`SimpleInvestorHomePage.tsx` 与 `build_signal_accuracy_summary()`）新手可读性增强：在 120 日前向考试卡片中新增「100.000 ₺ başlangıçla karşılığı」直观本币换算；`signal_accuracy` 增量返回 `preview_line`（10 日样本未到期时展示 1d/3d/5d 早期跑赢基准预览）与 `weekly_watch_line`（本周观望占比），并在 `n ≥ 30` 且未通过 90% 置信区间检验时显式展示 G3.3「başarısı kanıtlanmadı」徽章
 - [改进] 新增只读接口 `GET /api/v1/alpha/research-v5` 与 `/discover` 锦标赛页签（`TournamentTabPanel.tsx`）精简结果卡「Korelasyon testi (Min-Corr vs 1/vol): değer katmıyor」（`data-testid="research-v5-card"`），并更新 `docs/HANDOVER_ANTIGRAVITY.md` 与前后端测试
 - [新功能] 新增策略研究 v5（`src/quant/strategies/research_v5.py`、`src/quant/research_v5_lab.py`、`scripts/run_strategy_research_v5.py`、`tests/test_strategy_research_v5.py`）：在 10 只宏观 ETF + BIL 宇宙上以预先登记参数对比相关性惩罚风险平价（`V5_MINCORR_TREND_RISK_PARITY`）与单变量简单逆波动率对照组（`V5_INVVOL_TREND_CONTROL`，累计试验次数 `N=32`）；2008–2026 真实数据显示两者均通过 5/5 道门槛且 Min-Corr 改善最大回撤（-5.83% vs -6.33%）与 2022 熊市收益（+1.17% vs +0.13%），但在 5/25 bps 下 BIL 超额 Sharpe 差值为 `+0.00/-0.04`（未达 `+0.05` 门槛），故不纳入模拟盘并保持冻结的 `paa` / `meta_a` / `v3_trp` 不变；报告见 `docs/STRATEGY_RESEARCH_V5_REPORT.md`
 - [修复] `src/services/simple_investor_brief.py` 中 `_load_paper_exam_items()` 计算「Canlı Sanal Sınav」（`/simple`）前向收益率与 SPY 基准收益率时改以冻结日（`frozen_date`）当日净值与基准净值为起点（忽略冻结前的历史行），与 `quant_forward.py status` 及 `/discover` 前向验证门禁卡口径完全一致；重新打包并校验独立桌面版 `dist/DailyStockAnalysis/DailyStockAnalysis.exe`

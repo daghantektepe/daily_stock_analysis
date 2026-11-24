@@ -402,6 +402,8 @@ class SimpleSignalAccuracySummary(BaseModel):
     beat_rate_ci90_pct: Optional[List[float]] = None
     proven_vs_benchmark: Optional[bool] = None
     summary_line: str = "Yapay zekâ önerileri için veri yok."
+    preview_line: Optional[str] = None
+    weekly_watch_line: Optional[str] = None
 
 
 class SimpleBriefResponse(BaseModel):

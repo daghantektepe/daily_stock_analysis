@@ -822,6 +822,25 @@ def _format_signal_outcomes_section(outcomes: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def _build_short_horizon_preview_line(bench: Dict[str, Any]) -> Optional[str]:
+    by_h = bench.get("by_horizon") or {}
+    for preview_h in ("5d", "3d", "1d"):
+        h_groups = by_h.get(preview_h) or {}
+        buy_b = h_groups.get("buy") or {}
+        sell_b = h_groups.get("sell") or {}
+        n_prev = int(buy_b.get("n") or 0) + int(sell_b.get("n") or 0)
+        if n_prev <= 0:
+            continue
+        beats_prev = int(buy_b.get("beats") or 0) + int(sell_b.get("beats") or 0)
+        rate_prev = round(beats_prev / n_prev * 100.0, 1)
+        h_label = _HORIZON_LABELS_TR.get(preview_h, preview_h)
+        return (
+            f"Erken ön izleme ({h_label}): son {n_prev} yönlü önerinin "
+            f"%{rate_prev:.0f}'i endeksi geçti (10 günlük ana ölçüm bekleniyor)."
+        )
+    return None
+
+
 def build_signal_accuracy_summary(
     outcomes: Optional[Dict[str, Any]],
     *,
@@ -834,6 +853,12 @@ def build_signal_accuracy_summary(
     min_sample = int(bench.get("min_sample") or MIN_SIGNAL_SAMPLE)
     n = int(combined.get("n") or 0)
     total_checks = int(outcomes_dict.get("total") or 0)
+    watch_stats = outcomes_dict.get("weekly_watch") or {}
+    weekly_watch_line = (
+        str(watch_stats["line"])
+        if int(watch_stats.get("total") or 0) > 0 and watch_stats.get("line")
+        else None
+    )
 
     has_any_signals = (signal_count > 0) if signal_count is not None else (total_checks > 0 or n > 0)
     if not has_any_signals:
@@ -846,6 +871,8 @@ def build_signal_accuracy_summary(
             "beat_rate_ci90_pct": None,
             "proven_vs_benchmark": None,
             "summary_line": "Yapay zekâ önerileri için veri yok.",
+            "preview_line": None,
+            "weekly_watch_line": None,
         }
 
     if n < min_sample:
@@ -858,6 +885,8 @@ def build_signal_accuracy_summary(
             "beat_rate_ci90_pct": None,
             "proven_vs_benchmark": None,
             "summary_line": f"Yapay zekâ önerilerinin başarısı henüz ölçülüyor ({n}/{min_sample})",
+            "preview_line": _build_short_horizon_preview_line(bench) if n == 0 else None,
+            "weekly_watch_line": weekly_watch_line,
         }
 
     beat_rate = combined.get("beat_rate_pct")
@@ -877,6 +906,8 @@ def build_signal_accuracy_summary(
         "beat_rate_ci90_pct": ci90,
         "proven_vs_benchmark": proven,
         "summary_line": summary_line,
+        "preview_line": None,
+        "weekly_watch_line": weekly_watch_line,
     }
 
 

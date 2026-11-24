@@ -721,6 +721,8 @@ export interface SimpleSignalAccuracySummary {
   beat_rate_ci90_pct?: number[] | null;
   proven_vs_benchmark?: boolean | null;
   summary_line: string;
+  preview_line?: string | null;
+  weekly_watch_line?: string | null;
 }
 
 export interface SimpleBriefResponse {

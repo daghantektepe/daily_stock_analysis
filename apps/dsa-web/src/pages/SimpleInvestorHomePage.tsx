@@ -688,6 +688,12 @@ const SimpleInvestorHomePage: React.FC = () => {
                           {item.return_pct.toFixed(2)}%
                         </span>
                       </div>
+                      <p className="mt-1 text-[11px] text-secondary-text">
+                        100.000 ₺ başlangıçla karşılığı:{' '}
+                        <strong className="font-mono text-foreground">
+                          {Math.round(100000 * (1 + item.return_pct / 100)).toLocaleString('tr-TR')} ₺
+                        </strong>
+                      </p>
                       {item.benchmark_return_pct !== null && item.benchmark_return_pct !== undefined ? (
                         <p className="mt-0.5 text-[11px] text-secondary-text">
                           Aynı sürede ABD Borsası (SPY):{' '}
@@ -719,7 +725,7 @@ const SimpleInvestorHomePage: React.FC = () => {
             <div
               data-testid="simple-signal-accuracy"
               className={cn(
-                'flex flex-wrap items-center justify-between gap-2 rounded-2xl border px-4 py-3 text-xs',
+                'rounded-2xl border px-4 py-3 text-xs',
                 brief.signal_accuracy.data_status === 'ok'
                   ? brief.signal_accuracy.proven_vs_benchmark
                     ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200'
@@ -727,15 +733,35 @@ const SimpleInvestorHomePage: React.FC = () => {
                   : 'border-border/60 bg-card/75 text-secondary-text',
               )}
             >
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="font-medium text-foreground">{brief.signal_accuracy.summary_line}</span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="font-medium text-foreground">{brief.signal_accuracy.summary_line}</span>
+                  {brief.signal_accuracy.data_status === 'ok' && brief.signal_accuracy.proven_vs_benchmark === false ? (
+                    <span className="rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-300">
+                      başarısı kanıtlanmadı
+                    </span>
+                  ) : null}
+                  {brief.signal_accuracy.data_status === 'ok' && brief.signal_accuracy.proven_vs_benchmark === true ? (
+                    <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
+                      endeksi geçti (%90 GA)
+                    </span>
+                  ) : null}
+                </div>
+                <span className="font-mono text-[11px] text-secondary-text">
+                  {brief.signal_accuracy.data_status === 'missing'
+                    ? 'Veri yok'
+                    : `${brief.signal_accuracy.n}/${brief.signal_accuracy.min_sample} yönlü öneri`}
+                </span>
               </div>
-              <span className="font-mono text-[11px] text-secondary-text">
-                {brief.signal_accuracy.data_status === 'missing'
-                  ? 'Veri yok'
-                  : `${brief.signal_accuracy.n}/${brief.signal_accuracy.min_sample} yönlü öneri`}
-              </span>
+              {brief.signal_accuracy.preview_line || brief.signal_accuracy.weekly_watch_line ? (
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-secondary-text">
+                  {brief.signal_accuracy.preview_line ? <span>{brief.signal_accuracy.preview_line}</span> : <span />}
+                  {brief.signal_accuracy.weekly_watch_line ? (
+                    <span className="font-mono">{brief.signal_accuracy.weekly_watch_line}</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 

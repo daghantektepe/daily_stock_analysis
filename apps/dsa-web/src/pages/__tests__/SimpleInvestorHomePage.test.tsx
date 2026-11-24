@@ -227,9 +227,11 @@ describe('SimpleInvestorHomePage', () => {
       ...MOCK_BRIEF,
       signal_accuracy: {
         data_status: 'insufficient',
-        n: 4,
+        n: 0,
         min_sample: 30,
-        summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (4/30)',
+        summary_line: 'Yapay zekâ önerilerinin başarısı henüz ölçülüyor (0/30)',
+        preview_line: "Erken ön izleme (1g): son 3 yönlü önerinin %33'i endeksi geçti (10 günlük ana ölçüm bekleniyor).",
+        weekly_watch_line: "Bu hafta: 27 sinyal, %82'si izle",
       },
     });
     const { unmount } = render(
@@ -237,8 +239,31 @@ describe('SimpleInvestorHomePage', () => {
         <SimpleInvestorHomePage />
       </MemoryRouter>,
     );
-    expect(await screen.findByTestId('simple-signal-accuracy')).toHaveTextContent('4/30');
+    const insBox = await screen.findByTestId('simple-signal-accuracy');
+    expect(insBox).toHaveTextContent('0/30');
+    expect(insBox).toHaveTextContent("Erken ön izleme (1g): son 3 yönlü önerinin %33'i endeksi geçti");
+    expect(insBox).toHaveTextContent("Bu hafta: 27 sinyal, %82'si izle");
+    expect(screen.getByText(/100\.000 ₺ başlangıçla karşılığı:/)).toBeInTheDocument();
     unmount();
+
+    vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
+      ...MOCK_BRIEF,
+      signal_accuracy: {
+        data_status: 'ok',
+        n: 30,
+        min_sample: 30,
+        beat_rate_pct: 53,
+        proven_vs_benchmark: false,
+        summary_line: "Son 30 al/sat önerisinden %53'i 10 günde endeksten iyi çıktı.",
+      },
+    });
+    const { unmount: unmountUnproven } = render(
+      <MemoryRouter>
+        <SimpleInvestorHomePage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByTestId('simple-signal-accuracy')).toHaveTextContent('başarısı kanıtlanmadı');
+    unmountUnproven();
 
     vi.mocked(alphaApi.getSimpleBrief).mockResolvedValue({
       ...MOCK_BRIEF,
@@ -256,8 +281,10 @@ describe('SimpleInvestorHomePage', () => {
         <SimpleInvestorHomePage />
       </MemoryRouter>,
     );
-    expect(await screen.findByTestId('simple-signal-accuracy')).toHaveTextContent(
+    const okBox = await screen.findByTestId('simple-signal-accuracy');
+    expect(okBox).toHaveTextContent(
       "Son 30 al/sat önerisinden %70'i 10 günde endeksten iyi çıktı.",
     );
+    expect(okBox).toHaveTextContent('endeksi geçti (%90 GA)');
   });
 });
