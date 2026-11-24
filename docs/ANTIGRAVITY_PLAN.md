@@ -207,7 +207,7 @@ Bunlar ancak belirtilen koşul sağlanınca başlar:
 | G3.1 Kayma ölçümü (aylık) | ⏳ | — | Kullanıcı kararıyla ertelendi (`ALPACA_PAPER=true`, `ALPACA_AUTO_EXECUTE=false` kilitli) |
 | G3.2 Kontrol noktaları | ⏳ | `bd16ade` | `1/120` gün (`2026-11-24`) kayda geçti; ara noktalar: 21 Ara, 6 Oca, 19 Şub, 2 Nis |
 | G3.4 Kapı kararı | ⏳ | — | 14 Mayıs 2027 |
-| G4.1 Araştırma v5 (Min-Corr vs 1/vol kontrol) | ✅ | (bu commit) | `research_v5.py` + `research_v5_lab.py` (N=32): her iki aday 5/5 kapı geçti ancak 5/25 bps Sharpe farkı `+0.00/-0.04 < +0.05` olduğundan elendi; `v3_trp` korundu |
+| G4.1 Araştırma v5 (Min-Corr vs 1/vol kontrol) | ✅ | `eb8180e` | `research_v5.py` + `research_v5_lab.py` (N=32): her iki aday 5/5 kapı geçti ancak 5/25 bps Sharpe farkı `+0.00/-0.04 < +0.05` olduğundan elendi; `v3_trp` korundu |
 
 ---
 

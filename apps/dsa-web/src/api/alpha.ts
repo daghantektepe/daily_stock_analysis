@@ -631,6 +631,13 @@ export const alphaApi = {
     });
     return res.data;
   },
+
+  async getResearchV5Summary(): Promise<ResearchV5SummaryResponse> {
+    const res = await apiClient.get<ResearchV5SummaryResponse>('/api/v1/alpha/research-v5', {
+      timeout: 15000,
+    });
+    return res.data;
+  },
 };
 
 export interface SimpleWeatherSummary {
@@ -791,3 +798,22 @@ export interface ResearchV4SummaryResponse {
   data_end?: string | null;
   short_vs_control?: ResearchV4ShortVsControl | null;
 }
+
+export interface ResearchV5MinCorrVsControl {
+  mincorr: ResearchV4ArmSummary;
+  invvol_control: ResearchV4ArmSummary;
+  excess_sharpe_edge_5bps?: number | null;
+  excess_sharpe_edge_25bps?: number | null;
+  mincorr_adds_value: boolean;
+  reasons: string[];
+}
+
+export interface ResearchV5SummaryResponse {
+  ok: boolean;
+  error?: string | null;
+  generated_at?: string | null;
+  data_start?: string | null;
+  data_end?: string | null;
+  mincorr_vs_control?: ResearchV5MinCorrVsControl | null;
+}
+

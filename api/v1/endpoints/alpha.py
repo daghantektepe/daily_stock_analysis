@@ -35,6 +35,7 @@ from api.v1.schemas.alpha import (
     QuantPaperStepRequest,
     QuantTearsheetResponse,
     ResearchV4SummaryResponse,
+    ResearchV5SummaryResponse,
     SimpleBriefResponse,
     TournamentResponse,
     TournamentRunRequest,
@@ -587,3 +588,30 @@ def get_research_v4_summary() -> ResearchV4SummaryResponse:
         data_end=raw.get("data_end"),
         short_vs_control=raw.get("short_vs_control"),
     )
+
+
+@router.get("/research-v5", response_model=ResearchV5SummaryResponse)
+def get_research_v5_summary() -> ResearchV5SummaryResponse:
+    """Read-only summary of Strategy Research v5 (Min-Corr vs naive 1/vol control)."""
+    import json
+    from pathlib import Path
+    from src.quant.research_v5_lab import DEFAULT_RESEARCH_V5_JSON
+
+    target = Path(DEFAULT_RESEARCH_V5_JSON)
+    if not target.is_file():
+        return ResearchV5SummaryResponse(ok=False, error="Araştırma v5 verisi henüz üretilmedi.")
+    try:
+        raw = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        logger.warning("[alpha] failed to read research_v5_latest.json: %s", exc)
+        return ResearchV5SummaryResponse(ok=False, error="Araştırma v5 verisi okunamadı.")
+    if not isinstance(raw, dict) or not raw.get("mincorr_vs_control"):
+        return ResearchV5SummaryResponse(ok=False, error="Araştırma v5 özeti eksik.")
+    return ResearchV5SummaryResponse(
+        ok=True,
+        generated_at=raw.get("generated_at"),
+        data_start=raw.get("data_start"),
+        data_end=raw.get("data_end"),
+        mincorr_vs_control=raw.get("mincorr_vs_control"),
+    )
+

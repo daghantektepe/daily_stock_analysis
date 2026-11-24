@@ -7,6 +7,7 @@ import {
   type PaaSignalResponse,
   type QuantPaperBookItem,
   type ResearchV4SummaryResponse,
+  type ResearchV5SummaryResponse,
   type TournamentResponse,
 } from '../../api/alpha';
 import { getParsedApiError, type ParsedApiError } from '../../api/error';
@@ -25,6 +26,7 @@ export const TournamentTabPanel: React.FC = () => {
   const [forwardItems, setForwardItems] = useState<ForwardValidationItem[]>([]);
   const [forwardError, setForwardError] = useState<string | null>(null);
   const [researchV4, setResearchV4] = useState<ResearchV4SummaryResponse | null>(null);
+  const [researchV5, setResearchV5] = useState<ResearchV5SummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [steppingPaper, setSteppingPaper] = useState(false);
@@ -34,12 +36,13 @@ export const TournamentTabPanel: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [tData, paaData, paperData, forwardData, v4Data] = await Promise.all([
+      const [tData, paaData, paperData, forwardData, v4Data, v5Data] = await Promise.all([
         alphaApi.getTournament(true),
         alphaApi.getPaaSignal(false).catch(() => null),
         alphaApi.getQuantPaperBooks(true).catch(() => null),
         alphaApi.getForwardValidation().catch(() => null),
         alphaApi.getResearchV4Summary().catch(() => null),
+        alphaApi.getResearchV5Summary().catch(() => null),
       ]);
       setTournament(tData);
       if (paaData) setPaa(paaData);
@@ -49,6 +52,7 @@ export const TournamentTabPanel: React.FC = () => {
         setForwardError(forwardData.ok ? null : forwardData.error ?? 'İleri doğrulama okunamadı.');
       }
       if (v4Data) setResearchV4(v4Data);
+      if (v5Data) setResearchV5(v5Data);
     } catch (err) {
       setError(getParsedApiError(err));
     } finally {
@@ -302,6 +306,47 @@ export const TournamentTabPanel: React.FC = () => {
                 : '—'}
             </strong>{' '}
             (long-only kontrol).
+          </p>
+        </div>
+      ) : null}
+
+      {/* Research v5 Min-Corr vs 1/vol Control Compact Card (hidden if no data) */}
+      {researchV5?.ok && researchV5.mincorr_vs_control ? (
+        <div
+          data-testid="research-v5-card"
+          className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3 text-xs text-secondary-text"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-semibold text-foreground">
+              Korelasyon testi (Min-Corr vs 1/vol):{' '}
+              {researchV5.mincorr_vs_control.mincorr_adds_value
+                ? 'değer katıyor'
+                : 'değer katmıyor'}
+            </span>
+            <span className="font-mono text-[11px]">
+              {researchV5.data_start ?? '2008'} → {researchV5.data_end ?? 'güncel'} · Sanal sınava alınmadı
+            </span>
+          </div>
+          <p className="mt-1 leading-relaxed">
+            MaxDD ve 2022 krizini hafif iyileştirir (2022:{' '}
+            <strong className="font-mono text-foreground">
+              {researchV5.mincorr_vs_control.mincorr.return_2022_pct != null
+                ? `${researchV5.mincorr_vs_control.mincorr.return_2022_pct > 0 ? '+' : ''}${researchV5.mincorr_vs_control.mincorr.return_2022_pct.toFixed(1)}%`
+                : '—'}
+            </strong>
+            ) ama 25 bps işlem maliyetinde BIL üstü Sharpe{' '}
+            <strong className="font-mono text-foreground">
+              {researchV5.mincorr_vs_control.mincorr.excess_sharpe_25bps != null
+                ? researchV5.mincorr_vs_control.mincorr.excess_sharpe_25bps.toFixed(2).replace('.', ',')
+                : '—'}
+            </strong>
+            &apos;e karşı{' '}
+            <strong className="font-mono text-foreground">
+              {researchV5.mincorr_vs_control.invvol_control.excess_sharpe_25bps != null
+                ? researchV5.mincorr_vs_control.invvol_control.excess_sharpe_25bps.toFixed(2).replace('.', ',')
+                : '—'}
+            </strong>{' '}
+            (1/vol kontrol); yapısal 3-rejim v3_trp korundu.
           </p>
         </div>
       ) : null}

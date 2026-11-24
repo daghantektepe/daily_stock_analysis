@@ -215,3 +215,40 @@ def test_research_v4_endpoint_handles_missing_and_present_json(monkeypatch, tmp_
     assert body["short_vs_control"]["short_adds_value"] is False
     assert body["short_vs_control"]["long_short"]["excess_sharpe_5bps"] == 0.51
     assert body["short_vs_control"]["long_only_control"]["excess_sharpe_5bps"] == 0.68
+
+
+def test_research_v5_endpoint_handles_missing_and_present_json(monkeypatch, tmp_path) -> None:
+    import json
+    from src.quant import research_v5_lab
+
+    client = TestClient(_make_app())
+    missing_file = tmp_path / "missing_v5.json"
+    monkeypatch.setattr(research_v5_lab, "DEFAULT_RESEARCH_V5_JSON", missing_file)
+
+    r_missing = client.get("/api/v1/alpha/research-v5")
+    assert r_missing.status_code == 200
+    assert r_missing.json()["ok"] is False
+
+    present_file = tmp_path / "research_v5_latest.json"
+    present_file.write_text(
+        json.dumps({
+            "generated_at": "2026-11-24T19:30:33+00:00",
+            "data_start": "2007-01-03",
+            "data_end": "2026-11-24",
+            "mincorr_vs_control": {
+                "mincorr": {"excess_sharpe_5bps": 0.61, "excess_sharpe_25bps": 0.43, "return_2022_pct": 1.2},
+                "invvol_control": {"excess_sharpe_5bps": 0.61, "excess_sharpe_25bps": 0.47, "return_2022_pct": 0.1},
+                "mincorr_adds_value": False,
+                "reasons": ["25 bps fark -0.04"],
+            },
+        }),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(research_v5_lab, "DEFAULT_RESEARCH_V5_JSON", present_file)
+    r_ok = client.get("/api/v1/alpha/research-v5")
+    assert r_ok.status_code == 200
+    body = r_ok.json()
+    assert body["ok"] is True
+    assert body["mincorr_vs_control"]["mincorr_adds_value"] is False
+    assert body["mincorr_vs_control"]["mincorr"]["excess_sharpe_25bps"] == 0.43
+    assert body["mincorr_vs_control"]["invvol_control"]["excess_sharpe_25bps"] == 0.47

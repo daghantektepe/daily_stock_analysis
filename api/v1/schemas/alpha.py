@@ -477,3 +477,22 @@ class ResearchV4SummaryResponse(BaseModel):
     data_start: Optional[str] = None
     data_end: Optional[str] = None
     short_vs_control: Optional[ResearchV4ShortVsControl] = None
+
+
+class ResearchV5MinCorrVsControl(BaseModel):
+    mincorr: ResearchV4ArmSummary = Field(default_factory=ResearchV4ArmSummary)
+    invvol_control: ResearchV4ArmSummary = Field(default_factory=ResearchV4ArmSummary)
+    excess_sharpe_edge_5bps: Optional[float] = None
+    excess_sharpe_edge_25bps: Optional[float] = None
+    mincorr_adds_value: bool = False
+    reasons: List[str] = Field(default_factory=list)
+
+
+class ResearchV5SummaryResponse(BaseModel):
+    ok: bool = False
+    error: Optional[str] = None
+    generated_at: Optional[str] = None
+    data_start: Optional[str] = None
+    data_end: Optional[str] = None
+    mincorr_vs_control: Optional[ResearchV5MinCorrVsControl] = None
+

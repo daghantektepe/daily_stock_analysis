@@ -10,6 +10,7 @@ vi.mock('../../../api/alpha', () => ({
     getQuantPaperBooks: vi.fn(),
     getForwardValidation: vi.fn(),
     getResearchV4Summary: vi.fn(),
+    getResearchV5Summary: vi.fn(),
     getQuantTearsheet: vi.fn(),
     runTournament: vi.fn(),
     stepQuantPaperBooks: vi.fn(),
@@ -91,15 +92,34 @@ describe('TournamentTabPanel v4 short card', () => {
         reasons: [],
       },
     });
+    vi.mocked(alphaApi.getResearchV5Summary).mockResolvedValue({
+      ok: true,
+      data_start: '2007-01-03',
+      data_end: '2026-11-24',
+      mincorr_vs_control: {
+        mincorr: { excess_sharpe_5bps: 0.61, excess_sharpe_25bps: 0.43, return_2022_pct: 1.2 },
+        invvol_control: { excess_sharpe_5bps: 0.61, excess_sharpe_25bps: 0.47, return_2022_pct: 0.1 },
+        mincorr_adds_value: false,
+        reasons: [],
+      },
+    });
 
     const { unmount } = render(<TournamentTabPanel />);
     const card = await screen.findByTestId('research-v4-card');
     expect(card).toHaveTextContent('Short testi (ters ETF): değer katmıyor');
     expect(card).toHaveTextContent('0,51');
     expect(card).toHaveTextContent('0,68');
+    const cardV5 = await screen.findByTestId('research-v5-card');
+    expect(cardV5).toHaveTextContent('Korelasyon testi (Min-Corr vs 1/vol): değer katmıyor');
+    expect(cardV5).toHaveTextContent('0,43');
+    expect(cardV5).toHaveTextContent('0,47');
     unmount();
 
     vi.mocked(alphaApi.getResearchV4Summary).mockResolvedValue({
+      ok: false,
+      error: 'Veri yok',
+    });
+    vi.mocked(alphaApi.getResearchV5Summary).mockResolvedValue({
       ok: false,
       error: 'Veri yok',
     });
@@ -108,5 +128,6 @@ describe('TournamentTabPanel v4 short card', () => {
       expect(alphaApi.getResearchV4Summary).toHaveBeenCalledTimes(2);
     });
     expect(screen.queryByTestId('research-v4-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('research-v5-card')).not.toBeInTheDocument();
   });
 });

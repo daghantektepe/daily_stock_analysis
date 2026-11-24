@@ -60,6 +60,18 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 - **Kapı tuzağı:** Long/short aday 5/5 kapıyı yalnızca Meta-A ile korelasyonu daha düşük olduğu için geçti. Kontrol grubu olmasaydı yanlış sonuca varılırdı. **Yeni her araştırmada kontrol grubu şart.**
 - **Karar:** v4 sanal sınava **alınmadı**. Sürekli tutulan ters ETF felaket olur (SH 2010–2026: %−90).
 
+### 3.1 Araştırma v5 Özeti — Korelasyon-Duyarlı (Min-Corr) Ağırlıklandırma `1/vol`'e Göre Değer Katıyor mu?
+
+- **Ne test edildi (`src/quant/strategies/research_v5.py`, `src/quant/research_v5_lab.py`):** 10 makro ETF (`SPY, QQQ, EFA, EEM, VNQ, TLT, IEF, GLD, DBC, UUP`) + `BIL` üzerinde aynı trend filtresi (`SMA200` + `12A > BIL`) ve aynı `%8` hedef volatilite ile iki aday karşılaştırıldı (kümülatif deneme sayısı `32`):
+  - **Min-Corr (`use_corr_penalty=True`):** Aktif varlıkları `max(0.10, 1 - ort_korelasyon) / vol` ile ağırlıklandırır.
+  - **Kontrol grubu (`use_corr_penalty=False`):** Aynı kural, yalnızca korelasyon cezası kapalı (saf `1/vol`).
+- **Gerçek veri sonucu (2008–2026):**
+  - Her iki aday da 5/5 kapıdan geçti (`4/4` rejim pozitif ExBIL, `9/9` komşuluk platosu).
+  - Min-Corr hisse kümesi yoğunluğunu `%45,5`'ten `%38,5`'e düşürerek en büyük düşüşü (`-%5,83` vs `-%6,33`) ve 2022 kriz getirisini (`+%1,17` vs `+%0,13`) iyileştirdi.
+  - **Ancak** BIL üstü Sharpe'ta `5 bps`'de kontrol grubuyla berabere kaldı (`+0,61` vs `+0,61`, fark `0,00 < +0,05`) ve `25 bps`'de korelasyon kaynaklı ek işlem dönüşü nedeniyle kontrol grubunun gerisine düştü (`+0,43` vs `+0,47`, fark `-0,04`; CAGR `+%3,97` vs `+%4,30`).
+- **Karar:** **Hayır (kanıt yetersiz).** Yapısal 3-rejim sepeti (`v3_trp`, `5/25 bps` BIL üstü Sharpe `+0,74/+0,61`) dinamik korelasyon cezasından hem daha basit hem daha yüksek net Sharpe üretiyor. Sanal deftere alınmadı; dondurulmuş 3 strateji (`paa`, `meta_a`, `v3_trp`) korundu.
+- **Tam rapor:** `docs/STRATEGY_RESEARCH_V5_REPORT.md` · **Tekrar çalıştırma:** `.venv\Scripts\python.exe scripts\run_strategy_research_v5.py`
+
 ## 4. Doğrulanmış teknik durum
 
 - **Testler:**
