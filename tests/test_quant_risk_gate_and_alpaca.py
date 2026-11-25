@@ -165,6 +165,73 @@ def test_paper_trading_risk_gates_and_drawdown_breaker(db) -> None:
     assert summary["risk_status"]["current_drawdown_pct"] >= 10.0
 
 
+def test_quant_gate_fails_closed_when_bars_insufficient_and_uses_xu100_for_tr(db) -> None:
+    """REQ-03: quant_gate_enabled=True blocks entry on insufficient bars and picks XU100.IS for BIST."""
+    from src.services.quant_risk_gate import _benchmark_symbol_for_stock, evaluate_entry_risk_gate
+
+    assert _benchmark_symbol_for_stock("THYAO.IS") == "XU100.IS"
+    assert _benchmark_symbol_for_stock("NVDA") == "SPY"
+
+    # With quant_gate_enabled=True and empty DB (<150 bars), gate MUST fail closed
+    blocked = evaluate_entry_risk_gate(
+        stock_code="THYAO.IS",
+        signal={"id": 77, "stock_code": "THYAO.IS", "market": "tr", "action": "buy"},
+        open_positions=[],
+        trades=[],
+        db_manager=db,
+        quant_gate_enabled=True,
+        quant_min_score=40.0,
+    )
+    assert blocked.allowed is False
+    assert "quant_score_unavailable_fail_closed" in blocked.blocked_reasons
+
+    # BIST regime filter checks XU100.IS instead of SPY
+    fetched: List[str] = []
+    bist_decision = evaluate_entry_risk_gate(
+        stock_code="THYAO.IS",
+        signal={"id": 78, "stock_code": "THYAO.IS", "market": "tr", "action": "buy", "quant_score": 60.0},
+        open_positions=[],
+        trades=[],
+        db_manager=db,
+        market_regime_filter=True,
+        regime_history_fetcher=lambda sym: fetched.append(sym) or [10000.0 - i * 20.0 for i in range(210)],
+    )
+    assert "XU100.IS" in fetched and "SPY" not in fetched
+    assert bist_decision.allowed is False
+    assert bist_decision.regime is not None and bist_decision.regime.regime == "risk_off"
+
+
+def test_alpaca_mirror_error_writes_broker_audit_log(db, tmp_path) -> None:
+    """REQ-04: Alpaca auto-mirror failure logs and appends an error record to broker_audit.jsonl."""
+    from src.brokers.base import read_broker_audit_tail
+
+    class _FailingSession:
+        def request(self, method: str, url: str, **kwargs):
+            return _FakeResponse(503, {"message": "alpaca sandbox unavailable"})
+
+    audit_file = tmp_path / "broker_audit.jsonl"
+    failing_client = AlpacaClient(api_key="PKTEST", secret_key="SKTEST", paper=True, session=_FailingSession())
+    svc = PaperTradingService(
+        db,
+        enabled=True,
+        position_size=2000.0,
+        alpaca_client=failing_client,
+        alpaca_auto_execute=True,
+        audit_path=audit_file,
+    )
+    trade = svc.apply_signal(
+        {"id": 601, "stock_code": "NVDA", "market": "us", "action": "buy"},
+        price=135.0,
+    )
+    assert trade is not None
+    tail = read_broker_audit_tail(limit=5, audit_path=audit_file)
+    assert len(tail) == 1
+    assert tail[0]["broker_id"] == "alpaca"
+    assert tail[0]["action"] == "auto_mirror_order"
+    assert tail[0]["status"] == "error"
+    assert "503" in tail[0]["details"]["error"]
+
+
 def test_market_regime_risk_off_blocks_entry_when_enabled(db) -> None:
     # Seed 220 falling SPY bars so evaluate_market_regime flags risk_off
     start = date(2025, 10, 1)

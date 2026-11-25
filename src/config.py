@@ -1202,6 +1202,7 @@ class Config:
     paper_trading_quant_gate_enabled: bool = False
     paper_trading_quant_min_score: float = 40.0
     paper_trading_live_quotes: bool = False
+    signal_reliability_gate_enabled: bool = False
     # Alpaca US equity broker (defaults strictly to paper endpoint)
     alpaca_api_key: Optional[str] = None
     alpaca_secret_key: Optional[str] = None
@@ -2310,6 +2311,9 @@ class Config:
             ),
             paper_trading_live_quotes=parse_env_bool(
                 os.getenv('PAPER_TRADING_LIVE_QUOTES'), default=False
+            ),
+            signal_reliability_gate_enabled=parse_env_bool(
+                os.getenv('SIGNAL_RELIABILITY_GATE_ENABLED'), default=False
             ),
             alpaca_api_key=(os.getenv('ALPACA_API_KEY') or '').strip() or None,
             alpaca_secret_key=(os.getenv('ALPACA_SECRET_KEY') or '').strip() or None,

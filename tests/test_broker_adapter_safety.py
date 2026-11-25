@@ -95,6 +95,35 @@ def test_rebalance_preview_and_audit_across_registry(tmp_path: Path) -> None:
     assert plan_algolab["orders"][0]["target_notional"] == pytest.approx(25000.0)
 
 
+def test_dry_run_reconciliation_and_binance_fallback_error_audit(tmp_path: Path) -> None:
+    """REQ-04 / Step 5: Binance fallback logs error and dry-run reconciliation writes audit without orders."""
+    from src.brokers.registry import run_broker_dry_run_reconciliation
+
+    audit = tmp_path / "audit.jsonl"
+
+    class _FailingBinanceClient(BinanceClient):
+        def plan_crypto_trend_rebalance(self, target_weights):
+            raise RuntimeError("binance testnet timeout")
+
+    bnc = BinanceBrokerAdapter(
+        client=_FailingBinanceClient(api_key="k", api_secret="s", testnet=True),
+        audit_path=audit,
+    )
+    plan = bnc.preview_rebalance_plan({"BTC-USD": 50.0}, capital=10000.0)
+    assert "binance testnet timeout" in str(plan.get("fallback_reason"))
+    assert len(plan["orders"]) == 1
+
+    dry = run_broker_dry_run_reconciliation("algolab", strategy_key="v3_trp", capital=100000.0, audit_path=audit)
+    assert dry["ok"] is True
+    assert dry["dry_run_only"] is True
+    assert dry["broker_id"] == "algolab"
+    assert len(dry["plan"]["orders"]) >= 1
+
+    tail = read_broker_audit_tail(limit=10, audit_path=audit)
+    assert any(e["action"] == "preview_rebalance" and e["status"] == "error" for e in tail)
+    assert any(e["action"] == "dry_run_reconciliation" and e["broker_id"] == "algolab" for e in tail)
+
+
 def test_bridges_adapters_api_preview_and_forbidden_submit() -> None:
     app = create_app()
     client = TestClient(app)

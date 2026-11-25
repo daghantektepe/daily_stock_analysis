@@ -464,7 +464,7 @@ python scripts/quant_forward.py alpaca-reconcile
 ```
 
 - **Komutların işi:** `alpaca-plan` yalnızca okur ve emir planını gösterir. `alpaca-submit-paper` onay ister, emirleri **yalnızca sanal hesaba** gönderir, gerçek hesapta reddeder. `alpaca-reconcile` dolum fiyatını, gönderim anındaki fiyatla karşılaştırıp kaymayı kaydeder.
-- **Kilitler:** Zamanlanmış görev hiçbir zaman emir göndermez. `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` değişmez.
+- **Kilitler ve sinyal kapısı:** Zamanlanmış görev hiçbir zaman emir göndermez. `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` değişmez. Hisselerde fail-closed güvenilirlik kapısını açmak için `.env` içinde `SIGNAL_RELIABILITY_GATE_ENABLED=true` kullanılabilir (varsayılan `false`); hisse yönlü sinyallerin %80 kabul kapısını `python scripts/run_signal_walkforward.py --cost-bps 10` (`data/reports/SIGNAL_WALKFORWARD_REPORT.md`) ile çevrimdışı doğrulayabilirsin.
 - **Hata payı:** 120 günlük bir Sharpe tahmininin hata payı ±1,4 civarındadır. Kapıyı geçmek kanıtın başlangıcıdır, garantisi değil.
 
 ### 7.4 BIST stratejileri dolar bazında

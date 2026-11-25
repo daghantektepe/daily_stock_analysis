@@ -20,6 +20,11 @@ from src.schemas.decision_scale import (
 )
 from src.services.decision_signal_service import DecisionSignalService
 from src.services.portfolio_service import VALID_MARKETS
+from src.services.run_diagnostics import current_diagnostic_snapshot
+from src.services.signal_reliability_gate import (
+    apply_signal_reliability_gate,
+    summarize_run_diagnostics_for_signal,
+)
 from src.utils.sniper_points import extract_sniper_points
 
 
@@ -40,6 +45,16 @@ _CONFIDENCE_MAP = {
 }
 
 
+def _config_reliability_gate_enabled() -> bool:
+    try:
+        from src.config import get_config
+
+        val = getattr(get_config(), "signal_reliability_gate_enabled", False)
+        return val is True
+    except Exception:
+        return False
+
+
 def build_decision_signal_payload_from_report(
     result: AnalysisResult,
     *,
@@ -50,6 +65,7 @@ def build_decision_signal_payload_from_report(
     query_source: str,
     report_type: str,
     profile_source: ProfileSource,
+    reliability_gate_enabled: Optional[bool] = None,
 ) -> Dict[str, Any] | None:
     """Build a DecisionSignal payload from a completed stock analysis report."""
 
@@ -133,6 +149,9 @@ def build_decision_signal_payload_from_report(
     if market_structure_summary:
         metadata.update(market_structure_summary)
     metadata["holding_state"] = _extract_holding_state(portfolio_context)
+    diag_summary = summarize_run_diagnostics_for_signal(current_diagnostic_snapshot())
+    if diag_summary:
+        metadata["diagnostic_summary"] = diag_summary
 
     payload: Dict[str, Any] = {
         "stock_code": raw_code,
@@ -165,7 +184,20 @@ def build_decision_signal_payload_from_report(
         "metadata": metadata,
         "report_language": getattr(result, "report_language", None),
     }
-    return {key: value for key, value in payload.items() if value not in (None, "", [], {})}
+    cleaned = {key: value for key, value in payload.items() if value not in (None, "", [], {})}
+    gate_active = (
+        bool(reliability_gate_enabled)
+        if reliability_gate_enabled is not None
+        else (profile_source == "auto_default" and _config_reliability_gate_enabled())
+    )
+    if gate_active:
+        cleaned = apply_signal_reliability_gate(
+            cleaned,
+            result=result,
+            context_snapshot=context_snapshot,
+            enabled=True,
+        )
+    return cleaned
 
 
 def resolve_decision_signal_action_fields(
@@ -209,6 +241,7 @@ def extract_and_persist_from_analysis_result(
     report_type: str,
     profile_source: ProfileSource,
     service: Optional[DecisionSignalService] = None,
+    reliability_gate_enabled: Optional[bool] = None,
 ) -> Dict[str, Any] | None:
     """Best-effort extract and persist a DecisionSignal from an analysis result."""
 
@@ -222,6 +255,7 @@ def extract_and_persist_from_analysis_result(
             query_source=query_source,
             report_type=report_type,
             profile_source=profile_source,
+            reliability_gate_enabled=reliability_gate_enabled,
         )
         if payload is None:
             return None

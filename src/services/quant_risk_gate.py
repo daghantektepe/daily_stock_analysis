@@ -184,43 +184,58 @@ def _load_db_closes(
     return closes
 
 
+def _benchmark_symbol_for_stock(stock_code: str) -> str:
+    """Resolve the local equity benchmark for risk/quant checks (BIST -> XU100.IS, US -> SPY)."""
+    code = str(stock_code or "").strip().upper()
+    if code.endswith(".IS"):
+        return "XU100.IS"
+    return "SPY"
+
+
 def evaluate_market_regime(
     db_manager: Optional[DatabaseManager] = None,
     *,
     as_of_date: Optional[date] = None,
     history_fetcher: Optional[Callable[[str], Sequence[float]]] = None,
     allow_remote: bool = False,
+    benchmark_symbol: str = "SPY",
+    volatility_symbol: Optional[str] = "^VIX",
 ) -> MarketRegimeSnapshot:
-    """Assess broad US equity regime from SPY 50/200 SMA trend and VIX volatility."""
-    spy_closes: List[float] = []
+    """Assess broad equity regime from benchmark 50/200 SMA trend and optional VIX volatility."""
+    bench_sym = str(benchmark_symbol or "SPY").strip().upper()
+    vix_sym = str(volatility_symbol).strip().upper() if volatility_symbol else None
+    bench_closes: List[float] = []
     vix_closes: List[float] = []
 
     if history_fetcher is not None:
         try:
-            spy_closes = [float(x) for x in (history_fetcher("SPY") or []) if float(x) > 0]
-            vix_closes = [float(x) for x in (history_fetcher("^VIX") or []) if float(x) > 0]
+            bench_closes = [float(x) for x in (history_fetcher(bench_sym) or []) if float(x) > 0]
+            if vix_sym:
+                vix_closes = [float(x) for x in (history_fetcher(vix_sym) or []) if float(x) > 0]
         except Exception as exc:
-            logger.debug("Custom regime history_fetcher failed: %s", exc)
+            logger.debug("Custom regime history_fetcher failed for %s: %s", bench_sym, exc)
     elif db_manager is not None:
-        spy_closes = _load_db_closes(db_manager, "SPY", as_of_date=as_of_date)
-        vix_closes = _load_db_closes(db_manager, "^VIX", as_of_date=as_of_date, limit=30)
+        bench_closes = _load_db_closes(db_manager, bench_sym, as_of_date=as_of_date)
+        if vix_sym:
+            vix_closes = _load_db_closes(db_manager, vix_sym, as_of_date=as_of_date, limit=30)
 
-    if len(spy_closes) < 50 and allow_remote:
+    if len(bench_closes) < 50 and allow_remote:
         try:
             import yfinance as yf
 
-            hist = yf.Ticker("SPY").history(period="1y", auto_adjust=True)
+            hist = yf.Ticker(bench_sym).history(period="1y", auto_adjust=True)
             if hist is not None and not hist.empty and "Close" in hist:
-                spy_closes = [float(x) for x in hist["Close"].dropna().tolist() if float(x) > 0]
-            vix_hist = yf.Ticker("^VIX").history(period="1mo")
-            if vix_hist is not None and not vix_hist.empty and "Close" in vix_hist:
-                vix_closes = [float(x) for x in vix_hist["Close"].dropna().tolist() if float(x) > 0]
+                bench_closes = [float(x) for x in hist["Close"].dropna().tolist() if float(x) > 0]
+            if vix_sym:
+                vix_hist = yf.Ticker(vix_sym).history(period="1mo")
+                if vix_hist is not None and not vix_hist.empty and "Close" in vix_hist:
+                    vix_closes = [float(x) for x in vix_hist["Close"].dropna().tolist() if float(x) > 0]
         except Exception as exc:
-            logger.debug("Remote SPY/VIX regime fetch failed: %s", exc)
+            logger.debug("Remote %s/%s regime fetch failed: %s", bench_sym, vix_sym, exc)
 
     vix_level = round(vix_closes[-1], 2) if vix_closes else None
-    if len(spy_closes) < 50:
-        reasons = ["SPY benchmark history unavailable (<50 bars); regime gate neutral"]
+    if len(bench_closes) < 50:
+        reasons = [f"{bench_sym} benchmark history unavailable (<50 bars); regime gate neutral"]
         return MarketRegimeSnapshot(
             regime="neutral",
             position_scale=1.0,
@@ -228,35 +243,35 @@ def evaluate_market_regime(
             reasons=reasons,
         )
 
-    spy_close = round(spy_closes[-1], 4)
-    sma50 = round(sum(spy_closes[-50:]) / 50.0, 4)
-    sma200 = round(sum(spy_closes[-200:]) / 200.0, 4) if len(spy_closes) >= 200 else None
+    bench_close = round(bench_closes[-1], 4)
+    sma50 = round(sum(bench_closes[-50:]) / 50.0, 4)
+    sma200 = round(sum(bench_closes[-200:]) / 200.0, 4) if len(bench_closes) >= 200 else None
 
     reasons: List[str] = []
-    if (sma200 is not None and spy_close < sma200) or (vix_level is not None and vix_level >= 32.0):
-        if sma200 is not None and spy_close < sma200:
-            reasons.append(f"SPY {spy_close:.2f} < SMA200 {sma200:.2f} (downtrend)")
+    if (sma200 is not None and bench_close < sma200) or (vix_level is not None and vix_level >= 32.0):
+        if sma200 is not None and bench_close < sma200:
+            reasons.append(f"{bench_sym} {bench_close:.2f} < SMA200 {sma200:.2f} (downtrend)")
         if vix_level is not None and vix_level >= 32.0:
             reasons.append(f"VIX elevated crisis level ({vix_level:.1f} >= 32)")
         return MarketRegimeSnapshot(
             regime="risk_off",
             position_scale=0.0,
-            spy_close=spy_close,
+            spy_close=bench_close,
             spy_sma50=sma50,
             spy_sma200=sma200,
             vix_level=vix_level,
             reasons=reasons,
         )
 
-    if spy_close < sma50 or (vix_level is not None and vix_level >= 24.0):
-        if spy_close < sma50:
-            reasons.append(f"SPY {spy_close:.2f} < SMA50 {sma50:.2f} (short-term pullback)")
+    if bench_close < sma50 or (vix_level is not None and vix_level >= 24.0):
+        if bench_close < sma50:
+            reasons.append(f"{bench_sym} {bench_close:.2f} < SMA50 {sma50:.2f} (short-term pullback)")
         if vix_level is not None and vix_level >= 24.0:
             reasons.append(f"VIX elevated ({vix_level:.1f} >= 24)")
         return MarketRegimeSnapshot(
             regime="caution",
             position_scale=0.5,
-            spy_close=spy_close,
+            spy_close=bench_close,
             spy_sma50=sma50,
             spy_sma200=sma200,
             vix_level=vix_level,
@@ -264,13 +279,13 @@ def evaluate_market_regime(
         )
 
     reasons.append(
-        f"SPY {spy_close:.2f} > SMA50 {sma50:.2f}"
+        f"{bench_sym} {bench_close:.2f} > SMA50 {sma50:.2f}"
         + (f" & SMA200 {sma200:.2f}" if sma200 is not None else "")
     )
     return MarketRegimeSnapshot(
         regime="risk_on",
         position_scale=1.0,
-        spy_close=spy_close,
+        spy_close=bench_close,
         spy_sma50=sma50,
         spy_sma200=sma200,
         vix_level=vix_level,
@@ -436,33 +451,35 @@ def _score_single_stock_quant_from_db(
     stock_code: str,
     *,
     as_of_date: Optional[date] = None,
+    benchmark_code: Optional[str] = None,
 ) -> Optional[float]:
     """Compute an offline residual-momentum + 52w-high quant score using stored DB bars."""
     import pandas as pd
     from src.services.us_quant_screener import score_us_quant_candidate
 
-    spy_stmt = select(StockDaily.date, StockDaily.high, StockDaily.low, StockDaily.close, StockDaily.volume).where(
-        StockDaily.code == "SPY"
+    bench = benchmark_code or _benchmark_symbol_for_stock(stock_code)
+    bench_stmt = select(StockDaily.date, StockDaily.high, StockDaily.low, StockDaily.close, StockDaily.volume).where(
+        StockDaily.code == bench
     )
     stk_stmt = select(StockDaily.date, StockDaily.high, StockDaily.low, StockDaily.close, StockDaily.volume).where(
         StockDaily.code == stock_code
     )
     if as_of_date is not None:
-        spy_stmt = spy_stmt.where(StockDaily.date <= as_of_date)
+        bench_stmt = bench_stmt.where(StockDaily.date <= as_of_date)
         stk_stmt = stk_stmt.where(StockDaily.date <= as_of_date)
-    spy_stmt = spy_stmt.order_by(StockDaily.date)
+    bench_stmt = bench_stmt.order_by(StockDaily.date)
     stk_stmt = stk_stmt.order_by(StockDaily.date)
 
     with db_manager.session_scope() as session:
-        spy_rows = session.execute(spy_stmt).all()
+        bench_rows = session.execute(bench_stmt).all()
         stk_rows = session.execute(stk_stmt).all()
 
-    if len(spy_rows) < 150 or len(stk_rows) < 150:
+    if len(bench_rows) < 150 or len(stk_rows) < 150:
         return None
 
-    spy_df = pd.DataFrame(spy_rows, columns=["date", "High", "Low", "Close", "Volume"]).set_index("date")
+    bench_df = pd.DataFrame(bench_rows, columns=["date", "High", "Low", "Close", "Volume"]).set_index("date")
     stk_df = pd.DataFrame(stk_rows, columns=["date", "High", "Low", "Close", "Volume"]).set_index("date")
-    cand = score_us_quant_candidate(stock_code, stk_df, spy_df, min_dollar_volume=0.0)
+    cand = score_us_quant_candidate(stock_code, stk_df, bench_df, min_dollar_volume=0.0)
     return float(cand.score) if cand is not None else 0.0
 
 
@@ -521,7 +538,8 @@ def evaluate_entry_risk_gate(
     if max_drawdown_pct is not None and dd_pct is not None and dd_pct >= float(max_drawdown_pct):
         blocked.append(f"drawdown_circuit_breaker ({dd_pct:.2f}% >= {float(max_drawdown_pct):.1f}%)")
 
-    # 4. US Market Regime Filter (SPY 50/200 SMA + VIX)
+    # 4. Equity Market Regime Filter (BIST: XU100.IS, US: SPY 50/200 SMA + VIX)
+    bench_symbol = _benchmark_symbol_for_stock(code)
     regime: Optional[MarketRegimeSnapshot] = None
     if market_regime_filter or regime_history_fetcher is not None:
         regime = evaluate_market_regime(
@@ -529,6 +547,8 @@ def evaluate_entry_risk_gate(
             as_of_date=as_of_date,
             history_fetcher=regime_history_fetcher,
             allow_remote=allow_remote,
+            benchmark_symbol=bench_symbol,
+            volatility_symbol=None if bench_symbol == "XU100.IS" else "^VIX",
         )
         if market_regime_filter:
             if regime.regime == "risk_off":
@@ -538,7 +558,7 @@ def evaluate_entry_risk_gate(
                 position_scale = min(position_scale, regime.position_scale)
                 warnings.append(f"market_regime_caution ({'; '.join(regime.reasons)})")
 
-    # 5. Quantitative Entry Gate (prevent pure-narrative LLM BUYs below quant threshold)
+    # 5. Quantitative Entry Gate (fail-closed: prevent blind BUYs when quant score is missing or below threshold)
     quant_score: Optional[float] = None
     raw_q = signal.get("quant_score")
     if raw_q is not None:
@@ -547,11 +567,16 @@ def evaluate_entry_risk_gate(
         except (TypeError, ValueError):
             quant_score = None
     elif quant_gate_enabled and db_manager is not None:
-        quant_score = _score_single_stock_quant_from_db(db_manager, code, as_of_date=as_of_date)
+        quant_score = _score_single_stock_quant_from_db(
+            db_manager,
+            code,
+            as_of_date=as_of_date,
+            benchmark_code=bench_symbol,
+        )
 
     if quant_gate_enabled:
         if quant_score is None:
-            warnings.append("quant_score_unavailable_fail_open")
+            blocked.append("quant_score_unavailable_fail_closed")
         elif quant_score < float(quant_min_score):
             blocked.append(f"quant_gate_below_min ({quant_score:.1f} < {float(quant_min_score):.1f})")
 

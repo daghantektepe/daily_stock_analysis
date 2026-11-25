@@ -180,4 +180,13 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
   - **Araştırma v3 — Üçlü rejim portföyü (`v3_trp`):** `1/120 gün | getiri %+0.10 (SPY %+4.71)` (`$10,004.91`, en büyük düşüş `%-0.1`)
 - **`scripts\paper_trading_report.py --details`:** `2026-11-20` tarihli ABD `azalt` sinyallerinin (`URI`, `AMD`, `PANW`) `1d` kontrolü tamamlandı; aynı gün tekrarlanan sinyaller detay listesinde ve haftalık izle oranında da tekilleştirildi, 10 günlük ufuk dolana kadar `1g ön izleme` endeks karşılaştırma satırı eklendi.
 
+### 2026-11-25 — AI Sinyal Güvenilirliği Sertleştirme ve Walk-Forward (%80 Kabul Kapısı) Doğrulaması
+
+- **Fail-Closed Güvenilirlik & Risk Kapısı:**
+  - `src/services/signal_reliability_gate.py` eklendi (`SIGNAL_RELIABILITY_GATE_ENABLED=false` varsayılan korumalı opt-in); RiskAgent bozulması, bayat intraday veri, eksik/`R/R < 1.5` fiyat planı veya trend çelişkisinde `buy`/`add` sinyallerini `watch`'a düşürür ve sanitize edilmiş `diagnostic_summary` ekler (`adr-0001`).
+  - `src/services/quant_risk_gate.py` BIST (`*.IS` → `XU100.IS`) ve ABD (`SPY`/`^VIX`) rejim/kıyas ayrımı yapacak şekilde güncellendi; `quant_gate_enabled=True` iken bar/skor eksikse artık sessizce izin vermek yerine `quant_score_unavailable_fail_closed` ile engeller (`adr-0002`).
+  - `src/brokers/binance/adapter.py` ve `src/services/paper_trading_service.py` içindeki sessiz hata yutma noktaları `logger.warning` + `data/broker_audit.jsonl` kaydına bağlandı; `src/brokers/registry.py` içine salt-okunur `run_broker_dry_run_reconciliation()` eklendi.
+- **İzole Walk-Forward Doğrulama (`scripts\run_signal_walkforward.py --cost-bps 10`):**
+  - Dondurulmuş `library.py` / `research_v3.py` parmak izlerine dokunulmadan gerçek ABD ETF verisiyle (`2018–2021` IS, `2022+` 6 aylık OOS pencereleri) koşuldu → Karar **`UNPROVEN`** (`N=86`, Precision `56.98% < %80.0`, CI alt `47.7% <= %65.0`, Endeks geçme `37.87%`, Net PF `1.13 < 1.50`, MaxDD `-7.52%`). Yönlü AI sinyal doğruluk hedefi (%80) henüz kanıtlanmamıştır; `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` kilitleri korunur.
+
 

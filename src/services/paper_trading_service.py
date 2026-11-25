@@ -32,6 +32,7 @@ import logging
 import math
 from collections import defaultdict
 from datetime import date
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import desc, select
@@ -228,6 +229,7 @@ class PaperTradingService:
         live_quotes: Optional[bool] = None,
         alpaca_client: Optional[Any] = None,
         alpaca_auto_execute: Optional[bool] = None,
+        audit_path: Optional[Path] = None,
     ) -> None:
         self.db = db_manager or DatabaseManager.get_instance()
         config = get_config() if any(
@@ -312,6 +314,7 @@ class PaperTradingService:
         self.live_quotes = bool(live_quotes)
         self.alpaca_client = alpaca_client
         self.alpaca_auto_execute = bool(alpaca_auto_execute)
+        self.audit_path = Path(audit_path) if audit_path is not None else None
 
     def recommend_position(
         self,
@@ -706,13 +709,15 @@ class PaperTradingService:
     ) -> None:
         if not self.alpaca_auto_execute:
             return
+        from src.brokers.base import append_broker_audit_event
+
         try:
             from src.brokers.alpaca import AlpacaClient
 
             client = self.alpaca_client or AlpacaClient()
             if not client.is_configured() or not client.is_us_equity_symbol(stock_code):
                 return
-            client.submit_order(
+            resp = client.submit_order(
                 symbol=stock_code,
                 qty=quantity,
                 side=side,
@@ -720,8 +725,34 @@ class PaperTradingService:
                 take_profit=take_profit if side == "buy" else None,
                 client_order_id=f"dsa-sig-{signal_id}",
             )
+            append_broker_audit_event(
+                broker_id="alpaca",
+                action="auto_mirror_order",
+                status="ok",
+                details={
+                    "symbol": stock_code,
+                    "side": side,
+                    "quantity": quantity,
+                    "signal_id": signal_id,
+                    "order_id": resp.get("id") if isinstance(resp, dict) else None,
+                },
+                audit_path=self.audit_path,
+            )
         except Exception as exc:
             logger.warning("[paper->alpaca] mirror failed for %s (%s): %s", stock_code, side, exc)
+            append_broker_audit_event(
+                broker_id="alpaca",
+                action="auto_mirror_order",
+                status="error",
+                details={
+                    "symbol": stock_code,
+                    "side": side,
+                    "quantity": quantity,
+                    "signal_id": signal_id,
+                    "error": str(exc),
+                },
+                audit_path=self.audit_path,
+            )
 
     def _vol_scaled_position_size(self, stock_code: str, as_of_date: date) -> float:
         """Apply Barroso-Santa-Clara volatility scaling when ``vol_target_pct`` is set."""

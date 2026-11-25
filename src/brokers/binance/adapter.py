@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.brokers.base import BrokerAdapter, BrokerSecurityError
 from src.brokers.binance.client import BinanceClient
+
+logger = logging.getLogger(__name__)
 
 
 class BinanceBrokerAdapter(BrokerAdapter):
@@ -94,13 +97,23 @@ class BinanceBrokerAdapter(BrokerAdapter):
             if w > 0:
                 clean_weights[sym] = w
 
+        fallback_reason: Optional[str] = None
         if self.is_configured:
             try:
                 plan = self.client.plan_crypto_trend_rebalance(clean_weights)
                 self._audit("preview_rebalance", "ok", {"order_count": len(plan.get("orders", []))})
                 return {"broker_id": self.broker_id, "sandbox": self.is_sandbox, "currency": "USDT", **plan}
-            except Exception:
-                pass
+            except Exception as exc:
+                fallback_reason = str(exc)
+                logger.warning(
+                    "[binance-adapter] rebalance plan fetch failed; falling back to offline estimate: %s",
+                    exc,
+                )
+                self._audit(
+                    "preview_rebalance",
+                    "error",
+                    {"error": fallback_reason, "fallback": "offline_estimate"},
+                )
 
         total_cap = float(capital if capital and capital > 0 else 10000.0)
         orders: List[Dict[str, Any]] = []
@@ -115,8 +128,12 @@ class BinanceBrokerAdapter(BrokerAdapter):
                     "currency": "USDT",
                 }
             )
-        self._audit("preview_rebalance", "ok", {"order_count": len(orders), "offline_estimate": True})
-        return {
+        self._audit(
+            "preview_rebalance",
+            "ok",
+            {"order_count": len(orders), "offline_estimate": True, "fallback_reason": fallback_reason},
+        )
+        out: Dict[str, Any] = {
             "broker_id": self.broker_id,
             "sandbox": self.is_sandbox,
             "configured": self.is_configured,
@@ -124,6 +141,9 @@ class BinanceBrokerAdapter(BrokerAdapter):
             "capital": total_cap,
             "orders": orders,
         }
+        if fallback_reason is not None:
+            out["fallback_reason"] = fallback_reason
+        return out
 
     def submit_paper_order(self, order: Dict[str, Any], *, confirmed: bool = False) -> Dict[str, Any]:
         if not self.client.testnet:

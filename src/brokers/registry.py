@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from src.brokers.algolab import AlgoLabBrokerAdapter
 from src.brokers.alpaca.adapter import AlpacaBrokerAdapter
-from src.brokers.base import BrokerAdapter
+from src.brokers.base import BrokerAdapter, append_broker_audit_event
 from src.brokers.binance.adapter import BinanceBrokerAdapter
 from src.brokers.ibkr import IbkrBrokerAdapter
 
@@ -103,3 +103,67 @@ def resolve_strategy_target_weights(
     if key == "crypto_5sma":
         return {"BTC-USD": 25.0, "ETH-USD": 25.0}
     return {str(k).upper(): float(v) for k, v in meta_a_w.items() if float(v) > 0}
+
+
+def run_broker_dry_run_reconciliation(
+    broker_id: str,
+    *,
+    strategy_key: str = "meta_a",
+    capital: Optional[float] = None,
+    config: Any = None,
+    audit_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Read-only pre-flight reconciliation (health + account + positions + rebalance preview).
+
+    Never submits any order; records a ``dry_run_reconciliation`` audit entry so
+    sandbox readiness and error states are explicitly observable before execution.
+    """
+    bid = str(broker_id or "").strip().lower()
+    registry = get_broker_registry(config, audit_path=audit_path)
+    if bid not in registry:
+        raise ValueError(f"Unknown broker_id '{broker_id}'; available: {sorted(registry.keys())}")
+    adapter = registry[bid]
+    weights = resolve_strategy_target_weights(strategy_key)
+
+    errors: List[str] = []
+    health = adapter.health_check()
+    try:
+        account = adapter.get_account_summary()
+    except Exception as exc:
+        account = {"broker_id": bid, "error": str(exc)}
+        errors.append(f"account_summary:{exc}")
+    try:
+        positions = adapter.list_positions()
+    except Exception as exc:
+        positions = []
+        errors.append(f"list_positions:{exc}")
+    try:
+        plan = adapter.preview_rebalance_plan(weights, capital=capital)
+    except Exception as exc:
+        plan = {"broker_id": bid, "orders": [], "error": str(exc)}
+        errors.append(f"preview_rebalance:{exc}")
+
+    status = "error" if errors else ("ok" if health.get("sandbox") else "blocked_non_sandbox")
+    append_broker_audit_event(
+        broker_id=bid,
+        action="dry_run_reconciliation",
+        status=status,
+        details={
+            "strategy_key": strategy_key,
+            "order_count": len(plan.get("orders") or []),
+            "position_count": len(positions),
+            "errors": errors,
+        },
+        audit_path=audit_path,
+    )
+    return {
+        "ok": len(errors) == 0 and bool(health.get("sandbox")),
+        "dry_run_only": True,
+        "broker_id": bid,
+        "strategy_key": strategy_key,
+        "health": health,
+        "account": account,
+        "positions": positions,
+        "plan": plan,
+        "errors": errors,
+    }
