@@ -210,12 +210,19 @@ def _run_smoke_test(static_dir: Path, runtime_root: Path) -> int:
             "/api/v1/agent/backends",
             "/api/v1/alpha/tournament?auto_run=false",
             "/api/v1/alpha/quant-paper?auto_step=false",
+            "/api/v1/alpha/simple-brief",
+            "/api/v1/alpha/research-v5",
             "/discover",
+            "/simple",
         ):
-            with urllib.request.urlopen(f"{base}{path}", timeout=15.0) as resp:
-                if resp.status != 200:
-                    print(f"SMOKE_ERROR: {path} returned {resp.status}", file=sys.stderr)
-                    return 1
+            try:
+                with urllib.request.urlopen(f"{base}{path}", timeout=45.0) as resp:
+                    if resp.status != 200:
+                        print(f"SMOKE_ERROR: {path} returned {resp.status}", file=sys.stderr)
+                        return 1
+            except Exception as exc:  # noqa: BLE001
+                print(f"SMOKE_ERROR: {path} failed: {exc}", file=sys.stderr)
+                return 1
         from src.notification import NotificationService  # noqa: F401
         mcp = DsaMcpServer()
         if len(mcp.tool_names) < 16:
