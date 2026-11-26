@@ -295,7 +295,7 @@ BIST_SCREENER_ENABLED=true
 BIST_SCREENER_TOP_N=8
 ```
 
-Tarama veri çekemezse veya eşiği geçen aday bulamazsa sistem otomatik olarak `STOCK_LIST` listesine döner.
+Tarama veri çekemezse veya eşiği geçen aday bulamazsa sistem otomatik olarak `STOCK_LIST` listesine döner. Varsayılan `SCREENER_MERGE_WITH_STOCK_LIST=true` ile `BIST_SCREENER_ENABLED=true` veya `US_SCREENER_ENABLED=true` açıkken bile `STOCK_LIST` korunur ve taramadan gelen yeni adaylar listenin sonuna tekilleştirilerek eklenir (`SCREENER_MERGE_WITH_STOCK_LIST=false` yalnızca tarama adaylarını çalıştırır).
 
 ## 5. Gizlilik: buluta ne gider?
 

@@ -862,6 +862,54 @@ def _resolve_us_screener_codes(config: Config, args: argparse.Namespace) -> Opti
     return None
 
 
+def _merge_screener_stock_codes(
+    config: Config,
+    args: argparse.Namespace,
+) -> Optional[List[str]]:
+    """Resolve enabled BIST/US screener candidates and merge with STOCK_LIST by default.
+
+    Preserves ``STOCK_LIST`` when ``screener_merge_with_stock_list`` is True so
+    enabling ``US_SCREENER_ENABLED=true`` or ``BIST_SCREENER_ENABLED=true`` augments
+    the user's watchlist instead of silently replacing it.
+    """
+    bist_codes = _resolve_bist_screener_codes(config, args) or []
+    us_codes = _resolve_us_screener_codes(config, args) or []
+    screener_codes = list(dict.fromkeys([*us_codes, *bist_codes]))
+    if not screener_codes:
+        return None
+
+    merge_flag = getattr(config, "screener_merge_with_stock_list", True)
+    should_merge = merge_flag if isinstance(merge_flag, bool) else True
+    raw_base = getattr(config, "stock_list", None)
+    base_codes = (
+        list(raw_base)
+        if should_merge and isinstance(raw_base, (list, tuple))
+        else []
+    )
+
+    merged: List[str] = []
+    seen_upper: set[str] = set()
+    for raw_code in [*base_codes, *screener_codes]:
+        code = str(raw_code or "").strip()
+        key = code.upper()
+        if code and key not in seen_upper:
+            seen_upper.add(key)
+            merged.append(code)
+
+    if base_codes:
+        base_keys = {str(c or "").strip().upper() for c in base_codes if str(c or "").strip()}
+        added_count = sum(
+            1 for c in merged if c.upper() not in base_keys
+        )
+        logger.info(
+            "[screener] STOCK_LIST korundu (%d sembol) ve tarama adaylari ile birlestirildi (+%d yeni, toplam %d).",
+            len(base_codes),
+            added_count,
+            len(merged),
+        )
+    return merged
+
+
 def run_full_analysis(
     config: Config,
     args: argparse.Namespace,
@@ -905,11 +953,9 @@ def run_full_analysis(
         # Issue #529: Hot-reload STOCK_LIST from .env on each scheduled run
         if stock_codes is None and portfolio_stock_codes is None:
             config.refresh_stock_list()
-            bist_codes = _resolve_bist_screener_codes(config, args) or []
-            us_codes = _resolve_us_screener_codes(config, args) or []
-            combined_codes = list(dict.fromkeys([*us_codes, *bist_codes]))
-            if combined_codes:
-                stock_codes = combined_codes
+            merged_codes = _merge_screener_stock_codes(config, args)
+            if merged_codes:
+                stock_codes = merged_codes
 
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list

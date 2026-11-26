@@ -120,3 +120,58 @@ def test_main_bist_screener_hook_selects_or_falls_back() -> None:
     with patch("src.services.bist_screener.screen_bist_stocks", return_value={"selected_codes": [], "candidates": []}):
         assert _resolve_bist_screener_codes(cfg_on, args_off) is None
 
+
+def test_merge_screener_stock_codes_preserves_stock_list_and_dedups() -> None:
+    from unittest.mock import MagicMock
+    from main import _merge_screener_stock_codes
+
+    args = SimpleNamespace(screen_bist=False, screen_us=False)
+    us_picks = [
+        SimpleNamespace(symbol="AAPL", score=70.0, reasons=["52W-High"]),
+        SimpleNamespace(symbol="CROX", score=68.0, reasons=["PEAD"]),
+    ]
+    cfg_merge = SimpleNamespace(
+        bist_screener_enabled=False,
+        bist_screener_top_n=8,
+        us_screener_enabled=True,
+        us_screener_top_n=8,
+        screener_merge_with_stock_list=True,
+        stock_list=["THYAO.IS", "AAPL", "588200"],
+    )
+    with patch(
+        "src.services.us_quant_screener.screen_us_alpha_candidates",
+        return_value=us_picks,
+    ):
+        assert _merge_screener_stock_codes(cfg_merge, args) == [
+            "THYAO.IS",
+            "AAPL",
+            "588200",
+            "CROX",
+        ]
+
+    # Explicit opt-out restores screener-only replacement behavior.
+    cfg_replace = SimpleNamespace(
+        bist_screener_enabled=False,
+        bist_screener_top_n=8,
+        us_screener_enabled=True,
+        us_screener_top_n=8,
+        screener_merge_with_stock_list=False,
+        stock_list=["THYAO.IS", "AAPL", "588200"],
+    )
+    with patch(
+        "src.services.us_quant_screener.screen_us_alpha_candidates",
+        return_value=us_picks,
+    ):
+        assert _merge_screener_stock_codes(cfg_replace, args) == ["AAPL", "CROX"]
+
+    # MagicMock config defaults must safely fall back without crashing iteration.
+    mock_cfg = MagicMock()
+    mock_cfg.bist_screener_enabled = False
+    mock_cfg.us_screener_enabled = True
+    mock_cfg.us_screener_top_n = 8
+    with patch(
+        "src.services.us_quant_screener.screen_us_alpha_candidates",
+        return_value=us_picks,
+    ):
+        assert _merge_screener_stock_codes(mock_cfg, args) == ["AAPL", "CROX"]
+

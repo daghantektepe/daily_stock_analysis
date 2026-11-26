@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [Fix] Preserve `STOCK_LIST` when `US_SCREENER_ENABLED=true` or `BIST_SCREENER_ENABLED=true` by adding `SCREENER_MERGE_WITH_STOCK_LIST=true` (`Config.screener_merge_with_stock_list` and `_merge_screener_stock_codes()` in `main.py`), deduplicating overlapping picks instead of overwriting the user's watchlist (with `SCREENER_MERGE_WITH_STOCK_LIST=false` opt-out and unit tests in `tests/test_bist_screener.py`)
 - [Reliability] Harden AI trading signal pipeline and add isolated %80 acceptance walk-forward validation (`SIGNAL_RELIABILITY_GATE_ENABLED=false` default opt-in):
   - Eliminate silent exception swallowing in `src/brokers/binance/adapter.py` and `src/services/paper_trading_service.py` (log warnings and record `error`/`ok` audit events to `data/broker_audit.jsonl`); add read-only `run_broker_dry_run_reconciliation()` in `src/brokers/registry.py`.
   - Harden `evaluate_entry_risk_gate()` in `src/services/quant_risk_gate.py` to fail closed on missing quant scores when `quant_gate_enabled=True` (`quant_score_unavailable_fail_closed`) and route BIST `*.IS` regime checks to `XU100.IS` vs `SPY`/`^VIX` for US tickers.

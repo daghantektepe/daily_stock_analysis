@@ -1247,6 +1247,8 @@ class Config:
     # US high-alpha screener (Quant + PEAD 2.0 + Live SEC Form 4)
     us_screener_enabled: bool = False
     us_screener_top_n: int = 8
+    # Merge screener candidates onto STOCK_LIST instead of replacing STOCK_LIST
+    screener_merge_with_stock_list: bool = True
     
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
@@ -2386,6 +2388,10 @@ class Config:
                 field_name='US_SCREENER_TOP_N',
                 minimum=1,
                 maximum=25,
+            ),
+            screener_merge_with_stock_list=parse_env_bool(
+                os.getenv('SCREENER_MERGE_WITH_STOCK_LIST'),
+                default=True,
             ),
             log_dir=os.getenv('LOG_DIR', './logs'),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
