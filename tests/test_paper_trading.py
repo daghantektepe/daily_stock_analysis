@@ -1006,3 +1006,57 @@ def test_signal_details_and_weekly_watch_dedupe_same_day_repeats_and_1d_benchmar
     )
     assert watch_res["total"] == 2 and watch_res["watch"] == 1
     assert watch_res["watch_pct"] == pytest.approx(50.0)
+
+
+def test_sync_signal_and_watchlist_bars_offline(db, monkeypatch) -> None:
+    from datetime import date, datetime
+    from types import SimpleNamespace
+
+    from src.services.paper_trading_benchmark import sync_signal_and_watchlist_bars
+    from src.storage import DecisionSignalRecord
+
+    with db.session_scope() as session:
+        session.add(
+            DecisionSignalRecord(
+                stock_code="THYAO.IS",
+                stock_name="THY",
+                market="tr",
+                source_type="analysis",
+                source_report_id=501,
+                trace_id="trace-sync-tr",
+                market_phase="postmarket",
+                trigger_source="cli",
+                action="watch",
+                action_label="İzle",
+                horizon="3d",
+                reason="test",
+                plan_quality="complete",
+                status="active",
+                created_at=datetime(2026, 11, 27, 9, 0),
+            )
+        )
+
+    monkeypatch.setattr(
+        "src.config.get_config",
+        lambda: SimpleNamespace(stock_list=["NVDA", "THYAO.IS"]),
+    )
+    seen: list[str] = []
+
+    def _fake_fetcher(*, code: str, start_date: date, end_date: date) -> int:
+        seen.append(code)
+        assert end_date >= start_date
+        if code == "SPY":
+            raise RuntimeError("transient network error")
+        return 5
+
+    res = sync_signal_and_watchlist_bars(
+        db_manager=db,
+        today=date(2026, 11, 27),
+        max_workers=1,
+        bar_fetcher=_fake_fetcher,
+    )
+    assert set(seen) == {"THYAO.IS", "NVDA", "XU100.IS", "SPY"}
+    assert res["requested"] == 4
+    assert res["synced"] == 3
+    assert res["rows_saved"] == 15
+    assert res["failed"] == ["SPY"]

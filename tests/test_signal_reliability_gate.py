@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from src.services.decision_signal_extractor import build_decision_signal_payload_from_report
 from src.services.run_diagnostics import (
     activate_run_diagnostic_context,
@@ -147,3 +149,44 @@ def test_stale_intraday_quote_and_healthy_signal_with_diagnostics() -> None:
     )
     assert stale_payload["action"] == "watch"
     assert "realtime_quote_stale_intraday" in stale_payload["metadata"]["reliability_gate"]["reasons"]
+
+
+def test_price_scale_mismatch_and_x100_recovery() -> None:
+    """Wild price-scale mismatch downgrades BUY -> WATCH; literal x100 numeric slippage normalizes cleanly."""
+    wild_payload = apply_signal_reliability_gate(
+        {
+            "action": "buy",
+            "entry_low": 1500.0,
+            "stop_loss": 1400.0,
+            "target_price": 1700.0,
+            "evidence": {"current_price": 100.0},
+        },
+        enabled=True,
+    )
+    assert wild_payload["action"] == "watch"
+    assert any(r.startswith("price_plan_scale_mismatch") for r in wild_payload["metadata"]["reliability_gate"]["reasons"])
+
+    res_x100 = _strong_result()
+    res_x100.current_price = 244.43
+    res_x100.dashboard["battle_plan"]["sniper_points"] = {
+        "ideal_buy": 24867.0,
+        "stop_loss": 24150.0,
+        "take_profit": 26500.0,
+    }
+    recovered = build_decision_signal_payload_from_report(
+        res_x100,
+        trace_id="trace-x100-recover",
+        query_source="api",
+        report_type="full",
+        profile_source="auto_default",
+        reliability_gate_enabled=True,
+    )
+    assert recovered is not None
+    assert recovered["entry_low"] == pytest.approx(248.67, rel=1e-4)
+    assert recovered["stop_loss"] == pytest.approx(241.5, rel=1e-4)
+    assert recovered["target_price"] == pytest.approx(265.0, rel=1e-4)
+    assert sorted(recovered["metadata"]["sniper_scale_normalized_fields"]) == [
+        "ideal_buy",
+        "stop_loss",
+        "take_profit",
+    ]

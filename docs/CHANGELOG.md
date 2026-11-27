@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [Reliability] Harden sniper-point price parsing and post-close daily bar syncing for signal outcome evaluation:
+  - Fix localized Turkish/European decimal-comma parsing (`152,28` -> `152.28`, `1.234,56` -> `1234.56`) in `src/utils/sniper_points.py`, add reference-price `×100` normalization in `src/services/decision_signal_extractor.py`, and fail closed on `price_plan_scale_mismatch` (`>4x` / `<0.25x` vs reference spot) in `src/services/signal_reliability_gate.py`.
+  - Add `sync_signal_and_watchlist_bars()` in `src/services/paper_trading_benchmark.py`, `--sync-bars` in `scripts/paper_trading_report.py`, and wire `--sync-bars` into `scripts/windows/daily_paper_step.ps1` so daily `stock_daily` closes refresh automatically without LLM calls (`tests/test_storage.py`, `tests/test_signal_reliability_gate.py`, `tests/test_paper_trading.py`).
 - [Fix] Preserve `STOCK_LIST` when `US_SCREENER_ENABLED=true` or `BIST_SCREENER_ENABLED=true` by adding `SCREENER_MERGE_WITH_STOCK_LIST=true` (`Config.screener_merge_with_stock_list` and `_merge_screener_stock_codes()` in `main.py`), deduplicating overlapping picks instead of overwriting the user's watchlist (with `SCREENER_MERGE_WITH_STOCK_LIST=false` opt-out and unit tests in `tests/test_bist_screener.py`)
 - [Reliability] Harden AI trading signal pipeline and add isolated %80 acceptance walk-forward validation (`SIGNAL_RELIABILITY_GATE_ENABLED=false` default opt-in):
   - Eliminate silent exception swallowing in `src/brokers/binance/adapter.py` and `src/services/paper_trading_service.py` (log warnings and record `error`/`ok` audit events to `data/broker_audit.jsonl`); add read-only `run_broker_dry_run_reconciliation()` in `src/brokers/registry.py`.

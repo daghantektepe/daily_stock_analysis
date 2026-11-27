@@ -1269,6 +1269,112 @@ def maybe_send_weekly_performance_report(
         return False
 
 
+def sync_signal_and_watchlist_bars(
+    *,
+    db_manager: Optional[Any] = None,
+    codes: Optional[Sequence[str]] = None,
+    include_watchlist: bool = True,
+    include_benchmarks: bool = True,
+    lookback_days: int = 20,
+    max_workers: int = 4,
+    today: Optional[date] = None,
+    bar_fetcher: Optional[Callable[..., int]] = None,
+) -> Dict[str, Any]:
+    """Fetch recent daily OHLCV bars into ``stock_daily`` for pending signals and STOCK_LIST.
+
+    Reuses ``DecisionSignalOutcomeService._fetch_and_store_daily_bars`` without
+    invoking LLMs or search scrapers. Fail-open per ticker.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from src.config import get_config
+    from src.services.decision_signal_extractor import get_market_for_stock, normalize_stock_code
+    from src.services.decision_signal_outcome_service import (
+        DecisionSignalOutcomeService,
+        DecisionSignalRepository,
+    )
+
+    ref_today = today or datetime.now(_ISTANBUL_TZ).date()
+    start_date = ref_today - timedelta(days=max(int(lookback_days), 5))
+    service = DecisionSignalOutcomeService(db_manager=db_manager, refill_missing_bars=True, today=ref_today)
+    signal_repo = DecisionSignalRepository(db_manager)
+
+    raw_codes: List[str] = []
+    if codes is not None:
+        raw_codes.extend(codes)
+    else:
+        signal_records, _ = signal_repo.list(page=1, page_size=500)
+        for sig in signal_records:
+            if getattr(sig, "stock_code", None):
+                raw_codes.append(str(sig.stock_code))
+        if include_watchlist:
+            try:
+                cfg = get_config()
+                raw_codes.extend(getattr(cfg, "stock_list", None) or [])
+            except Exception as exc:  # noqa: BLE001 - optional config
+                logger.warning("[paper-benchmark] config watchlist unavailable during bar sync: %s", exc)
+
+    unique_codes: List[str] = []
+    seen_upper: set[str] = set()
+    markets_seen: set[str] = set()
+    for item in raw_codes:
+        norm = normalize_stock_code(str(item or "").strip())
+        key = norm.upper()
+        if norm and key not in seen_upper:
+            seen_upper.add(key)
+            unique_codes.append(norm)
+            mkt = get_market_for_stock(norm)
+            if mkt:
+                markets_seen.add(mkt)
+
+    if include_benchmarks:
+        if "tr" in markets_seen and "XU100.IS" not in seen_upper:
+            unique_codes.append("XU100.IS")
+            seen_upper.add("XU100.IS")
+        if "us" in markets_seen and "SPY" not in seen_upper:
+            unique_codes.append("SPY")
+            seen_upper.add("SPY")
+
+    fetcher = bar_fetcher or service._fetch_and_store_daily_bars
+    synced = 0
+    failed: List[str] = []
+    total_rows = 0
+
+    def _sync_one(sym: str) -> int:
+        return int(fetcher(code=sym, start_date=start_date, end_date=ref_today) or 0)
+
+    workers = max(1, min(int(max_workers or 1), max(len(unique_codes), 1)))
+    if workers == 1:
+        for sym in unique_codes:
+            try:
+                rows_saved = _sync_one(sym)
+                if rows_saved > 0:
+                    synced += 1
+                    total_rows += rows_saved
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[paper-benchmark] bar sync failed for %s: %s", sym, exc)
+                failed.append(sym)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(_sync_one, sym): sym for sym in unique_codes}
+            for fut in as_completed(futures):
+                sym = futures[fut]
+                try:
+                    rows_saved = fut.result()
+                    if rows_saved > 0:
+                        synced += 1
+                        total_rows += rows_saved
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("[paper-benchmark] bar sync failed for %s: %s", sym, exc)
+                    failed.append(sym)
+
+    return {
+        "requested": len(unique_codes),
+        "synced": synced,
+        "rows_saved": total_rows,
+        "failed": sorted(failed),
+    }
+
+
 __all__: List[str] = [
     "BENCHMARKS",
     "DEFAULT_WEEKLY_REPORT_STATE_PATH",
@@ -1279,5 +1385,6 @@ __all__: List[str] = [
     "evaluate_weekly_watch_ratio",
     "format_paper_trading_report",
     "maybe_send_weekly_performance_report",
+    "sync_signal_and_watchlist_bars",
     "yfinance_history",
 ]

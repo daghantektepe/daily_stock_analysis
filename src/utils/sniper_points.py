@@ -11,6 +11,43 @@ from typing import Any, Dict, Optional
 SNIPER_KEYS = ("ideal_buy", "secondary_buy", "stop_loss", "take_profit")
 
 
+_NUMERIC_TOKEN_RE = re.compile(r"\d[\d.,]*")
+
+
+def _normalize_numeric_token(token: str) -> str:
+    """Normalize US thousands vs Turkish/European decimal commas in a numeric token."""
+    if "," not in token:
+        return token
+    if "." in token:
+        last_dot = token.rfind(".")
+        last_comma = token.rfind(",")
+        if last_comma > last_dot and len(token[last_comma + 1:]) != 3:
+            # e.g. "1.234,56" -> "1234.56"
+            return token.replace(".", "").replace(",", ".")
+        if last_comma > last_dot and re.fullmatch(r"\d{1,3}(?:\.\d{3})+,\d+", token):
+            # e.g. "1.234,560" -> "1234.560"
+            return token.replace(".", "").replace(",", ".")
+        # e.g. "1,234.56" -> "1234.56"
+        return token.replace(",", "")
+
+    if token.count(",") > 1:
+        # e.g. "1,234,567" -> "1234567"
+        return token.replace(",", "")
+
+    int_part, frac_part = token.split(",", 1)
+    if not frac_part:
+        return int_part
+    # Turkish/European decimal comma ("152,28", "33,00", "0,825", "3,5") vs English thousands ("1,250").
+    if len(frac_part) != 3 or int_part == "0":
+        return f"{int_part}.{frac_part}"
+    return f"{int_part}{frac_part}"
+
+
+def _normalize_localized_separators(raw_text: str) -> str:
+    text = raw_text.replace("，", " ").strip()
+    return _NUMERIC_TOKEN_RE.sub(lambda m: _normalize_numeric_token(m.group(0)), text)
+
+
 def parse_sniper_value(value: Any) -> Optional[float]:
     """Parse a sniper point value from report text into a positive price."""
 
@@ -20,7 +57,7 @@ def parse_sniper_value(value: Any) -> Optional[float]:
         parsed = float(value)
         return parsed if parsed > 0 else None
 
-    text = str(value).replace(",", "").replace("，", "").strip()
+    text = _normalize_localized_separators(str(value))
     if not text or text in {"-", "—", "N/A"}:
         return None
 

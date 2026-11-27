@@ -168,6 +168,48 @@ def _has_contradicting_trend(
     return None
 
 
+def _resolve_reference_price(
+    payload: Mapping[str, Any],
+    result: Any,
+    context_snapshot: Optional[Mapping[str, Any]],
+) -> Optional[float]:
+    evidence = _as_dict(payload.get("evidence"))
+    snap = _as_dict(context_snapshot)
+    rt = _as_dict(snap.get("realtime_quote"))
+    daily = _as_dict(snap.get("daily"))
+    for candidate in (
+        evidence.get("current_price"),
+        getattr(result, "current_price", None),
+        rt.get("price"),
+        daily.get("close"),
+        daily.get("last_close"),
+    ):
+        val = _finite_pos(candidate)
+        if val is not None:
+            return val
+    return None
+
+
+def _has_scale_mismatch(
+    payload: Mapping[str, Any],
+    reference_price: Optional[float],
+    *,
+    min_ratio: float = 0.25,
+    max_ratio: float = 4.0,
+) -> Optional[str]:
+    """Detect wildly mis-scaled price levels (e.g. x100 decimal-comma slippage)."""
+    if reference_price is None or reference_price <= 0:
+        return None
+    for field_name in ("entry_low", "entry_high", "stop_loss", "target_price"):
+        val = _finite_pos(payload.get(field_name))
+        if val is None:
+            continue
+        ratio = val / reference_price
+        if ratio > max_ratio or ratio < min_ratio:
+            return f"price_plan_scale_mismatch:{field_name}={val:.4g}_vs_ref={reference_price:.4g}"
+    return None
+
+
 def evaluate_signal_reliability(
     payload: Mapping[str, Any],
     *,
@@ -197,6 +239,11 @@ def evaluate_signal_reliability(
     trend_reason = _has_contradicting_trend(result, context_snapshot)
     if trend_reason:
         reasons.append(trend_reason)
+
+    reference_price = _resolve_reference_price(payload, result, context_snapshot)
+    scale_reason = _has_scale_mismatch(payload, reference_price)
+    if scale_reason:
+        reasons.append(scale_reason)
 
     stop_loss = _finite_pos(payload.get("stop_loss"))
     target_price = _finite_pos(payload.get("target_price"))

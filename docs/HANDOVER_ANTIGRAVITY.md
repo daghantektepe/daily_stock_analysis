@@ -189,4 +189,12 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 - **İzole Walk-Forward Doğrulama (`scripts\run_signal_walkforward.py --cost-bps 10`):**
   - Dondurulmuş `library.py` / `research_v3.py` parmak izlerine dokunulmadan gerçek ABD ETF verisiyle (`2018–2021` IS, `2022+` 6 aylık OOS pencereleri) koşuldu → Karar **`UNPROVEN`** (`N=86`, Precision `56.98% < %80.0`, CI alt `47.7% <= %65.0`, Endeks geçme `37.87%`, Net PF `1.13 < 1.50`, MaxDD `-7.52%`). Yönlü AI sinyal doğruluk hedefi (%80) henüz kanıtlanmamıştır; `ALPACA_PAPER=true` ve `ALPACA_AUTO_EXECUTE=false` kilitleri korunur.
 
+### 2026-11-27 — Ondalık Ölçek Koruması, Watchlist Birleştirme ve Kapanış Barı Eşitlemesi
+
+- **`US_SCREENER` + `STOCK_LIST` Birleştirme (`2243a38f`):** `SCREENER_MERGE_WITH_STOCK_LIST=true` (`src/config.py`, `_merge_screener_stock_codes()` in `main.py`) ile `US_SCREENER_ENABLED=true` açıkken bile `STOCK_LIST` ezilmez; canlıda `43` `STOCK_LIST` + `4` ABD tarama adayı = `47/47` sembol üretildi (`86 passed`).
+- **Türkçe Ondalık Virgülü & Ölçek Sapma Koruması:**
+  - `src/utils/sniper_points.py` (`parse_sniper_value`) `"152,28 TL"`, `"248,67 USD"`, `"1.234,56 TL"` gibi yerel ondalık virgülleri binlik ayırıcı sanıp `×100` büyütmeyecek şekilde düzeltildi; `decision_signal_extractor.py` ham sayısal `×100` sapmalarını normalize eder (`sniper_scale_normalized_fields`), `signal_reliability_gate.py` ise referans fiyata göre `>4x` / `<0.25x` planları `price_plan_scale_mismatch` ile `watch`'a çeker. Önceki 7 kaydın ham JSON tekrar çözümlemesi `7/7` doğrulandı (`PGSUS.IS` `152.28`, `AMZN` `248.67`, `TOST` `33.0` vb.).
+- **Otomatik Kapanış Barı Eşitlemesi (`--sync-bars`):**
+  - `src/services/paper_trading_benchmark.py` (`sync_signal_and_watchlist_bars()`), `scripts/paper_trading_report.py --sync-bars` ve `scripts/windows/daily_paper_step.ps1` güncellendi; LLM maliyeti olmadan bekleyen sinyal + `STOCK_LIST` + `XU100.IS`/`SPY` barlarını yeniler. Canlı test: `[sync-bars] requested=48 synced=48 rows=645 failed=0`; `228 passed` (`pytest` 10 modül).
+
 

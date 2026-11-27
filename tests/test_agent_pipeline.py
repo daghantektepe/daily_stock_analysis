@@ -1797,6 +1797,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
                 query_source="test",
                 report_type="simple",
                 profile_source="auto_default",
+                reliability_gate_enabled=False,
             )
             self.assertIsNotNone(signal_payload)
             self.assertEqual(signal_payload["action"], "buy")
@@ -2125,6 +2126,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
                 query_source="test",
                 report_type="simple",
                 profile_source="auto_default",
+                reliability_gate_enabled=False,
             )
             self.assertIsNotNone(signal_payload)
             self.assertEqual(signal_payload["action"], explanation["final_action"])
@@ -2369,6 +2371,7 @@ class TestAnalyzeWithAgentStockName(unittest.TestCase):
                 query_source="test",
                 report_type="simple",
                 profile_source="auto_default",
+                reliability_gate_enabled=False,
             )
             self.assertIsNotNone(signal_payload)
             self.assertEqual(signal_payload["action"], explanation["final_action"])

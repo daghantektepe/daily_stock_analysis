@@ -323,7 +323,7 @@ Bu sistem kazanç garantisi vermez. Bir sinyalin işe yarayıp yaramadığını 
 1. **En az 4–6 hafta yalnızca sanal işlem, ATR risk yönetimi ve otomatik haftalık rapor** (`PAPER_TRADING_ENABLED=true`). Sanal işlem motoru her yeni `buy`/`add` sinyalinde 14 günlük ATR volatilitesini (veya sinyalin kendi zarar kes seviyesini) kullanarak pozisyon büyüklüğünü `PAPER_TRADING_RISK_PCT` (varsayılan `%5`) risk bütçesine göre otomatik ölçekler; yüksek volatiliteli hissede daha az lot alır. Açık pozisyonlar sonraki günlerin dip/zirve fiyatlarında **zarar kes (`stop_loss`, varsayılan `2 × ATR`)** veya **kâr al (`take_profit`, varsayılan `3 × ATR`)** seviyesine değdiğinde sanal defterde otomatik olarak kapatılır. Özet için:
 
 ```bash
-python scripts/paper_trading_report.py
+python scripts/paper_trading_report.py --sync-bars --details
 ```
 
    `--notify` eklersen özet Telegram'a da gider. Sistem her günlük analizden sonra bekleyen sinyal isabetlerini (`1/3/5/10` işlem günü, ±%2 nötr bant) kendiliğinden hesaplar ve **her Cuma 18:00 sonrası** çalıştırmada sanal işlem özetini, BIST 100 ve dolar kıyasını ve sinyal isabet oranlarını otomatik olarak Telegram'a gönderir (haftada bir kez, `data/weekly_report_state.json`). Ayrıca Web arayüzündeki **Sanal İşlem / KAP** (`/paper-trading`) sayfasından açık pozisyonları, ATR zarar kes / kâr al seviyelerini, BIST 100 & dolar kıyasını ve KAP / haber uyarılarını doğrudan görebilirsin.

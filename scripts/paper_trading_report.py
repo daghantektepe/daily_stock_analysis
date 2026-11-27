@@ -79,6 +79,11 @@ def main() -> int:
         help="only send when it is Friday after market close in Istanbul and not yet sent this ISO week",
     )
     parser.add_argument(
+        "--sync-bars",
+        action="store_true",
+        help="refresh recent stock_daily close bars for signals and STOCK_LIST before evaluation (no LLM calls)",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="show third-party data provider logs and warnings during evaluation",
@@ -91,8 +96,13 @@ def main() -> int:
             evaluate_weekly_watch_ratio,
             format_paper_trading_report,
             maybe_send_weekly_performance_report,
+            sync_signal_and_watchlist_bars,
         )
         from src.services.paper_trading_service import PaperTradingService
+
+        sync_summary = None
+        if args.sync_bars:
+            sync_summary = sync_signal_and_watchlist_bars()
 
         if args.weekly_if_due:
             maybe_send_weekly_performance_report(market=args.market)
@@ -109,6 +119,12 @@ def main() -> int:
 
             details_lines = describe_signal_outcome_details(market=args.market)
 
+    if sync_summary is not None:
+        print(
+            f"[sync-bars] requested={sync_summary['requested']} "
+            f"synced={sync_summary['synced']} rows={sync_summary['rows_saved']} "
+            f"failed={len(sync_summary['failed'])}"
+        )
     print(text)
     if args.details:
         print("\n🔎 Sinyal ayrıntısı")

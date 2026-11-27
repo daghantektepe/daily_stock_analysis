@@ -528,6 +528,15 @@ class TestStorage(unittest.TestCase):
         self.assertIn(DatabaseManager._parse_sniper_value("1.55-1.56(MA5/M20支撑)"), [1.55, 1.56])
         self.assertIn(DatabaseManager._parse_sniper_value("1.49-1.50(MA60附近企稳)"), [1.49, 1.50])
 
+        # 8. Türkçe / Avrupa ondalık virgülü (binlik ayırıcı sanılıp x100 olmamalı)
+        self.assertEqual(DatabaseManager._parse_sniper_value("İdeal alım: 152,28 TL çevresi (MA5)"), 152.28)
+        self.assertEqual(DatabaseManager._parse_sniper_value("248,67 USD civarı; tutunma teyidi"), 248.67)
+        self.assertEqual(DatabaseManager._parse_sniper_value("Risk seviyesi: 33,00 dolar"), 33.0)
+        self.assertEqual(DatabaseManager._parse_sniper_value("0,825 yuan"), 0.825)
+        self.assertEqual(DatabaseManager._parse_sniper_value("1.234,56 TL"), 1234.56)
+        self.assertEqual(DatabaseManager._parse_sniper_value("1,234.56 USD"), 1234.56)
+        self.assertEqual(DatabaseManager._parse_sniper_value("100.5，200.0元"), 200.0)
+
     def test_get_chat_sessions_prefix_is_scoped_by_colon_boundary(self):
         DatabaseManager.reset_instance()
         db = DatabaseManager(db_url="sqlite:///:memory:")

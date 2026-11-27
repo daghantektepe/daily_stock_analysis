@@ -162,7 +162,10 @@ try {
 
   $cCode = Invoke-DsaStep -StepArgs @('scripts\crypto_trend.py', 'paper', '--notify') -Label 'crypto_trend.py'
 
-  $wCode = Invoke-DsaStep -StepArgs @('scripts\paper_trading_report.py', '--weekly-if-due') -Label 'paper_trading_report.py --weekly-if-due'
+  $reportArgs = @('scripts\paper_trading_report.py')
+  if (-not $NoRefresh) { $reportArgs += '--sync-bars' }
+  $reportArgs += '--weekly-if-due'
+  $wCode = Invoke-DsaStep -StepArgs $reportArgs -Label 'paper_trading_report.py --sync-bars --weekly-if-due'
 
   Write-Log "=== DSA Daily Paper Step Finished ==="
   if ($qCode -ne 0 -or $cCode -ne 0 -or $wCode -ne 0) {

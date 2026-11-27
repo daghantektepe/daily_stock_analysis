@@ -105,6 +105,10 @@ def build_decision_signal_payload_from_report(
         return None
 
     sniper_points = extract_sniper_points(result)
+    sniper_points, normalized_scale_fields = _normalize_sniper_scale_against_reference(
+        sniper_points,
+        _resolve_reference_price_for_sniper(result, context_snapshot),
+    )
     entry_low, entry_high = _entry_range(
         sniper_points.get("ideal_buy"),
         sniper_points.get("secondary_buy"),
@@ -152,6 +156,8 @@ def build_decision_signal_payload_from_report(
     diag_summary = summarize_run_diagnostics_for_signal(current_diagnostic_snapshot())
     if diag_summary:
         metadata["diagnostic_summary"] = diag_summary
+    if normalized_scale_fields:
+        metadata["sniper_scale_normalized_fields"] = normalized_scale_fields
 
     payload: Dict[str, Any] = {
         "stock_code": raw_code,
@@ -389,6 +395,47 @@ def _extract_guardrail_reason(
 def _confidence_from_level(value: Any) -> Optional[float]:
     key = str(value or "").strip().lower()
     return _CONFIDENCE_MAP.get(key)
+
+
+def _resolve_reference_price_for_sniper(
+    result: AnalysisResult,
+    context_snapshot: Optional[Mapping[str, Any]],
+) -> Optional[float]:
+    snap = _as_mapping(context_snapshot)
+    rt = _as_mapping(snap.get("realtime_quote"))
+    daily = _as_mapping(snap.get("daily"))
+    for candidate in (
+        getattr(result, "current_price", None),
+        rt.get("price"),
+        daily.get("close"),
+        daily.get("last_close"),
+    ):
+        try:
+            val = float(candidate)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(val) and val > 0.0:
+            return val
+    return None
+
+
+def _normalize_sniper_scale_against_reference(
+    sniper_points: Dict[str, Optional[float]],
+    reference_price: Optional[float],
+) -> tuple[Dict[str, Optional[float]], List[str]]:
+    """Correct literal x100 unit/comma-stripped levels (ratio in [75, 135]) relative to spot."""
+    if reference_price is None or reference_price <= 0:
+        return sniper_points, []
+    updated = dict(sniper_points)
+    normalized_fields: List[str] = []
+    for key, value in sniper_points.items():
+        if value is None or not math.isfinite(value) or value <= 0.0:
+            continue
+        ratio = value / reference_price
+        if 75.0 <= ratio <= 135.0:
+            updated[key] = round(value / 100.0, 4)
+            normalized_fields.append(key)
+    return updated, normalized_fields
 
 
 def _entry_range(ideal_buy: Optional[float], secondary_buy: Optional[float]) -> tuple[Optional[float], Optional[float]]:
