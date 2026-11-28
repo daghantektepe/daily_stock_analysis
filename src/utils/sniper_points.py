@@ -12,6 +12,13 @@ SNIPER_KEYS = ("ideal_buy", "secondary_buy", "stop_loss", "take_profit")
 
 
 _NUMERIC_TOKEN_RE = re.compile(r"\d[\d.,]*")
+_ISO_DATE_RE = re.compile(r"\b\d{4}-\d{1,2}-\d{1,2}\b")
+_PCT_TOKEN_RE = re.compile(r"(?:%\s*-?\d+(?:\.\d+)?|-?\d+(?:\.\d+)?\s*%)")
+_MA_PREFIX_RE = re.compile(r"\b(?:E?MA|RSI|KDJ|MACD)\s*\d+\b", re.IGNORECASE)
+_CURRENCY_PRICE_RE = re.compile(
+    r"(?:[$₺€]\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:TL|TRY|USD|EUR|dolar)\b)",
+    re.IGNORECASE,
+)
 
 
 def _normalize_numeric_token(token: str) -> str:
@@ -92,12 +99,35 @@ def parse_sniper_value(value: Any) -> Optional[float]:
             paren_pos = min(paren_pos, pos)
     search_text = text[:paren_pos].strip() or text
 
+    # Strip non-price numeric noise (ISO dates like 2026-11-23, %0.6 / 2%, MA5/EMA20).
+    cleaned_text = _ISO_DATE_RE.sub(" ", search_text)
+    cleaned_text = _PCT_TOKEN_RE.sub(" ", cleaned_text)
+    cleaned_text = _MA_PREFIX_RE.sub(" ", cleaned_text)
+
+    # Prefer the stated price tagged with a currency in the leading clause (before ";"),
+    # avoiding dates, percentages, or secondary reference numbers in trailing notes.
+    primary_clause = cleaned_text.split(";", 1)[0].strip() or cleaned_text
+    currency_match = _CURRENCY_PRICE_RE.search(primary_clause)
+    if currency_match:
+        num_str = currency_match.group(1) or currency_match.group(2)
+        try:
+            parsed = float(num_str)
+            return parsed if parsed > 0 else None
+        except ValueError:
+            pass
+
     valid_numbers = []
-    for match in re.finditer(r"\d+(?:\.\d+)?", search_text):
+    for match in re.finditer(r"\d+(?:\.\d+)?", primary_clause):
         start_idx = match.start()
-        if start_idx >= 2 and search_text[start_idx - 2:start_idx].upper() == "MA":
+        if start_idx >= 2 and primary_clause[start_idx - 2:start_idx].upper() == "MA":
             continue
         valid_numbers.append(match.group())
+    if not valid_numbers and primary_clause != cleaned_text:
+        for match in re.finditer(r"\d+(?:\.\d+)?", cleaned_text):
+            start_idx = match.start()
+            if start_idx >= 2 and cleaned_text[start_idx - 2:start_idx].upper() == "MA":
+                continue
+            valid_numbers.append(match.group())
     if valid_numbers:
         try:
             parsed = float(valid_numbers[-1])

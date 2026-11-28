@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [Fix] Harden sniper currency-clause parsing and bypass missing optional `mcp` import in LiteLLM tool-calling:
+  - Improve `parse_sniper_value()` (`src/utils/sniper_points.py`) to strip ISO dates (`YYYY-MM-DD`), percentage deltas (`%0.6`, `2%`), and trailing secondary clauses after `;`, prioritizing currency-tagged prices (`TL/TRY/USD/EUR/dolar/$/₺/€`) so localized Turkish/English strings like `"480,13 USD; ... %2 altındaki"` and `"304,00 USD: 2026-11-23 ..."` extract the exact level (`tests/test_storage.py`).
+  - Set `_skip_mcp_handler=True` in `LLMToolAdapter._call_litellm_model()` (`src/agent/llm_adapter.py`) via `_should_skip_litellm_mcp_handler()` when passing regular OpenAI `function` tools and optional package `mcp` is absent (`litellm 1.108.3`), unblocking `AGENT_MODE=true` / `AGENT_ARCH=multi` local Ollama tool-calling without adding dependencies (`tests/test_agent_litellm_route_resolution.py`).
 - [Reliability] Harden sniper-point price parsing and post-close daily bar syncing for signal outcome evaluation:
   - Fix localized Turkish/European decimal-comma parsing (`152,28` -> `152.28`, `1.234,56` -> `1234.56`) in `src/utils/sniper_points.py`, add reference-price `×100` normalization in `src/services/decision_signal_extractor.py`, and fail closed on `price_plan_scale_mismatch` (`>4x` / `<0.25x` vs reference spot) in `src/services/signal_reliability_gate.py`.
   - Add `sync_signal_and_watchlist_bars()` in `src/services/paper_trading_benchmark.py`, `--sync-bars` in `scripts/paper_trading_report.py`, and wire `--sync-bars` into `scripts/windows/daily_paper_step.ps1` so daily `stock_daily` closes refresh automatically without LLM calls (`tests/test_storage.py`, `tests/test_signal_reliability_gate.py`, `tests/test_paper_trading.py`).

@@ -6,6 +6,7 @@ Normalizes function-calling / tool-use across all providers into a unified
 interface consumed by the AgentExecutor, via LiteLLM.
 """
 
+import importlib.util
 import json
 import logging
 import time
@@ -52,6 +53,17 @@ from src.llm.provider_cache import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _should_skip_litellm_mcp_handler(tools: Iterable[Any]) -> bool:
+    """Bypass LiteLLM's experimental MCP gateway import when only function tools exist and `mcp` is absent."""
+    has_mcp_tool = any(
+        isinstance(tool, dict) and str(tool.get("type") or "").strip().lower() == "mcp"
+        for tool in tools
+    )
+    if has_mcp_tool:
+        return False
+    return importlib.util.find_spec("mcp") is None
 
 
 def _resolve_litellm_exception(name: str) -> type[BaseException]:
@@ -706,6 +718,8 @@ class LLMToolAdapter:
 
         if tools:
             call_kwargs["tools"] = tools
+            if _should_skip_litellm_mcp_handler(tools):
+                call_kwargs["_skip_mcp_handler"] = True
 
         # Use Router for primary model (multi-key), direct litellm for others
         use_channel_router = self._has_channel_config()

@@ -536,6 +536,30 @@ class TestStorage(unittest.TestCase):
         self.assertEqual(DatabaseManager._parse_sniper_value("1.234,56 TL"), 1234.56)
         self.assertEqual(DatabaseManager._parse_sniper_value("1,234.56 USD"), 1234.56)
         self.assertEqual(DatabaseManager._parse_sniper_value("100.5，200.0元"), 200.0)
+        self.assertEqual(
+            DatabaseManager._parse_sniper_value(
+                "480,13 USD; 489,93 USD referans fiyatının yaklaşık %2 altındaki mekanik risk eşiği."
+            ),
+            480.13,
+        )
+        self.assertEqual(
+            DatabaseManager._parse_sniper_value(
+                "Zarar kes: 292,72 USD; MA20’nin yaklaşık %1 altında günlük kapanışta risk azaltın."
+            ),
+            292.72,
+        )
+        self.assertEqual(
+            DatabaseManager._parse_sniper_value(
+                "304,00 USD: 2026-11-23 tepesine yakın ilk hedef; ancak yalnızca teyitli girişten sonra."
+            ),
+            304.0,
+        )
+        self.assertEqual(
+            DatabaseManager._parse_sniper_value(
+                "1.364,29 USD: koşullu girişten sonra MA5'in yaklaşık %0,6 altı; günlük kapanışla uygula."
+            ),
+            1364.29,
+        )
 
     def test_get_chat_sessions_prefix_is_scoped_by_colon_boundary(self):
         DatabaseManager.reset_instance()

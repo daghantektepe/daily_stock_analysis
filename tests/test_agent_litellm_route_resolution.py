@@ -300,3 +300,35 @@ def test_call_completion_does_not_overwrite_adapter_route_resolution() -> None:
 
     assert response.provider == "error"
     assert adapter._route_resolution is original_resolution
+
+
+def test_llm_adapter_sets_skip_mcp_handler_for_function_tools_when_mcp_absent() -> None:
+    from types import SimpleNamespace
+    from src.agent.llm_adapter import _should_skip_litellm_mcp_handler
+
+    fn_tools = [{"type": "function", "function": {"name": "get_daily", "parameters": {}}}]
+    mcp_tools = [{"type": "mcp", "server_label": "s"}]
+
+    with patch("src.agent.llm_adapter.importlib.util.find_spec", return_value=None):
+        assert _should_skip_litellm_mcp_handler(fn_tools) is True
+        assert _should_skip_litellm_mcp_handler(mcp_tools) is False
+
+    with patch("src.agent.llm_adapter.importlib.util.find_spec", return_value=object()):
+        assert _should_skip_litellm_mcp_handler(fn_tools) is False
+
+    config = _config(agent_litellm_model="ollama/qwen3:8b")
+    adapter = LLMToolAdapter(config)
+    adapter._router = None
+    fake_resp = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="{}", tool_calls=[]))],
+        usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+    )
+    with patch("src.agent.llm_adapter.importlib.util.find_spec", return_value=None), \
+         patch("src.agent.llm_adapter.litellm.completion", return_value=fake_resp) as mock_comp:
+        adapter._call_litellm_model(
+            [{"role": "user", "content": "hi"}],
+            fn_tools,
+            "ollama/qwen3:8b",
+            temperature=0.3,
+        )
+    assert mock_comp.call_args.kwargs.get("_skip_mcp_handler") is True

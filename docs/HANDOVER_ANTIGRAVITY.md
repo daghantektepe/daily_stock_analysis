@@ -197,4 +197,13 @@ Kullanıcı short ve opsiyon gibi araçları değerli buluyor. Short fikri, kred
 - **Otomatik Kapanış Barı Eşitlemesi (`--sync-bars`):**
   - `src/services/paper_trading_benchmark.py` (`sync_signal_and_watchlist_bars()`), `scripts/paper_trading_report.py --sync-bars` ve `scripts/windows/daily_paper_step.ps1` güncellendi; LLM maliyeti olmadan bekleyen sinyal + `STOCK_LIST` + `XU100.IS`/`SPY` barlarını yeniler. Canlı test: `[sync-bars] requested=48 synced=48 rows=645 failed=0`; `228 passed` (`pytest` 10 modül).
 
+### 2026-11-28 — 32 Satır DB Onarımı (Adım A) ve İzole `AGENT_MODE=true` A/B Testi (Adım B)
+
+- **Adım A (`stock_analysis.db` Onarımı):**
+  - `sniper_points.py` içine `;` öncesi para birimi önceliği, ISO tarih (`2026-11-23`) ve yüzde (`%0,6` / `%2`) temizleme eklendi; `stock_analysis.db.bak-20261128` (`11,1 MB`) yedeği alındıktan sonra `decision_signals` içinde `32` ve `analysis_history` içinde `32` hatalı ölçekli kayıt (`1040.0 URI`, `1386.44 LLY`, `480.13 MSFT`, `292.72/304.0 NET`, `152.28 PGSUS.IS`, `321.96 ASELS.IS` vb.) onarıldı → taramada kalan ölçek dışı satır **`0`**.
+- **Adım B (`AGENT_MODE=true` + `AGENT_ARCH=multi` + Yerel `ollama/qwen3:8b` Sanal A/B Testi):**
+  - `litellm 1.108.3`'ün kurulu olmayan `mcp` paketini araç çağrılarında import etmesini önleyen `_should_skip_litellm_mcp_handler()` (`_skip_mcp_handler=True`, `src/agent/llm_adapter.py`) eklendi (yeni paket eklemeden yerel Ollama araç çağrısı çalıştırıldı).
+  - İzole kopya DB üzerinde `THYAO.IS`, `AAPL`, `NVDA` koşturuldu: `THYAO.IS` (`60s`, `watch 52`, `plan_quality=minimal`) ve `AAPL` (`174s`, `watch 58`, `plan_quality=partial`, `diagnostic_summary` tam) tamamlanırken, `NVDA` `max_steps=6` sınırına takılarak fail etti; `RiskAgent` ise eksik alt-ajan kanıtı nedeniyle `no_risk_evidence` geçildi.
+  - **Karar:** Tekil `gemini_cli` modu tüm test hisselerinde `plan_quality='complete'` ürettiği için `.env` varsayılanı şimdilik **`GENERATION_BACKEND=gemini_cli` + `AGENT_MODE=false`** bırakıldı; Pazartesi (`2026-11-30`) kapanışlarıyla `2026-11-27`'de üretilen `12` yönlü sinyalin `1g/3g/5g/10g` sonuçları izlenecek.
+
 
